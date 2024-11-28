@@ -7,7 +7,7 @@ import Register from "./pages/auth/Register";
 export const routes: RouteObject[] = [
     {
         element: <App />,
-        path: "/",
+        path: "/*",
         children: [
             {
                 path: "auth",
