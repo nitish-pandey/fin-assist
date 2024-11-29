@@ -1,9 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useToast from "../../providers/Toast";
 import { useForm } from "react-hook-form";
 import Cookies from "universal-cookie";
 import { login } from "../../utils/api";
-
+import { useGlobalContext } from "../../providers/ConfigProvider";
 interface LoginData {
     email: string;
     password: string;
@@ -17,6 +17,8 @@ const Login = () => {
         handleSubmit,
         formState: { errors, isSubmitting },
     } = useForm<LoginData>();
+    const navigate = useNavigate();
+    const { setProfile, setOrganization } = useGlobalContext();
 
     const onSubmit = async (data: LoginData) => {
         try {
@@ -26,7 +28,16 @@ const Login = () => {
                 path: "/",
                 expires: new Date(Date.now() + 259200000),
             });
-            showToast("Login successful", "success");
+            cookies.set("userId", res.user.id, {
+                path: "/",
+                expires: new Date(Date.now() + 259200000),
+            });
+            showToast("Login successful", "success", 2000);
+            setProfile(res.user);
+            setOrganization(res.user.organizations || []);
+            setTimeout(() => {
+                navigate("/settings/profile");
+            }, 1500);
         } catch (error) {
             console.error(error);
             showToast("Invalid Credentails, try again", "error");

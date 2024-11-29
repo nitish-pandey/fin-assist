@@ -1,18 +1,33 @@
 import axios from "axios";
+import { UserType } from "../data/types";
 interface LoginProps {
     email: string;
     password: string;
 }
 
-const URL = "http://localhost:3000/api";
+const URL = "https://22c55236-38b1-45ea-93f4-a0bd1aa0de31.mock.pstmn.io/api";
 
 export const login = async ({
     email,
     password,
 }: LoginProps) => {
-    const response = await axios.post(`${URL}/login`, {
+    const response = await axios.post(`${URL}/users/login`, {
         email,
         password,
     });
-    return response.data;
+    return response.data as { token: string, user: UserType };
 }
+
+interface UserInfoProps {
+    token: string;
+    userId: string;
+}
+
+export const getUserInfo = async ({ token, userId }: UserInfoProps) => {
+    const response = await axios.get(`${URL}/users/${userId}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return response.data as UserType;
+};
