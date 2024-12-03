@@ -3,12 +3,12 @@ import App from "./App";
 import AuthLayout from "./layouts/AuthLayout";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import OrgLayout from "./layouts/OrgLayout";
 import Logout from "./pages/auth/logout";
 import SettingLayout from "./layouts/SettingLayout";
 import ProfilePage from "./pages/settings/Profile";
 import UserOrgs from "./pages/settings/Orgs";
 import OrgUsers from "./pages/admin/OrgUsers";
+import { MainLayout } from "./layouts/MainLayout";
 
 export const routes: RouteObject[] = [
     {
@@ -34,7 +34,7 @@ export const routes: RouteObject[] = [
             },
             {
                 path: "org/:orgId",
-                element: <OrgLayout />,
+                element: <MainLayout />,
                 children: [
                     {
                         element: <h1>Dashboard</h1>,

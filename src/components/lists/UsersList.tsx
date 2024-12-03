@@ -48,7 +48,7 @@ const UsersList = ({ orgId }: UsersListProps) => {
 
     return (
         <div>
-            <h1>Users</h1>
+            <h1 className="text-white">Users</h1>
             <TableComponent columns={userCols} data={users} />
         </div>
     );

@@ -1,0 +1,156 @@
+"use client";
+
+import * as React from "react";
+import {
+    BookOpen,
+    Info,
+    LayoutDashboard,
+    Notebook,
+    SendToBackIcon,
+    Users,
+} from "lucide-react";
+
+import { NavMain } from "../nav/Main";
+import { NavProjects } from "../nav/Projects";
+import { NavUser } from "../nav/User";
+import { TeamSwitcher } from "../nav/TeamSwitcher";
+import { useParams } from "react-router-dom";
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarRail,
+} from "@/components/ui/sidebar";
+import { useGlobalContext } from "@/providers/ConfigProvider";
+
+interface OrgData {
+    id: string;
+    name: string;
+    logo: React.ElementType;
+    type: string;
+    current: boolean;
+}
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+    const { orgId } = useParams<{ orgId: string }>();
+    const { profile, organization, permissions } = useGlobalContext();
+    const ownedOrgs: OrgData[] =
+        organization?.map((org) => ({
+            id: org.id,
+            name: org.name,
+            logo: Notebook,
+            type: org.type,
+            current: org.id === orgId,
+        })) || [];
+    const permittedOrgs: OrgData[] =
+        permissions?.map((org) => ({
+            id: org.id,
+            name: "Org-" + org.id.slice(0, 4),
+            logo: Notebook,
+            type: "Shared",
+            current: org.id === orgId,
+        })) || [];
+
+    const data = {
+        user: {
+            name: profile?.name || "John Doe",
+            email: profile?.email || "email@domain.com",
+            avatar: "https://i.pras.co/100",
+        },
+        teams: [...ownedOrgs, ...permittedOrgs],
+        navMain: [
+            {
+                title: "Stock",
+                url: "#",
+                icon: SendToBackIcon,
+                isActive: true,
+                items: [
+                    {
+                        title: "Buy Stock",
+                        url: "#",
+                    },
+                    {
+                        title: "Sell Stock",
+                        url: "#",
+                    },
+                ],
+            },
+            {
+                title: "Transactions",
+                url: "#",
+                icon: Notebook,
+                items: [
+                    {
+                        title: "Buy Transaction",
+                        url: "#",
+                    },
+                    {
+                        title: "Sell Transaction",
+                        url: "#",
+                    },
+                    {
+                        title: "Other Transaction",
+                        url: "#",
+                    },
+                ],
+            },
+            {
+                title: "Documentation",
+                url: "#",
+                icon: BookOpen,
+                items: [
+                    {
+                        title: "Introduction",
+                        url: "#",
+                    },
+                    {
+                        title: "Get Started",
+                        url: "#",
+                    },
+                    {
+                        title: "Tutorials",
+                        url: "#",
+                    },
+                    {
+                        title: "Changelog",
+                        url: "#",
+                    },
+                ],
+            },
+        ],
+        projects: [
+            {
+                name: "Dashboard",
+                url: "/org/" + orgId + "/dashboard",
+                icon: LayoutDashboard,
+            },
+            {
+                name: "Info",
+                url: "/org/" + orgId + "/info",
+                icon: Info,
+            },
+            {
+                name: "Users",
+                url: "/org/" + orgId + "/users",
+                icon: Users,
+            },
+        ],
+    };
+
+    return (
+        <Sidebar collapsible="icon" {...props}>
+            <SidebarHeader>
+                <TeamSwitcher teams={data.teams} />
+            </SidebarHeader>
+            <SidebarContent>
+                <NavProjects projects={data.projects} />
+                <NavMain items={data.navMain} />
+            </SidebarContent>
+            <SidebarFooter>
+                <NavUser user={data.user} />
+            </SidebarFooter>
+            <SidebarRail />
+        </Sidebar>
+    );
+}

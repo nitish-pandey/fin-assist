@@ -15,13 +15,15 @@ const OrgUsers = () => {
 
     return (
         <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-semibold text-gray-800 mb-4">
-                Org Users
-            </h1>
-            <UsersList orgId="1" />
-            <div className="my-4">
-                {canInviteUser && <InviteUser orgId={orgId} />}
+            <div className="flex items-center justify-between mb-4">
+                <h1 className="text-2xl font-semibold text-gray-50 mb-4">
+                    Org Users
+                </h1>
+                <div className="my-4">
+                    {canInviteUser && <InviteUser orgId={orgId} />}
+                </div>
             </div>
+            <UsersList orgId="1" />
         </div>
     );
 };

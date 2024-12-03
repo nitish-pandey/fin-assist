@@ -18,10 +18,10 @@ function App() {
     }
 
     return (
-        <>
+        <main className="dark text-white">
             <Outlet />
             <ToastContainer />
-        </>
+        </main>
     );
 }
 

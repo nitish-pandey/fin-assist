@@ -32,3 +32,25 @@ export const getUserInfo = async ({ token, userId }: UserInfoProps) => {
     });
     return response.data as UserType;
 };
+
+
+interface CreateOrganizationProps {
+    userId: string;
+    token: string;
+    name: string;
+}
+
+export const createOrganization = async ({
+    userId,
+    token,
+    name,
+}: CreateOrganizationProps) => {
+    const response = await axios.post(`${URL}/users/${userId}/orgs`, {
+        name
+    }, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return response.data;
+};
