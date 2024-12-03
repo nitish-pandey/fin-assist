@@ -3,11 +3,12 @@ import React, { createContext, useContext, useState, useCallback } from "react";
 import Cookies from "universal-cookie";
 import { getUserInfo } from "../utils/api";
 
-import { UserType, OrganizationType } from "../data/types";
+import { UserType, OrganizationType, PermissionType } from "../data/types";
 
 interface GlobalContextType {
     profile: UserType | null;
     organization: OrganizationType[] | null;
+    permissions: PermissionType[] | null;
     setProfile: (profile: UserType | null) => void;
     setOrganization: (organization: OrganizationType[] | null) => void;
     updateProfile: () => Promise<void>;
@@ -24,6 +25,9 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
     const [organization, setOrganization] = useState<OrganizationType[] | null>(
         null
     );
+    const [permissions, setPermissions] = useState<PermissionType[] | null>(
+        null
+    );
 
     const cookies = new Cookies();
 
@@ -38,10 +42,11 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
             const res = await getUserInfo({
                 token,
-                userId: userId.replace(/\D/g, ""),
+                userId,
             });
             setProfile(res);
             setOrganization(res.organizations || []);
+            setPermissions(res.permissions || []);
         } catch (error: any) {
             console.error("Error updating profile:", error);
         }
@@ -55,6 +60,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
                 updateProfile,
                 setProfile,
                 setOrganization,
+                permissions,
             }}
         >
             {children}

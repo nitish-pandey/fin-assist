@@ -8,6 +8,7 @@ import Logout from "./pages/auth/logout";
 import SettingLayout from "./layouts/SettingLayout";
 import ProfilePage from "./pages/settings/Profile";
 import UserOrgs from "./pages/settings/Orgs";
+import OrgUsers from "./pages/admin/OrgUsers";
 
 export const routes: RouteObject[] = [
     {
@@ -40,12 +41,16 @@ export const routes: RouteObject[] = [
                         path: "dashboard",
                     },
                     {
-                        element: <h1>Settings</h1>,
+                        element: <OrgUsers />,
                         path: "users",
                     },
                     {
                         element: <h1>Profile</h1>,
                         path: "products",
+                    },
+                    {
+                        element: <h1>Profile</h1>,
+                        path: "info",
                     },
                 ],
             },

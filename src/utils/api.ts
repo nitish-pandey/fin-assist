@@ -5,7 +5,8 @@ interface LoginProps {
     password: string;
 }
 
-const URL = "https://22c55236-38b1-45ea-93f4-a0bd1aa0de31.mock.pstmn.io/api";
+// const URL = "https://22c55236-38b1-45ea-93f4-a0bd1aa0de31.mock.pstmn.io/api";
+const URL = "http://localhost:5000/api"
 
 export const login = async ({
     email,

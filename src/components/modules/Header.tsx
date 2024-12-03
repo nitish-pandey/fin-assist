@@ -4,11 +4,6 @@ import { IoMdArrowDropdown } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import { useGlobalContext } from "../../providers/ConfigProvider";
 
-interface Organization {
-    id: string;
-    name: string;
-}
-
 const headerOptions = [
     {
         title: "Your Profile",
@@ -28,8 +23,8 @@ interface Headerprops {
 
 export function Header({ orgId }: Headerprops) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const { organization } = useGlobalContext();
-    const [currentOrg, setCurrentOrg] = useState<Organization>();
+    const { organization, permissions } = useGlobalContext();
+    const [currentOrg, setCurrentOrg] = useState<string>();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
     useEffect(() => {
@@ -38,11 +33,22 @@ export function Header({ orgId }: Headerprops) {
             orgId &&
             organization.find((org) => org.id === orgId)
         ) {
-            setCurrentOrg(organization.find((org) => org.id === orgId));
+            setCurrentOrg(organization.find((org) => org.id === orgId)?.id);
+        } else if (
+            permissions &&
+            orgId &&
+            permissions.find((perm) => perm.organizationId === orgId)
+        ) {
+            const perm = permissions.find(
+                (perm) => perm.organizationId === orgId
+            );
+            if (perm) {
+                setCurrentOrg(perm.organizationId);
+            }
         } else if (organization && organization.length === 0) {
             navigate("/settings/orgs");
         }
-    }, [orgId, organization]);
+    }, [orgId, organization, permissions]);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -60,8 +66,8 @@ export function Header({ orgId }: Headerprops) {
         };
     }, []);
 
-    const switchOrganization = (org: Organization) => {
-        setCurrentOrg(org);
+    const switchOrganization = (orgId: string) => {
+        setCurrentOrg(orgId);
         setIsDropdownOpen(false);
     };
 
@@ -75,7 +81,8 @@ export function Header({ orgId }: Headerprops) {
             >
                 <FaBuilding className="h-5 w-5 text-gray-600" />
                 <span className="text-sm font-medium hidden sm:inline">
-                    {currentOrg?.name}
+                    {organization?.find((org) => org.id === currentOrg)?.name ||
+                        "Org-" + currentOrg?.slice(0, 5)}
                 </span>
                 <IoMdArrowDropdown
                     className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
@@ -94,9 +101,9 @@ export function Header({ orgId }: Headerprops) {
                             <Link
                                 to={`/org/${org.id}/dashboard`}
                                 key={org.id}
-                                onClick={() => switchOrganization(org)}
+                                onClick={() => switchOrganization(org.id)}
                                 className={`flex items-center w-full px-4 py-2 text-sm ${
-                                    currentOrg?.id === org.id
+                                    currentOrg === org.id
                                         ? "text-blue-600 bg-blue-50 font-medium"
                                         : "text-gray-700 hover:bg-gray-100"
                                 }`}
@@ -105,6 +112,34 @@ export function Header({ orgId }: Headerprops) {
                                 {org.name}
                             </Link>
                         ))}
+                        {permissions
+                            // remove duplicate organizations
+                            ?.filter(
+                                (perm, index, self) =>
+                                    index ===
+                                    self.findIndex(
+                                        (t) =>
+                                            t.organizationId ===
+                                            perm.organizationId
+                                    )
+                            )
+                            .map((perm) => (
+                                <Link
+                                    to={`/org/${perm.organizationId}/dashboard`}
+                                    key={perm.id}
+                                    onClick={() =>
+                                        switchOrganization(perm.organizationId)
+                                    }
+                                    className={`flex items-center w-full px-4 py-2 text-sm ${
+                                        currentOrg === perm.organizationId
+                                            ? "text-blue-600 bg-blue-50 font-medium"
+                                            : "text-gray-700 hover:bg-gray-100"
+                                    }`}
+                                >
+                                    <FaBuilding className="mr-3 h-4 w-4" />
+                                    {perm.organizationId.slice(0, 15)}
+                                </Link>
+                            ))}
                     </div>
                     <div className="border-t border-gray-200"></div>
                     {headerOptions.map((option, index) => (

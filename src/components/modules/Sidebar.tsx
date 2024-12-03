@@ -42,14 +42,14 @@ const Sidebar = ({ sidebarOptions }: SidebarProps) => {
                             <Link
                                 to={option.path || "#"}
                                 onClick={() => setOpenSubmenu(option.name)}
-                                className={`flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-3xl transition-colors duration-200
+                                className={`flex gap-2 items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-3xl transition-colors duration-200
                                     ${
                                         openSubmenu === option.name
                                             ? "bg-gray-300"
                                             : ""
                                     } `}
                             >
-                                <option.icon className="mr-2 h-5 w-5" />
+                                {option.icon}
                                 {option.name}
                             </Link>
                         ) : (
@@ -62,8 +62,8 @@ const Sidebar = ({ sidebarOptions }: SidebarProps) => {
                                             : ""
                                     }`}
                                 >
-                                    <div className="flex items-center">
-                                        <option.icon className="mr-2 h-5 w-5" />
+                                    <div className="flex gap-2 items-center">
+                                        {option.icon}
                                         {option.name}
                                     </div>
                                     {openSubmenu === option.name ? (
@@ -87,9 +87,9 @@ const Sidebar = ({ sidebarOptions }: SidebarProps) => {
                                                     ? subOption.path
                                                     : "#"
                                             }
-                                            className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-3xl transition-colors duration-200"
+                                            className="flex gap-2 items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-3xl transition-colors duration-200"
                                         >
-                                            <subOption.icon className="mr-2 h-5 w-5" />
+                                            {subOption.icon}
                                             {subOption.name}
                                         </Link>
                                     ))}

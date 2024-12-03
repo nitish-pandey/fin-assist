@@ -16,17 +16,17 @@ const SettingLayout = () => {
         {
             name: "Profile",
             path: "/settings/profile",
-            icon: CgProfile,
+            icon: <CgProfile />,
         },
         {
             name: "My Organizations",
             path: "/settings/orgs",
-            icon: GoOrganization,
+            icon: <GoOrganization />,
         },
         {
             name: "Logout",
             path: "/auth/logout",
-            icon: CiLogout,
+            icon: <CiLogout />,
         },
     ];
     return (
