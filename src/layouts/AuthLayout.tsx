@@ -3,7 +3,7 @@ import AuthImg from "../assets/bg/auth-img.svg";
 
 const AuthLayout = () => {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-t from-sky-400 to-white relative">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-t from-sky-400 to-white relative text-black">
             <div className="max-w-7xl mx-auto px-4 pt-3 pb-24 flex gap-20 items-center justify-between">
                 {/* Left Section */}
                 <div className="mx-auto max-w-xl hidden md:block">

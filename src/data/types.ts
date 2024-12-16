@@ -1,15 +1,8 @@
-export enum Permissions {
-    VIEW_ORG = "VIEW_ORG",
-    EDIT_ORG = "EDIT_ORG",
-    DELETE_ORG = "DELETE_ORG",
-    VIEW_USER = "VIEW_USER",
-    VIEW_PRODUCT = "VIEW_PRODUCT",
-    MANAGE_PRODUCT = "MANAGE_PRODUCT",
-    VIEW_STOCK = "VIEW_STOCK",
-    MANAGE_STOCK = "MANAGE_STOCK",
-};
 
-export type OrganizationType = {
+
+export type AccessType = "VIEW_ORG" | "EDIT_ORG" | "DELETE_ORG" | "VIEW_USER" | "VIEW_PRODUCT" | "MANAGE_PRODUCT" | "VIEW_STOCK" | "MANAGE_STOCK";
+
+export type OrganizationSchema = {
     id: string;
     name: string;
     description: string | null;
@@ -23,21 +16,24 @@ export type OrganizationType = {
 
     createdAt: string;
     updatedAt: string;
+
+    permissions?: RoleAccessSchema[];
 };
 
-export type PermissionType = {
+export type RoleAccessSchema = {
     id: string;
 
     userId: string;
     organizationId: string;
-    access: string;
+    access: AccessType;
     
     createdAt: string;
     updatedAt: string;
+    user?: UserSchema;
 };
 
 
-export type UserType = {
+export type UserSchema = {
     id: string;
     name: string;
     contact: string | null;
@@ -48,6 +44,6 @@ export type UserType = {
     createdAt: string;
     updatedAt: string;
 
-    organizations?: OrganizationType[];
-    permissions?: PermissionType[];
+    organizations?: OrganizationSchema[];
+    permissions?: RoleAccessSchema[];
 }

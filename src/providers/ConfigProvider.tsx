@@ -1,80 +1,134 @@
-// contexts/GlobalContext.tsx
-import React, { createContext, useContext, useState, useCallback } from "react";
+// contexts/AuthContext.tsx
+import React, {
+    createContext,
+    useContext,
+    useState,
+    useCallback,
+    useEffect,
+    useMemo,
+} from "react";
 import Cookies from "universal-cookie";
-import { getUserInfo } from "../utils/api";
+import { getUserInfo, login as APILogin } from "../utils/api"; // Make sure this handles errors and includes token validation
+import { UserSchema } from "../data/types";
 
-import { UserType, OrganizationType, PermissionType } from "../data/types";
-
-interface GlobalContextType {
-    profile: UserType | null;
-    organization: OrganizationType[] | null;
-    permissions: PermissionType[] | null;
-    setProfile: (profile: UserType | null) => void;
-    setOrganization: (organization: OrganizationType[] | null) => void;
+interface AuthContextProps {
+    login: (email: string, password: string) => Promise<void>;
+    isUpdating: boolean;
+    logout: () => void;
+    authenticated: boolean;
+    profile: UserSchema | null;
     updateProfile: () => Promise<void>;
+    error: string | null;
 }
 
 // Create context
-const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 // Provider
-export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
-    const [profile, setProfile] = useState<UserType | null>(null);
-    const [organization, setOrganization] = useState<OrganizationType[] | null>(
-        null
-    );
-    const [permissions, setPermissions] = useState<PermissionType[] | null>(
-        null
-    );
+    const [profile, setProfile] = useState<UserSchema | null>(null);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [authenticated, setAuthenticated] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const cookies = new Cookies();
 
     const updateProfile = useCallback(async () => {
+        setIsUpdating(true);
         const token = cookies.get("token");
         const userId = cookies.get("userId");
         if (!token || !userId) {
+            setAuthenticated(false);
+            setProfile(null);
             return;
         }
-        // remove alphabets from userId, only digits
-
         try {
-            const res = await getUserInfo({
-                token,
-                userId,
-            });
+            const res = await getUserInfo(token, userId);
             setProfile(res);
-            setOrganization(res.organizations || []);
-            setPermissions(res.permissions || []);
-        } catch (error: any) {
-            console.error("Error updating profile:", error);
+            setAuthenticated(true);
+            setError(null); // Clear previous errors
+        } catch (err) {
+            console.error("Error updating profile:", err);
+            setError("Failed to fetch user information.");
+            setAuthenticated(false);
+            setProfile(null);
+            throw Error("Failed to fetch user information.");
+        } finally {
+            setIsUpdating(false);
         }
+    }, [cookies]);
+
+    const login = useCallback(
+        async (email: string, password: string) => {
+            setIsUpdating(true);
+            try {
+                const response = await APILogin(email, password);
+                const token = response.token;
+                const user = response.user;
+                cookies.set("token", token, {
+                    path: "/",
+                    secure: true,
+                    httpOnly: false,
+                });
+                cookies.set("userId", user.id, {
+                    path: "/",
+                    secure: true,
+                    httpOnly: false,
+                });
+                setProfile(user);
+                setAuthenticated(true);
+                setError(null);
+            } catch (err: any) {
+                console.error("Error logging in:", err);
+                setError(err.response?.data?.message || "Login failed.");
+                setAuthenticated(false);
+                setProfile(null);
+                throw Error("Login failed.");
+            } finally {
+                setIsUpdating(false);
+            }
+        },
+        [cookies]
+    );
+
+    const logout = useCallback(() => {
+        cookies.remove("token", { path: "/" });
+        cookies.remove("userId", { path: "/" });
+        setProfile(null);
+        setAuthenticated(false);
+    }, [cookies]);
+
+    useEffect(() => {
+        updateProfile().then(() => ({}));
     }, []);
 
+    const contextValue = useMemo(
+        () => ({
+            login,
+            logout,
+            authenticated,
+            isUpdating,
+            profile,
+            updateProfile,
+            error,
+        }),
+        [login, logout, authenticated, profile, updateProfile, error]
+    );
+
     return (
-        <GlobalContext.Provider
-            value={{
-                profile,
-                organization,
-                updateProfile,
-                setProfile,
-                setOrganization,
-                permissions,
-            }}
-        >
+        <AuthContext.Provider value={contextValue}>
             {children}
-        </GlobalContext.Provider>
+        </AuthContext.Provider>
     );
 };
 
-// Hook to use GlobalContext
-export const useGlobalContext = () => {
-    const context = useContext(GlobalContext);
+// Hook to use AuthContext
+export const useAuth = (): AuthContextProps => {
+    const context = useContext(AuthContext);
     if (!context) {
-        throw new Error(
-            "useGlobalContext must be used within a GlobalProvider"
-        );
+        throw new Error("useAuth must be used within an AuthProvider");
     }
     return context;
 };

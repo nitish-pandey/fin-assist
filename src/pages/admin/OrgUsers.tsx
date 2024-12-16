@@ -1,16 +1,19 @@
 import UsersList from "../../components/lists/UsersList";
 import { useParams } from "react-router-dom";
-import { useGlobalContext } from "../../providers/ConfigProvider";
+import { useAuth } from "../../providers/ConfigProvider";
 import InviteUser from "../../components/forms/InviteUser";
 
 const OrgUsers = () => {
     const { orgId } = useParams<{ orgId: string }>() as { orgId: string };
-    const { permissions, organization } = useGlobalContext();
+    const { profile } = useAuth();
+    const organization = profile?.organizations;
+    const permissions = profile?.permissions;
+
     const canInviteUser =
         organization?.find((org) => org.id === orgId) ||
         permissions?.find(
             (perm) =>
-                perm.organizationId === orgId && perm.access === "MANAGE_USERS"
+                perm.organizationId === orgId && perm.access === "VIEW_USER"
         );
 
     return (
@@ -23,7 +26,7 @@ const OrgUsers = () => {
                     {canInviteUser && <InviteUser orgId={orgId} />}
                 </div>
             </div>
-            <UsersList orgId="1" />
+            <UsersList orgId={orgId} />
         </div>
     );
 };

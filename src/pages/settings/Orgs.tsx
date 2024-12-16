@@ -1,23 +1,23 @@
-import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useGlobalContext } from "../../providers/ConfigProvider";
+import { useAuth } from "../../providers/ConfigProvider";
 import { FaBuilding, FaUserShield, FaChevronRight } from "react-icons/fa";
 import { HiOutlineOfficeBuilding } from "react-icons/hi";
-import { PermissionType } from "../../data/types";
+import { RoleAccessSchema } from "../../data/types";
 
 const UserOrgs = () => {
-    const { organization, permissions } = useGlobalContext();
+    const { profile } = useAuth();
 
-    const groupedPermissions = useMemo(() => {
-        const grouped = permissions?.reduce((acc, perm) => {
-            if (!acc[perm.organizationId]) {
-                acc[perm.organizationId] = [];
-            }
-            acc[perm.organizationId].push(perm);
-            return acc;
-        }, {} as Record<string, PermissionType[]>);
-        return grouped;
-    }, [permissions]);
+    const organization = profile?.organizations;
+    const Permissions = profile?.permissions;
+
+    // group permissions by organization
+    const groupedPermissions: Record<string, RoleAccessSchema[]> = {};
+    Permissions?.forEach((perm) => {
+        if (!groupedPermissions[perm.organizationId]) {
+            groupedPermissions[perm.organizationId] = [];
+        }
+        groupedPermissions[perm.organizationId].push(perm);
+    });
 
     return (
         <div className="p-6 bg-gray-100 min-h-screen">

@@ -1,9 +1,9 @@
 import React from "react";
-import { useGlobalContext } from "../../providers/ConfigProvider";
+import { useAuth } from "../../providers/ConfigProvider";
 import { FaUser, FaEnvelope, FaPhone, FaUserTag } from "react-icons/fa";
 
 const ProfilePage = () => {
-    const { profile } = useGlobalContext();
+    const { profile } = useAuth();
 
     if (!profile) {
         return <div className="text-center py-8">Loading profile...</div>;

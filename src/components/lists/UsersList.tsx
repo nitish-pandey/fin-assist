@@ -1,8 +1,17 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { TableComponent } from "../modules/Table";
-import { UserType } from "../../data/types";
+import { useState, useEffect } from "react";
+import Cookies from "universal-cookie";
+import { getOrgUsers } from "@/utils/api";
 
-const userCols: ColumnDef<UserType>[] = [
+interface UserInfo {
+    id: string;
+    name: string;
+    email: string;
+    permissions: string[];
+}
+
+const userCols: ColumnDef<UserInfo>[] = [
     {
         accessorKey: "name",
         header: "Name",
@@ -12,8 +21,19 @@ const userCols: ColumnDef<UserType>[] = [
         header: "Email",
     },
     {
-        accessorKey: "type",
-        header: "Type",
+        accessorKey: "permissions",
+        header: "Permissions",
+        cell(props) {
+            return (
+                <div>
+                    {props.row.original.permissions.map((perm) => (
+                        <span key={perm} className="mr-2">
+                            {perm}
+                        </span>
+                    ))}
+                </div>
+            );
+        },
     },
 ];
 
@@ -22,29 +42,35 @@ interface UsersListProps {
 }
 
 const UsersList = ({ orgId }: UsersListProps) => {
-    console.log(orgId);
-    const users: UserType[] = [
-        {
-            id: "1",
-            contact: "1234567890",
-            status: "Active",
-            name: "John Doe",
-            email: "sad@as.asd",
-            type: "Admin",
-            createdAt: "2021-09-01",
-            updatedAt: "2021-09-01",
-        },
-        {
-            id: "1",
-            contact: "1234567890",
-            status: "Active",
-            name: "John Doe",
-            email: "sad@as.asd",
-            type: "Admin",
-            createdAt: "2021-09-01",
-            updatedAt: "2021-09-01",
-        },
-    ];
+    const [users, setUsers] = useState<UserInfo[]>([]);
+    const cookies = new Cookies();
+
+    useEffect(() => {
+        // fetch users
+        const token = cookies.get("token");
+        getOrgUsers(orgId, token)
+            .then((data) => {
+                // group by user
+                const users: UserInfo[] = [];
+                data.forEach((perm) => {
+                    const user = users.find((u) => u.id === perm.userId);
+                    if (user) {
+                        user.permissions.push(perm.access);
+                    } else {
+                        users.push({
+                            id: perm.userId,
+                            name: perm.user?.name || "",
+                            email: perm.user?.email || "",
+                            permissions: [perm.access],
+                        });
+                    }
+                });
+                setUsers(users);
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+    }, [orgId]);
 
     return (
         <div>

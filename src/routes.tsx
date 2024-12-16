@@ -8,6 +8,7 @@ import SettingLayout from "./layouts/SettingLayout";
 import ProfilePage from "./pages/settings/Profile";
 import UserOrgs from "./pages/settings/Orgs";
 import OrgUsers from "./pages/admin/OrgUsers";
+import OrgLayout from "@/layouts/OrgLayout.tsx";
 import { MainLayout } from "./layouts/MainLayout";
 
 export const routes: RouteObject[] = [

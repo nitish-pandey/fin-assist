@@ -1,9 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import useToast from "../../providers/Toast";
 import { useForm } from "react-hook-form";
-import Cookies from "universal-cookie";
-import { login } from "../../utils/api";
-import { useGlobalContext } from "../../providers/ConfigProvider";
+import { useAuth } from "../../providers/ConfigProvider";
+
 interface LoginData {
     email: string;
     password: string;
@@ -11,38 +10,39 @@ interface LoginData {
 
 const Login = () => {
     const { showToast } = useToast();
-    const cookies = new Cookies();
+    const navigate = useNavigate();
+    const { login } = useAuth();
+
     const {
         register,
         handleSubmit,
         formState: { errors, isSubmitting },
     } = useForm<LoginData>();
-    const navigate = useNavigate();
-    const { setProfile, setOrganization } = useGlobalContext();
 
     const onSubmit = async (data: LoginData) => {
         try {
-            console.log(data);
-            const res = await login(data);
-            cookies.set("token", res.token, {
-                path: "/",
-                expires: new Date(Date.now() + 259200000),
-            });
-            cookies.set("userId", res.user.id, {
-                path: "/",
-                expires: new Date(Date.now() + 259200000),
-            });
-            showToast("Login successful", "success", 2000);
-            setProfile(res.user);
-            setOrganization(res.user.organizations || []);
-            setTimeout(() => {
-                navigate("/settings/profile");
-            }, 1500);
-        } catch (error) {
-            console.error(error);
-            showToast("Invalid Credentails, try again", "error");
+            await login(data.email, data.password);
+            showToast("Logged in successfully!", "success");
+            navigate("/settings/profile"); // Navigate without a delay
+        } catch (error: any) {
+            console.error("Login Error:", error);
+            const errorMessage =
+                error.response?.data?.message || "Login failed. Please try again.";
+            showToast(errorMessage, "error");
         }
     };
+
+    const renderError = (message?: string) =>
+        message && (
+            <p
+                className="text-red-500 text-xs font-medium mt-1"
+                role="alert"
+                aria-live="polite"
+            >
+                {message}
+            </p>
+        );
+
     return (
         <div>
             <h2 className="text-3xl font-semibold mb-2">Login credentials</h2>
@@ -52,6 +52,7 @@ const Login = () => {
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {/* Email Field */}
                 <div>
                     <label
                         htmlFor="email"
@@ -61,6 +62,7 @@ const Login = () => {
                     </label>
                     <input
                         id="email"
+                        type="email"
                         {...register("email", {
                             required: "Email is required",
                             pattern: {
@@ -69,14 +71,12 @@ const Login = () => {
                             },
                         })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        disabled={isSubmitting}
                     />
-                    {errors.email && (
-                        <p className="text-red-500 text-xs font-medium mt-1">
-                            {errors.email.message}
-                        </p>
-                    )}
+                    {renderError(errors.email?.message)}
                 </div>
 
+                {/* Password Field */}
                 <div>
                     <div className="flex justify-between items-center mb-1">
                         <label
@@ -95,31 +95,31 @@ const Login = () => {
                     <input
                         type="password"
                         id="password"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
                         {...register("password", {
                             required: "Password is required",
                             minLength: {
                                 value: 6,
-                                message:
-                                    "Password should be atleast 6 characters",
+                                message: "Password should be at least 6 characters",
                             },
                         })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        disabled={isSubmitting}
                     />
-                    {errors.password && (
-                        <p className="text-red-500 text-xs font-medium mt-1">
-                            {errors.password.message}
-                        </p>
-                    )}
+                    {renderError(errors.password?.message)}
                 </div>
 
+                {/* Submit Button */}
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-teal-800 text-white py-2 rounded-md hover:bg-teal-900 transition-colors"
+                    className={`w-full bg-teal-800 text-white py-2 rounded-md transition-colors ${
+                        isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-teal-900"
+                    }`}
                 >
                     {isSubmitting ? "Logging in..." : "Login"}
                 </button>
 
+                {/* Sign-Up Link */}
                 <p className="text-center text-sm font-medium text-gray-600">
                     Don't have an account?{" "}
                     <Link

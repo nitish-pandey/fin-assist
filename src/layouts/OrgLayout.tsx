@@ -1,24 +1,15 @@
 import { Outlet, useParams, useNavigate } from "react-router-dom";
+import { useMemo } from "react";
 import Sidebar from "../components/modules/Sidebar";
 import { Header } from "../components/modules/Header";
-// import {
-//     FaUsers,
-//     FaCircleInfo,
-//     AiOutlineProduct,
-//     IoAddCircleSharp,
-//     CiCircleList,
-//     GiStockpiles,
-//     LuLayoutDashboard,
-// } from "react-icons/";
 import { FaUsers, FaCircleInfo } from "react-icons/fa6";
 import { AiOutlineProduct } from "react-icons/ai";
 import { IoAddCircleSharp } from "react-icons/io5";
 import { CiCircleList } from "react-icons/ci";
 import { GiStockpiles } from "react-icons/gi";
 import { LuLayoutDashboard } from "react-icons/lu";
-import { useGlobalContext } from "../providers/ConfigProvider";
-import { OrganizationType, PermissionType } from "../data/types";
-import { useMemo } from "react";
+import { useAuth } from "../providers/ConfigProvider";
+import { OrganizationSchema, RoleAccessSchema } from "../data/types";
 
 export type SidebarOptionType = {
     name: string;
@@ -31,95 +22,104 @@ export type SidebarOptionType = {
 const OrgLayout = () => {
     const { orgId } = useParams<{ orgId: string }>();
     const navigate = useNavigate();
-    const { organization, permissions, profile } = useGlobalContext();
+    const { error, isUpdating, authenticated, profile } = useAuth();
 
-    if (!orgId) {
-        navigate("/auth/login", { replace: true });
-        return <div>Redirecting...</div>;
-    }
+    // // Redirect to login if orgId is missing or user is unauthenticated
+    // if (!orgId || !authenticated) {
+    //     navigate("/auth/login", { replace: true });
+    //     return <div>Redirecting...</div>;
+    // }
 
+    // Check if the current user is the owner of the organization
     const isOwner = useMemo(
         () =>
-            organization?.some(
-                (org: OrganizationType) =>
+            profile?.organizations?.some(
+                (org: OrganizationSchema) =>
                     org.id === orgId && org.ownerId === profile?.id.toString()
             ),
-        [organization, orgId, profile?.id]
+        [profile, orgId]
     );
 
+    // Check if the user has a specific permission for the organization
     const hasPermission = useMemo(
         () => (requiredPermission: string) =>
-            permissions?.some(
-                (perm: PermissionType) =>
+            profile?.permissions?.some(
+                (perm: RoleAccessSchema) =>
                     perm.organizationId === orgId &&
                     perm.access === requiredPermission.toString()
             ),
-        [permissions, orgId]
+        [profile, orgId]
     );
-    const getSidebarOptions = () => [
-        {
-            name: "Dashboard",
-            path: `/org/${orgId}/dashboard`,
-            icon: <LuLayoutDashboard />,
-            visible: isOwner || hasPermission("VIEW_ORG"),
-        },
-        {
-            name: "Info",
-            path: `/org/${orgId}/info`,
-            icon: <FaCircleInfo />,
-            visible: isOwner || hasPermission("VIEW_ORG"),
-        },
-        {
-            name: "Users",
-            path: `/org/${orgId}/users`,
-            icon: <FaUsers />,
-            visible: isOwner || hasPermission("VIEW_USER"),
-        },
-        {
-            name: "Product",
-            icon: <AiOutlineProduct />,
-            visible: isOwner || hasPermission("VIEW_PRODUCT"),
-            options: [
-                {
-                    name: "Add Product",
-                    icon: <IoAddCircleSharp />,
-                    path: `/org/${orgId}/add-product`,
-                    visible: isOwner || hasPermission("MANAGE_PRODUCT"),
-                },
-                {
-                    name: "View Products",
-                    icon: <CiCircleList />,
-                    path: `/org/${orgId}/view-products`,
-                    visible: isOwner || hasPermission("VIEW_PRODUCT"),
-                },
-            ],
-        },
-        {
-            name: "Stock",
-            icon: <GiStockpiles />,
-            visible: isOwner || hasPermission("VIEW_STOCK"),
-            options: [
-                {
-                    name: "Add Stock",
-                    icon: <IoAddCircleSharp />,
-                    path: `/org/${orgId}/add-stock`,
-                    visible: isOwner || hasPermission("MANAGE_STOCK"),
-                },
-                {
-                    name: "View Stock",
-                    icon: <CiCircleList />,
-                    path: `/org/${orgId}/view-stock`,
-                    visible: isOwner || hasPermission("VIEW_STOCK"),
-                },
-            ],
-        },
-    ];
 
+    // Define the sidebar options dynamically
+    const getSidebarOptions = useMemo(
+        () => [
+            {
+                name: "Dashboard",
+                path: `/org/${orgId}/dashboard`,
+                icon: <LuLayoutDashboard />,
+                visible: isOwner || hasPermission("VIEW_ORG"),
+            },
+            {
+                name: "Info",
+                path: `/org/${orgId}/info`,
+                icon: <FaCircleInfo />,
+                visible: isOwner || hasPermission("VIEW_ORG"),
+            },
+            {
+                name: "Users",
+                path: `/org/${orgId}/users`,
+                icon: <FaUsers />,
+                visible: isOwner || hasPermission("VIEW_USER"),
+            },
+            {
+                name: "Product",
+                icon: <AiOutlineProduct />,
+                visible: isOwner || hasPermission("VIEW_PRODUCT"),
+                options: [
+                    {
+                        name: "Add Product",
+                        icon: <IoAddCircleSharp />,
+                        path: `/org/${orgId}/add-product`,
+                        visible: isOwner || hasPermission("MANAGE_PRODUCT"),
+                    },
+                    {
+                        name: "View Products",
+                        icon: <CiCircleList />,
+                        path: `/org/${orgId}/view-products`,
+                        visible: isOwner || hasPermission("VIEW_PRODUCT"),
+                    },
+                ],
+            },
+            {
+                name: "Stock",
+                icon: <GiStockpiles />,
+                visible: isOwner || hasPermission("VIEW_STOCK"),
+                options: [
+                    {
+                        name: "Add Stock",
+                        icon: <IoAddCircleSharp />,
+                        path: `/org/${orgId}/add-stock`,
+                        visible: isOwner || hasPermission("MANAGE_STOCK"),
+                    },
+                    {
+                        name: "View Stock",
+                        icon: <CiCircleList />,
+                        path: `/org/${orgId}/view-stock`,
+                        visible: isOwner || hasPermission("VIEW_STOCK"),
+                    },
+                ],
+            },
+        ],
+        [orgId, isOwner, hasPermission]
+    );
+
+    // Filter visible sidebar options
     const filterSidebarOptions = (
         options: SidebarOptionType[]
     ): SidebarOptionType[] =>
         options
-            .filter((option) => option.visible !== false)
+            .filter((option) => option.visible)
             .map((option) => ({
                 ...option,
                 options: option.options
@@ -128,9 +128,23 @@ const OrgLayout = () => {
             }));
 
     const sidebarOptions = useMemo(
-        () => filterSidebarOptions(getSidebarOptions()),
+        () => filterSidebarOptions(getSidebarOptions),
         [getSidebarOptions]
     );
+
+    // Display loading state while updating profile or permissions
+    if (isUpdating) {
+        return <div>Loading...</div>;
+    }
+
+    // Handle errors gracefully
+    if (error) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <p className="text-red-600 font-medium">Error: {error}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex h-screen bg-gray-100">

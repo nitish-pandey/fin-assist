@@ -16,14 +16,14 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 
-import { useGlobalContext } from "@/providers/ConfigProvider";
+import { useAuth } from "@/providers/ConfigProvider";
 import { createOrganization } from "@/utils/api";
 import Cookies from "universal-cookie";
 
 export function AddOrganizationForm() {
     const [isOpen, setIsOpen] = useState(false);
     const [orgName, setOrgName] = useState("");
-    const { updateProfile } = useGlobalContext();
+    const { updateProfile } = useAuth();
     const cookie = new Cookies();
 
     const handleSubmit = async (e: React.FormEvent) => {

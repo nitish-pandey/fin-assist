@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { FaUser, FaSignOutAlt, FaBuilding } from "react-icons/fa";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
-import { useGlobalContext } from "../../providers/ConfigProvider";
+import { useAuth } from "../../providers/ConfigProvider";
 
 const headerOptions = [
     {
@@ -23,7 +23,7 @@ interface Headerprops {
 
 export function Header({ orgId }: Headerprops) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const { organization, permissions } = useGlobalContext();
+    const { organization, permissions } = useAuth();
     const [currentOrg, setCurrentOrg] = useState<string>();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();

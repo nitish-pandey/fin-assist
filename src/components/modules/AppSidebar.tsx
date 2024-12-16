@@ -22,7 +22,7 @@ import {
     SidebarHeader,
     SidebarRail,
 } from "@/components/ui/sidebar";
-import { useGlobalContext } from "@/providers/ConfigProvider";
+import { useAuth } from "@/providers/ConfigProvider";
 
 interface OrgData {
     id: string;
@@ -34,7 +34,9 @@ interface OrgData {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { orgId } = useParams<{ orgId: string }>();
-    const { profile, organization, permissions } = useGlobalContext();
+    const { profile } = useAuth();
+    const organization = profile?.organizations;
+    const permissions = profile?.permissions;
     const ownedOrgs: OrgData[] =
         organization?.map((org) => ({
             id: org.id,
