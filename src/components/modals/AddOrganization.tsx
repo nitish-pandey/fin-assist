@@ -32,11 +32,11 @@ export function AddOrganizationForm() {
         console.log("Creating organization:", orgName);
         setIsOpen(false);
         setOrgName("");
-        await createOrganization({
-            userId: cookie.get("userId"),
-            token: cookie.get("token"),
-            name: orgName,
-        });
+        await createOrganization(
+            cookie.get("userId"),
+            cookie.get("token"),
+            orgName
+        );
         updateProfile();
     };
 

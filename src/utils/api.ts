@@ -14,6 +14,15 @@ export const login = async (email: string, password: string) => {
     return response.data as { token: string, user: UserSchema };
 }
 
+export const registerUser = async (name: string, email: string, password: string) => { 
+    const response = await axios.post(`${URL}/users/register`, {
+        name,
+        email,
+        password,
+    });
+    return response.data;
+}   
+
 
 export const getUserInfo = async (token: string, userId: string) => {
     const response = await axios.get(`${URL}/users/${userId}`, {
@@ -42,4 +51,33 @@ export const getOrgUsers = async (orgId: string, token: string) => {
         },
     });
     return response.data as RoleAccessSchema[];
+}
+
+
+export const inviteUser = async (email: string, orgId: string, token: string) => {
+    const response = await axios.post(`${URL}/orgs/${orgId}/invite`, {
+        email
+    }, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return response.data;
+}
+
+export const acceptInvite = async (inviteId: string) => {
+    const response = await axios.post(`${URL}/orgs/${inviteId}/accept`, {
+        inviteId
+    }, {
+    })
+    return response.data;
+};
+
+export const getOrgInfo = async (orgId: string, token: string) => {
+    const response = await axios.get(`${URL}/orgs/${orgId}`, {
+        headers: {  
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return response.data;
 }

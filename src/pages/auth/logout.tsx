@@ -12,6 +12,7 @@ const Logout = () => {
         localStorage.clear();
         sessionStorage.clear();
         showToast("Logged out successfully", "success", 2000);
+        console.log("Logged out successfully");
         navigate("/auth/login");
     }, []);
 

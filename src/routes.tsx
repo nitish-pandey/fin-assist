@@ -8,8 +8,8 @@ import SettingLayout from "./layouts/SettingLayout";
 import ProfilePage from "./pages/settings/Profile";
 import UserOrgs from "./pages/settings/Orgs";
 import OrgUsers from "./pages/admin/OrgUsers";
-import OrgLayout from "@/layouts/OrgLayout.tsx";
 import { MainLayout } from "./layouts/MainLayout";
+import OrgInfoPage from "./pages/admin/OrgInfo";
 
 export const routes: RouteObject[] = [
     {
@@ -50,7 +50,7 @@ export const routes: RouteObject[] = [
                         path: "products",
                     },
                     {
-                        element: <h1>Profile</h1>,
+                        element: <OrgInfoPage />,
                         path: "info",
                     },
                 ],

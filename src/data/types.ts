@@ -32,6 +32,16 @@ export type RoleAccessSchema = {
     user?: UserSchema;
 };
 
+export type InviteSchema = {
+    id: string; 
+    organizationId: string;
+    userId: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
+
 
 export type UserSchema = {
     id: string;
@@ -46,4 +56,5 @@ export type UserSchema = {
 
     organizations?: OrganizationSchema[];
     permissions?: RoleAccessSchema[];
+    invites?: InviteSchema[];
 }

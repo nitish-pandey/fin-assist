@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import useToast from "../../providers/Toast";
+import { registerUser } from "@/utils/api";
 
 interface RegisterData {
     name: string;
@@ -18,9 +19,9 @@ const Register = () => {
     const { showToast } = useToast();
     const navigate = useNavigate();
 
-    const onSubmit = (data: RegisterData) => {
+    const onSubmit = async (data: RegisterData) => {
         try {
-            console.log(data);
+            await registerUser(data.name, data.email, data.password);
             showToast(
                 "Registration successful, redirecting to login",
                 "success",

@@ -46,12 +46,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             current: org.id === orgId,
         })) || [];
     const permittedOrgs: OrgData[] =
-        permissions?.map((org) => ({
-            id: org.id,
-            name: "Org-" + org.id.slice(0, 4),
+        permissions?.map((perm) => ({
+            id: perm.organizationId,
+            name: "Org-" + perm.id.slice(0, 4),
             logo: Notebook,
             type: "Shared",
-            current: org.id === orgId,
+            current: perm.organizationId == orgId,
         })) || [];
 
     const data = {

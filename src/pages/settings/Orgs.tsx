@@ -3,12 +3,16 @@ import { useAuth } from "../../providers/ConfigProvider";
 import { FaBuilding, FaUserShield, FaChevronRight } from "react-icons/fa";
 import { HiOutlineOfficeBuilding } from "react-icons/hi";
 import { RoleAccessSchema } from "../../data/types";
+import { AddOrganizationForm } from "@/components/modals/AddOrganization";
+import { Button } from "@/components/ui/button";
+import { acceptInvite } from "@/utils/api";
 
 const UserOrgs = () => {
     const { profile } = useAuth();
 
     const organization = profile?.organizations;
     const Permissions = profile?.permissions;
+    const invites = profile?.invites;
 
     // group permissions by organization
     const groupedPermissions: Record<string, RoleAccessSchema[]> = {};
@@ -19,11 +23,21 @@ const UserOrgs = () => {
         groupedPermissions[perm.organizationId].push(perm);
     });
 
+    const AcceptInvite = async (id: string) => {
+        // accept invite
+        await acceptInvite(id);
+    };
+
     return (
-        <div className="p-6 bg-gray-100 min-h-screen">
-            <h1 className="text-3xl font-bold mb-8 text-gray-800">
-                Your Organizations
-            </h1>
+        <div className="p-6 bg-gray-100 min-h-screen light">
+            <div className="flex items-start justify-between mb-8">
+                <h1 className="text-3xl font-bold mb-8 text-gray-800">
+                    Your Organizations
+                </h1>
+                <div className=" text-black flex border border-gray-700 rounded-xl">
+                    <AddOrganizationForm />
+                </div>
+            </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {organization?.map((org) => (
                     <Link
@@ -104,6 +118,37 @@ const UserOrgs = () => {
                         </div>
                     )
                 )}
+            </div>
+            <div className="mt-12">
+                <h1 className="text-3xl font-bold mb-8 text-gray-800">
+                    Invites
+                </h1>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {invites?.map((invite) => (
+                        <div
+                            key={invite.id}
+                            className="bg-white shadow-lg rounded-xl p-6"
+                        >
+                            <div className="flex items-center mb-4">
+                                <HiOutlineOfficeBuilding className="h-8 w-8 text-blue-500 mr-3" />
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-800">
+                                        {invite.organizationId}
+                                    </h2>
+                                </div>
+                            </div>
+                            <Button
+                                className="flex justify-between items-center text-blue-600 mt-4"
+                                onClick={() => AcceptInvite(invite.id)}
+                            >
+                                <span className="text-sm font-medium">
+                                    Accept Invite
+                                </span>
+                                <FaChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );

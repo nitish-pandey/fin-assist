@@ -12,17 +12,8 @@ import {
     DialogContent,
     DialogHeader,
 } from "@/components/ui/dialog";
-
-const inviteUser = async (email: string, orgId: string, token: string) => {
-    // Simulating an API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    if (email === "error@example.com")
-        throw new Error("Failed to send invitation");
-    console.log(`Invited user with email: ${email}`);
-    console.log(`To organization with id: ${orgId}`);
-    console.log(`Using token: ${token}`);
-};
-
+import Cookies from "universal-cookie";
+import { inviteUser } from "@/utils/api";
 interface InviteUserProps {
     orgId: string;
 }
@@ -32,13 +23,14 @@ const InviteUser = ({ orgId }: InviteUserProps) => {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const cookie = new Cookies();
 
     const handleInvite = async () => {
         try {
             setError("");
             setSuccess(false);
             setLoading(true);
-            await inviteUser(email, orgId, "dummy-token");
+            await inviteUser(email, orgId, cookie.get("token"));
             setEmail("");
             setSuccess(true);
         } catch (error: any) {
