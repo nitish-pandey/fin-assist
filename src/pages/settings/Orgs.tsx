@@ -8,15 +8,12 @@ import { Button } from "@/components/ui/button";
 import { acceptInvite } from "@/utils/api";
 
 const UserOrgs = () => {
-    const { profile } = useAuth();
-
-    const organization = profile?.organizations;
-    const Permissions = profile?.permissions;
+    const { profile, organizations, permissions } = useAuth();
     const invites = profile?.invites;
 
     // group permissions by organization
     const groupedPermissions: Record<string, RoleAccessSchema[]> = {};
-    Permissions?.forEach((perm) => {
+    permissions?.forEach((perm) => {
         if (!groupedPermissions[perm.organizationId]) {
             groupedPermissions[perm.organizationId] = [];
         }
@@ -24,26 +21,23 @@ const UserOrgs = () => {
     });
 
     const AcceptInvite = async (id: string) => {
-        // accept invite
         await acceptInvite(id);
     };
 
     return (
-        <div className="p-6 bg-gray-100 min-h-screen light">
+        <div className="p-6 min-h-screen light">
             <div className="flex items-start justify-between mb-8">
-                <h1 className="text-3xl font-bold mb-8 text-gray-800">
-                    Your Organizations
-                </h1>
-                <div className=" text-black flex border border-gray-700 rounded-xl">
+                <h1 className="text-3xl font-bold mb-8">Your Organizations</h1>
+                <div className="  flex border border-gray-700 rounded-xl">
                     <AddOrganizationForm />
                 </div>
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {organization?.map((org) => (
+                {organizations?.map((org) => (
                     <Link
                         key={org.id}
                         to={`/org/${org.id}/dashboard`}
-                        className="bg-white shadow-lg rounded-xl p-6 transition-all duration-300 hover:shadow-xl hover:scale-105"
+                        className=" shadow-lg rounded-xl p-6 transition-all duration-300 hover:shadow-xl hover:scale-105 border"
                     >
                         <div className="flex items-center mb-4">
                             {org.logo ? (
@@ -56,7 +50,7 @@ const UserOrgs = () => {
                                 <FaBuilding className="h-16 w-16 text-blue-500 mr-4" />
                             )}
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-800">
+                                <h2 className="text-xl font-semibold">
                                     {org.name}
                                 </h2>
                                 <p className="text-sm text-gray-600 mt-1">
@@ -75,20 +69,18 @@ const UserOrgs = () => {
                 ))}
             </div>
 
-            <h1 className="text-3xl font-bold mt-12 mb-8 text-gray-800">
-                Your Permissions
-            </h1>
+            <h1 className="text-3xl font-bold mt-12 mb-8">Your Permissions</h1>
             <div className="space-y-8">
                 {Object.entries(groupedPermissions || {}).map(
                     ([orgId, perms]) => (
                         <div
                             key={orgId}
-                            className="bg-white shadow-lg rounded-xl p-6"
+                            className=" shadow-lg rounded-xl p-6 border"
                         >
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center">
                                     <HiOutlineOfficeBuilding className="h-8 w-8 text-blue-500 mr-3" />
-                                    <h2 className="text-xl font-semibold text-gray-800">
+                                    <h2 className="text-xl font-semibold">
                                         Organization ID: {orgId}
                                     </h2>
                                 </div>
@@ -106,7 +98,7 @@ const UserOrgs = () => {
                                 {perms.map((perm) => (
                                     <li
                                         key={perm.id}
-                                        className="flex items-center text-gray-700 bg-gray-50 rounded-lg p-3"
+                                        className="flex items-center rounded-lg p-3"
                                     >
                                         <FaUserShield className="h-5 w-5 text-green-500 mr-2" />
                                         <span className="font-medium">
@@ -120,14 +112,12 @@ const UserOrgs = () => {
                 )}
             </div>
             <div className="mt-12">
-                <h1 className="text-3xl font-bold mb-8 text-gray-800">
-                    Invites
-                </h1>
+                <h1 className="text-3xl font-bold mb-8">Invites</h1>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {invites?.map((invite) => (
                         <div
                             key={invite.id}
-                            className="bg-white shadow-lg rounded-xl p-6"
+                            className="border shadow-lg rounded-xl p-6"
                         >
                             <div className="flex items-center mb-4">
                                 <HiOutlineOfficeBuilding className="h-8 w-8 text-blue-500 mr-3" />

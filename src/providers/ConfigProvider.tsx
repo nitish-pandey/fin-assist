@@ -9,7 +9,11 @@ import React, {
 } from "react";
 import Cookies from "universal-cookie";
 import { getUserInfo, login as APILogin } from "../utils/api"; // Make sure this handles errors and includes token validation
-import { UserSchema } from "../data/types";
+import {
+    UserSchema,
+    OrganizationSchema,
+    RoleAccessSchema,
+} from "../data/types";
 
 interface AuthContextProps {
     login: (email: string, password: string) => Promise<void>;
@@ -17,6 +21,8 @@ interface AuthContextProps {
     logout: () => void;
     authenticated: boolean;
     profile: UserSchema | null;
+    organizations: OrganizationSchema[] | null;
+    permissions: RoleAccessSchema[] | null;
     updateProfile: () => Promise<void>;
     error: string | null;
 }
@@ -29,6 +35,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
     const [profile, setProfile] = useState<UserSchema | null>(null);
+    const [organizations, setOrganizations] = useState<
+        OrganizationSchema[] | null
+    >(null);
+    const [permissions, setPermissions] = useState<RoleAccessSchema[] | null>(
+        null
+    );
     const [isUpdating, setIsUpdating] = useState(false);
     const [authenticated, setAuthenticated] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -46,7 +58,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         try {
             const res = await getUserInfo(token, userId);
-            setProfile(res);
+            setProfile(res.profile);
+            setOrganizations(res.organizations);
+            setPermissions(res.permissions);
             setAuthenticated(true);
             setError(null); // Clear previous errors
         } catch (err) {
@@ -110,6 +124,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             logout,
             authenticated,
             isUpdating,
+            organizations,
+            permissions,
             profile,
             updateProfile,
             error,

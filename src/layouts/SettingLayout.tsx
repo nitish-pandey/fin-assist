@@ -1,45 +1,75 @@
-import { Outlet } from "react-router-dom";
-import Sidebar from "../components/modules/Sidebar";
-import { GoOrganization } from "react-icons/go";
-import { CgProfile } from "react-icons/cg";
-import { CiLogout } from "react-icons/ci";
+import { Link, Outlet } from "react-router-dom";
+import { SidebarFooter, SidebarProvider } from "@/components/ui/sidebar";
+import { Home, Inbox, LogOut } from "lucide-react";
 
-export type SidebarOptionType = {
-    name: string;
-    path?: string;
-    icon: any;
-    options?: SidebarOptionType[];
-};
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarGroup,
+    SidebarGroupContent,
+    SidebarGroupLabel,
+    SidebarMenu,
+    // SidebarTrigger,
+    SidebarMenuButton,
+    SidebarMenuItem,
+} from "@/components/ui/sidebar";
 
 const SettingLayout = () => {
-    const sidebarOptions: SidebarOptionType[] = [
+    const items = [
         {
-            name: "Profile",
-            path: "/settings/profile",
-            icon: <CgProfile />,
+            title: "Profile",
+            url: "/settings/profile",
+            icon: Home,
         },
         {
-            name: "My Organizations",
-            path: "/settings/orgs",
-            icon: <GoOrganization />,
-        },
-        {
-            name: "Logout",
-            path: "/auth/logout",
-            icon: <CiLogout />,
+            title: "Orgs",
+            url: "/settings/orgs",
+            icon: Inbox,
         },
     ];
     return (
-        <div className="flex h-screen bg-gray-100">
-            <Sidebar sidebarOptions={sidebarOptions} />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 mt-5">
-                    <div className="container mx-auto px-6 py-8">
-                        <Outlet />
-                    </div>
-                </main>
-            </div>
-        </div>
+        <SidebarProvider>
+            <Sidebar>
+                <SidebarContent>
+                    <SidebarGroup>
+                        <SidebarGroupLabel>Application</SidebarGroupLabel>
+                        <SidebarGroupContent>
+                            <SidebarMenu>
+                                {items.map((item) => (
+                                    <SidebarMenuItem key={item.title}>
+                                        <SidebarMenuButton asChild>
+                                            <Link to={item.url}>
+                                                <item.icon />
+                                                <span>{item.title}</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                ))}
+                            </SidebarMenu>
+                        </SidebarGroupContent>
+                    </SidebarGroup>
+                </SidebarContent>
+                <SidebarFooter>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton>
+                                <Link
+                                    to="/auth/logout"
+                                    className="flex items-center gap-2"
+                                >
+                                    <LogOut />
+                                    <span>Logout</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarFooter>
+            </Sidebar>
+            <main className="flex-1 flex flex-col overflow-hidden bg-gray-900 text-white">
+                {/* <SidebarTrigger /> */}
+                <Outlet />
+            </main>
+        </SidebarProvider>
     );
 };
 

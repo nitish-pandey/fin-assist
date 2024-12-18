@@ -1,5 +1,5 @@
 import axios from "axios";
-import { RoleAccessSchema, UserSchema } from "../data/types";
+import { OrganizationSchema, RoleAccessSchema, UserSchema } from "../data/types";
 
 export const BASE_URL = "http://localhost:5000";
 
@@ -30,7 +30,11 @@ export const getUserInfo = async (token: string, userId: string) => {
             Authorization: `Bearer ${token}`,
         },
     });
-    return response.data as UserSchema;
+    return response.data as {
+        "profile": UserSchema,
+        "organizations": OrganizationSchema[],
+        "permissions": RoleAccessSchema[],
+    }
 };
 
 export const createOrganization = async (userId: string, token: string, name: string) => {

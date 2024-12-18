@@ -34,11 +34,10 @@ interface OrgData {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { orgId } = useParams<{ orgId: string }>();
-    const { profile } = useAuth();
-    const organization = profile?.organizations;
-    const permissions = profile?.permissions;
+    const { profile, organizations, permissions } = useAuth();
+
     const ownedOrgs: OrgData[] =
-        organization?.map((org) => ({
+        organizations?.map((org) => ({
             id: org.id,
             name: org.name,
             logo: Notebook,
@@ -48,7 +47,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const permittedOrgs: OrgData[] =
         permissions?.map((perm) => ({
             id: perm.organizationId,
-            name: "Org-" + perm.id.slice(0, 4),
+            name: perm.organization?.name || "Organization",
             logo: Notebook,
             type: "Shared",
             current: perm.organizationId == orgId,

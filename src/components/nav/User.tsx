@@ -18,6 +18,7 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar";
+import { Link } from "react-router-dom";
 
 const menus = [
     {
@@ -113,14 +114,14 @@ export function NavUser({
                         {menus.map((menuGroup, groupIndex) => (
                             <DropdownMenuGroup key={groupIndex}>
                                 {menuGroup.items.map((item, itemIndex) => (
-                                    <DropdownMenuItem
-                                        key={itemIndex}
-                                        onClick={() => {
-                                            window.location.href = item.path;
-                                        }}
-                                    >
-                                        <item.icon className="mr-2 h-4 w-4" />
-                                        {item.name}
+                                    <DropdownMenuItem key={itemIndex}>
+                                        <Link
+                                            to={item.path}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <item.icon className="mr-2 h-4 w-4" />
+                                            {item.name}
+                                        </Link>
                                     </DropdownMenuItem>
                                 ))}
                                 {groupIndex < menus.length - 1 && (

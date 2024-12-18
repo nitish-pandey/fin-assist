@@ -30,6 +30,7 @@ export type RoleAccessSchema = {
     createdAt: string;
     updatedAt: string;
     user?: UserSchema;
+    organization?: OrganizationSchema;
 };
 
 export type InviteSchema = {
