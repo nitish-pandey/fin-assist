@@ -1,8 +1,7 @@
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import useToast from "../../providers/Toast";
-import { registerUser } from "@/utils/api";
-
+import { api } from "@/utils/api";
+import { useToast } from "@/hooks/use-toast";
 interface RegisterData {
     name: string;
     email: string;
@@ -16,23 +15,26 @@ const Register = () => {
         formState: { errors },
     } = useForm<RegisterData>();
 
-    const { showToast } = useToast();
+    const { toast } = useToast();
     const navigate = useNavigate();
 
     const onSubmit = async (data: RegisterData) => {
         try {
-            await registerUser(data.name, data.email, data.password);
-            showToast(
-                "Registration successful, redirecting to login",
-                "success",
-                3000
-            );
+            await api.post("/auth/register", data);
+            toast({
+                title: "Registration successful",
+                description: "You are now registered.",
+            });
             setTimeout(() => {
                 navigate("/auth/login");
             }, 3500);
         } catch (error) {
             console.error(error);
-            showToast("Registration failed, try again", "error");
+            toast({
+                title: "Registration failed",
+                description: "Registration failed. Please try again.",
+                variant: "destructive",
+            });
         }
     };
 
@@ -40,16 +42,12 @@ const Register = () => {
         <div>
             <h2 className="text-3xl font-semibold mb-2">Create an account</h2>
             <p className="text-gray-600 text-sm font-medium mb-6">
-                Please fill in the details below to register for your
-                personalized dashboard.
+                Please fill in the details below to register for your personalized dashboard.
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                    <label
-                        htmlFor="name"
-                        className="block text-sm text-gray-600 mb-1"
-                    >
+                    <label htmlFor="name" className="block text-sm text-gray-600 mb-1">
                         Full Name
                     </label>
                     <input
@@ -68,10 +66,7 @@ const Register = () => {
                 </div>
 
                 <div>
-                    <label
-                        htmlFor="email"
-                        className="block text-sm text-gray-600 mb-1"
-                    >
+                    <label htmlFor="email" className="block text-sm text-gray-600 mb-1">
                         Email Address
                     </label>
                     <input
@@ -93,10 +88,7 @@ const Register = () => {
                 </div>
 
                 <div>
-                    <label
-                        htmlFor="password"
-                        className="block text-sm text-gray-600 mb-1"
-                    >
+                    <label htmlFor="password" className="block text-sm text-gray-600 mb-1">
                         Password
                     </label>
                     <input
@@ -107,8 +99,7 @@ const Register = () => {
                             required: "Password is required",
                             minLength: {
                                 value: 6,
-                                message:
-                                    "Password should be atleast 6 characters",
+                                message: "Password should be atleast 6 characters",
                             },
                         })}
                     />
@@ -128,10 +119,7 @@ const Register = () => {
 
                 <p className="text-center font-medium text-sm text-gray-600">
                     Already have an account?{" "}
-                    <Link
-                        to="/auth/login"
-                        className="text-blue-800 hover:underline"
-                    >
+                    <Link to="/auth/login" className="text-blue-800 hover:underline">
                         Log in
                     </Link>
                 </p>

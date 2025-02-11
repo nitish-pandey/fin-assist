@@ -1,78 +1,95 @@
-"use client";
-
-import * as React from "react";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/providers/auth-provider";
+import { useForm } from "react-hook-form";
+import { api } from "@/utils/api";
+import { useToast } from "@/hooks/use-toast";
 
-import { useAuth } from "@/providers/ConfigProvider";
-import { createOrganization } from "@/utils/api";
-import Cookies from "universal-cookie";
+interface AddOrganizationFormData {
+    name: string;
+    description: string;
+}
 
 export function AddOrganizationForm() {
-    const [isOpen, setIsOpen] = useState(false);
-    const [orgName, setOrgName] = useState("");
-    const { updateProfile } = useAuth();
-    const cookie = new Cookies();
+    const [open, setOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const { user, refetch } = useAuth();
+    const { toast } = useToast();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        // Here you would typically send the data to your backend
-        console.log("Creating organization:", orgName);
-        setIsOpen(false);
-        setOrgName("");
-        await createOrganization(
-            cookie.get("userId"),
-            cookie.get("token"),
-            orgName
-        );
-        updateProfile();
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        reset,
+    } = useForm<AddOrganizationFormData>();
+
+    const onSubmit = async (data: AddOrganizationFormData) => {
+        setLoading(true);
+        try {
+            const userId = user?.id || "";
+            await api.post(`/users/${userId}/orgs`, data);
+
+            toast({
+                title: "Success",
+                description: "Organization created successfully!",
+            });
+
+            reset(); // Clear form fields
+            setOpen(false); // Close modal
+            refetch(); // Fetch updated user data
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to create organization.",
+                variant: "destructive",
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <>
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogTrigger asChild>
-                    <Button variant="ghost" className="w-full justify-start">
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Organization
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
+            <Button onClick={() => setOpen(true)} className="w-full max-w-60">
+                Add Organization
+            </Button>
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>Add New Organization</DialogTitle>
-                        <DialogDescription>
-                            Enter the name for your new organization.
-                        </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleSubmit}>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="name" className="text-right">
-                                    Name
-                                </Label>
-                                <Input
-                                    id="name"
-                                    value={orgName}
-                                    onChange={(e) => setOrgName(e.target.value)}
-                                    className="col-span-3"
-                                />
-                            </div>
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Organization Name</Label>
+                            <Input
+                                id="name"
+                                placeholder="Enter organization name"
+                                {...register("name", { required: "Name is required" })}
+                            />
+                            {errors.name && (
+                                <span className="text-red-500">{errors.name.message}</span>
+                            )}
                         </div>
-                        <DialogFooter>
-                            <Button type="submit">Add Organization</Button>
-                        </DialogFooter>
+                        <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                                id="description"
+                                {...register("description", {
+                                    required: "Description is required",
+                                })}
+                                placeholder="Enter organization description"
+                            />
+                            {errors.description && (
+                                <span className="text-red-500">{errors.description.message}</span>
+                            )}
+                        </div>
+                        <Button type="submit" className="w-full" disabled={loading}>
+                            {loading ? "Creating..." : "Create Organization"}
+                        </Button>
                     </form>
                 </DialogContent>
             </Dialog>

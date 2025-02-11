@@ -74,12 +74,8 @@ export function TeamSwitcher({
                                 <activeTeam.logo className="size-4" />
                             </div>
                             <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-semibold">
-                                    {activeTeam.name}
-                                </span>
-                                <span className="truncate text-xs">
-                                    {activeTeam.type}
-                                </span>
+                                <span className="truncate font-semibold">{activeTeam.name}</span>
+                                <span className="truncate text-xs">{activeTeam.type}</span>
                             </div>
                             <ChevronsUpDown className="ml-auto" />
                         </SidebarMenuButton>
@@ -116,9 +112,7 @@ export function TeamSwitcher({
                             </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                            <AddOrganizationForm />
-                        </DropdownMenuItem>
+                        <AddOrganizationForm />
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>

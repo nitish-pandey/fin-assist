@@ -65,7 +65,7 @@ const SettingLayout = () => {
                     </SidebarMenu>
                 </SidebarFooter>
             </Sidebar>
-            <main className="flex-1 flex flex-col overflow-hidden bg-gray-900 text-white">
+            <main className="flex-1 flex flex-col overflow-hidden">
                 {/* <SidebarTrigger /> */}
                 <Outlet />
             </main>

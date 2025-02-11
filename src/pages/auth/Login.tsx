@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import useToast from "../../providers/Toast";
 import { useForm } from "react-hook-form";
-import { useAuth } from "../../providers/ConfigProvider";
+import { useAuth } from "../../providers/auth-provider";
+import { useToast } from "@/hooks/use-toast";
 
 interface LoginData {
     email: string;
@@ -9,7 +9,7 @@ interface LoginData {
 }
 
 const Login = () => {
-    const { showToast } = useToast();
+    const { toast } = useToast();
     const navigate = useNavigate();
     const { login } = useAuth();
 
@@ -22,23 +22,25 @@ const Login = () => {
     const onSubmit = async (data: LoginData) => {
         try {
             await login(data.email, data.password);
-            showToast("Logged in successfully!", "success");
+            toast({
+                title: "Login successful",
+                description: "You are now logged in.",
+            });
             navigate("/settings/profile"); // Navigate without a delay
         } catch (error: any) {
             console.error("Login Error:", error);
-            const errorMessage =
-                error.response?.data?.message || "Login failed. Please try again.";
-            showToast(errorMessage, "error");
+            const errorMessage = error.response?.data?.message || "Login failed. Please try again.";
+            toast({
+                title: "Login failed",
+                description: errorMessage,
+                variant: "destructive",
+            });
         }
     };
 
     const renderError = (message?: string) =>
         message && (
-            <p
-                className="text-red-500 text-xs font-medium mt-1"
-                role="alert"
-                aria-live="polite"
-            >
+            <p className="text-red-500 text-xs font-medium mt-1" role="alert" aria-live="polite">
                 {message}
             </p>
         );
@@ -47,17 +49,14 @@ const Login = () => {
         <div>
             <h2 className="text-3xl font-semibold mb-2">Login credentials</h2>
             <p className="text-gray-700 mb-6 text-sm font-light">
-                Please log in with your Email ID and password to continue to
-                your personalized dashboard.
+                Please log in with your Email ID and password to continue to your personalized
+                dashboard.
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 {/* Email Field */}
                 <div>
-                    <label
-                        htmlFor="email"
-                        className="block text-sm text-gray-600 mb-1"
-                    >
+                    <label htmlFor="email" className="block text-sm text-gray-600 mb-1">
                         Work email
                     </label>
                     <input
@@ -79,10 +78,7 @@ const Login = () => {
                 {/* Password Field */}
                 <div>
                     <div className="flex justify-between items-center mb-1">
-                        <label
-                            htmlFor="password"
-                            className="block text-sm text-gray-600"
-                        >
+                        <label htmlFor="password" className="block text-sm text-gray-600">
                             Password
                         </label>
                         <Link
@@ -122,10 +118,7 @@ const Login = () => {
                 {/* Sign-Up Link */}
                 <p className="text-center text-sm font-medium text-gray-600">
                     Don't have an account?{" "}
-                    <Link
-                        to="/auth/register"
-                        className="text-blue-800 hover:underline"
-                    >
+                    <Link to="/auth/register" className="text-blue-800 hover:underline">
                         Sign up
                     </Link>
                 </p>

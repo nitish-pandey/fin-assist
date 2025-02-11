@@ -1,11 +1,11 @@
 import React from "react";
-import { useAuth } from "../../providers/ConfigProvider";
-import { FaUser, FaEnvelope, FaPhone, FaUserTag } from "react-icons/fa";
+import { useAuth } from "../../providers/auth-provider";
+import { FaUser, FaEnvelope } from "react-icons/fa";
 
 const ProfilePage = () => {
-    const { profile } = useAuth();
+    const { user } = useAuth();
 
-    if (!profile) {
+    if (!user) {
         return <div className="text-center py-8">Loading profile...</div>;
     }
 
@@ -23,32 +23,11 @@ const ProfilePage = () => {
                             </div>
                         </div>
                         <div>
-                            <h2 className="text-2xl font-semibold mb-1">
-                                {profile.name}
-                            </h2>
+                            <h2 className="text-2xl font-semibold mb-1">{user.name}</h2>
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <ProfileItem
-                            icon={<FaEnvelope />}
-                            label="Email"
-                            value={profile.email}
-                        />
-                        <ProfileItem
-                            icon={<FaPhone />}
-                            label="Contact"
-                            value={profile.contact || "Not provided"}
-                        />
-                        <ProfileItem
-                            icon={<FaUserTag />}
-                            label="Type"
-                            value={profile.type}
-                        />
-                        <ProfileItem
-                            icon={<FaUserTag />}
-                            label="Status"
-                            value={profile.status}
-                        />
+                        <ProfileItem icon={<FaEnvelope />} label="Email" value={user.email} />
                     </div>
                 </div>
             </div>

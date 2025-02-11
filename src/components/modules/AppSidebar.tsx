@@ -1,14 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-    BookOpen,
-    Info,
-    LayoutDashboard,
-    Notebook,
-    SendToBackIcon,
-    Users,
-} from "lucide-react";
+import { BookOpen, Info, LayoutDashboard, Notebook, SendToBackIcon, Users } from "lucide-react";
 
 import { NavMain } from "../nav/Main";
 import { NavProjects } from "../nav/Projects";
@@ -22,7 +15,7 @@ import {
     SidebarHeader,
     SidebarRail,
 } from "@/components/ui/sidebar";
-import { useAuth } from "@/providers/ConfigProvider";
+import { useAuth } from "@/providers/auth-provider";
 
 interface OrgData {
     id: string;
@@ -34,20 +27,22 @@ interface OrgData {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { orgId } = useParams<{ orgId: string }>();
-    const { profile, organizations, permissions } = useAuth();
+    const { user, orgs, permissions } = useAuth();
 
     const ownedOrgs: OrgData[] =
-        organizations?.map((org) => ({
-            id: org.id,
-            name: org.name,
-            logo: Notebook,
-            type: org.type,
-            current: org.id === orgId,
-        })) || [];
+        orgs
+            ?.filter((org) => org.id !== undefined)
+            .map((org) => ({
+                id: org.id as string,
+                name: org.name,
+                logo: Notebook,
+                type: "Owned",
+                current: org.id === orgId,
+            })) || [];
     const permittedOrgs: OrgData[] =
         permissions?.map((perm) => ({
             id: perm.organizationId,
-            name: perm.organization?.name || "Organization",
+            name: perm.organizationId || "Organization",
             logo: Notebook,
             type: "Shared",
             current: perm.organizationId == orgId,
@@ -55,67 +50,61 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     const data = {
         user: {
-            name: profile?.name || "John Doe",
-            email: profile?.email || "email@domain.com",
+            name: user?.name || "John Doe",
+            email: user?.email || "email@domain.com",
             avatar: "https://i.pras.co/100",
         },
         teams: [...ownedOrgs, ...permittedOrgs],
         navMain: [
             {
-                title: "Stock",
-                url: "#",
+                title: "Accounts",
+                url: "/org/" + orgId + "/accounts/list",
                 icon: SendToBackIcon,
                 isActive: true,
                 items: [
                     {
-                        title: "Buy Stock",
-                        url: "#",
+                        title: "View",
+                        url: "/org/" + orgId + "/accounts/view",
                     },
                     {
-                        title: "Sell Stock",
-                        url: "#",
+                        title: "Create",
+                        url: "/org/" + orgId + "/accounts/create",
                     },
                 ],
             },
             {
-                title: "Transactions",
+                title: "Products",
                 url: "#",
                 icon: Notebook,
+                isActive: true,
                 items: [
                     {
-                        title: "Buy Transaction",
-                        url: "#",
+                        title: "Categories",
+                        url: "/org/" + orgId + "/categories",
                     },
                     {
-                        title: "Sell Transaction",
-                        url: "#",
+                        title: "Products",
+                        url: "/org/" + orgId + "/products/list",
                     },
                     {
-                        title: "Other Transaction",
-                        url: "#",
+                        title: "Add Product",
+                        url: "/org/" + orgId + "/products/create",
                     },
                 ],
             },
             {
-                title: "Documentation",
+                title: "Orders",
                 url: "#",
                 icon: BookOpen,
+                isActive: true,
                 items: [
                     {
-                        title: "Introduction",
-                        url: "#",
+                        title: "Add",
+                        url: "/org/" + orgId + "/orders/create",
                     },
                     {
-                        title: "Get Started",
-                        url: "#",
-                    },
-                    {
-                        title: "Tutorials",
-                        url: "#",
-                    },
-                    {
-                        title: "Changelog",
-                        url: "#",
+                        title: "View",
+                        url: "/org/" + orgId + "/orders/view",
                     },
                 ],
             },
@@ -135,6 +124,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 name: "Users",
                 url: "/org/" + orgId + "/users",
                 icon: Users,
+            },
+            {
+                name: "Entity",
+                url: "/org/" + orgId + "/entity",
+                icon: Notebook,
             },
         ],
     };

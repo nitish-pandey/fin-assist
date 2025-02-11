@@ -1,87 +1,11 @@
 import axios from "axios";
-import { OrganizationSchema, RoleAccessSchema, UserSchema } from "../data/types";
 
-export const BASE_URL = "http://localhost:5000";
+const BASE_URL = "http://localhost:5000/api";
 
-// const URL = "https://22c55236-38b1-45ea-93f4-a0bd1aa0de31.mock.pstmn.io/api";
-const URL = "http://localhost:5000/api"
-
-export const login = async (email: string, password: string) => {
-    const response = await axios.post(`${URL}/users/login`, {
-        email,
-        password,
-    });
-    return response.data as { token: string, user: UserSchema };
-}
-
-export const registerUser = async (name: string, email: string, password: string) => { 
-    const response = await axios.post(`${URL}/users/register`, {
-        name,
-        email,
-        password,
-    });
-    return response.data;
-}   
-
-
-export const getUserInfo = async (token: string, userId: string) => {
-    const response = await axios.get(`${URL}/users/${userId}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response.data as {
-        "profile": UserSchema,
-        "organizations": OrganizationSchema[],
-        "permissions": RoleAccessSchema[],
-    }
-};
-
-export const createOrganization = async (userId: string, token: string, name: string) => {
-    const response = await axios.post(`${URL}/users/${userId}/orgs`, {
-        name
-    }, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response.data;
-};
-
-export const getOrgUsers = async (orgId: string, token: string) => {
-    const response = await axios.get(`${URL}/orgs/${orgId}/users`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response.data as RoleAccessSchema[];
-}
-
-
-export const inviteUser = async (email: string, orgId: string, token: string) => {
-    const response = await axios.post(`${URL}/orgs/${orgId}/invite`, {
-        email
-    }, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response.data;
-}
-
-export const acceptInvite = async (inviteId: string) => {
-    const response = await axios.post(`${URL}/orgs/${inviteId}/accept`, {
-        inviteId
-    }, {
-    })
-    return response.data;
-};
-
-export const getOrgInfo = async (orgId: string, token: string) => {
-    const response = await axios.get(`${URL}/orgs/${orgId}`, {
-        headers: {  
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response.data;
-}
+export const api = axios.create({
+    baseURL: BASE_URL,
+    withCredentials: true,
+    headers: {
+        "Content-Type": "application/json",
+    },
+});

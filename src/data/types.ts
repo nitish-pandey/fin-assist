@@ -1,61 +1,158 @@
+export interface User {
+    id?: string;
+    email: string;
+    password: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
 
+    organizations?: Organization[];
+    permissions?: RoleAccess[];
+}
 
-export type AccessType = "VIEW_ORG" | "EDIT_ORG" | "DELETE_ORG" | "VIEW_USER" | "VIEW_PRODUCT" | "MANAGE_PRODUCT" | "VIEW_STOCK" | "MANAGE_STOCK";
+export interface Organization {
+    id?: string;
+    name: string;
+    ownerId: string;
+    description: string | null;
+    logo?: string | null;
+    contact?: string | null;
+    pan?: string | null;
+    vat?: string | null;
+    domain?: string | null;
+    createdAt?: string;
+    updatedAt?: string;
+}
 
-export type OrganizationSchema = {
+export type ACCESS = "ORG" | "ACCOUNT" | "PRODUCT" | "ENTITY" | "ORDER";
+
+export interface RoleAccess {
+    id: string;
+    userId: string;
+    organizationId: string;
+    access: ACCESS;
+    user?: User;
+    organization?: Organization;
+}
+
+export interface Invite {
+    id: string;
+    organizationId: string;
+    email: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export type ACCOUNT_TYPE = "BANK" | "BANK_OD" | "CASH_COUNTER" | "CHEQUE" | "MISC";
+
+export interface AccountDetails {
+    accountNumber: string;
+    bankName: string;
+    chequeDate: string | null;
+}
+
+export interface Account {
+    id: string;
+    name: string;
+    balance: number;
+    type: ACCOUNT_TYPE;
+
+    details: AccountDetails;
+
+    organizationId: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Entity {
+    id: string;
+    name: string;
+    phone: string;
+    email: string | null;
+    description: string | null;
+    organizationId: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Category {
     id: string;
     name: string;
     description: string | null;
-    contact: string | null;
-    domain: string | null;
-    ownerId: string;
-    panNumber: string | null;
-    vatNumber: string | null;
-    logo: string | null;
-    type: string;
-
-    createdAt: string;
-    updatedAt: string;
-
-    permissions?: RoleAccessSchema[];
-};
-
-export type RoleAccessSchema = {
-    id: string;
-
-    userId: string;
     organizationId: string;
-    access: AccessType;
-    
     createdAt: string;
     updatedAt: string;
-    user?: UserSchema;
-    organization?: OrganizationSchema;
-};
+}
 
-export type InviteSchema = {
-    id: string; 
-    organizationId: string;
-    userId: string;
-    status: string;
-    createdAt: string;
-    updatedAt: string;
-};
-
-
-
-export type UserSchema = {
+export interface Product {
     id: string;
     name: string;
-    contact: string | null;
-    email: string;
-    type : string;
-    status: string;
+    categoryId: string;
+    image: string | null;
+    price: number;
+    stock: number;
+    description: string | null;
+    organizationId: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export type PaymentStatus = "PAID" | "PENDING" | "FAILED" | "CANCELLED" | "PARTIAL";
+
+export interface Order {
+    id: string;
+    orderNumber: string;
+    description?: string | null;
+
+    type: "BUY" | "SELL";
+
+    baseAmount: number;
+    discount: number;
+    tax: number;
+    totalAmount: number;
+
+    paymentStatus: PaymentStatus;
+
+    organizationId: string;
+    entityId?: string | null;
+    createdAt: string;
+    updatedAt: string;
+
+    organization?: Organization | null;
+    entity?: Entity | null;
+
+    items?: OrderItem[];
+    transactions?: Transaction[];
+}
+
+export interface OrderItem {
+    id: string;
+    name: string;
+    description?: string | null;
+
+    orderId: string;
+    productId: string;
+    quantity: number;
+    price: number;
+    subTotal: number;
+
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Transaction {
+    id: string;
+    description: string | null;
+    amount: number;
+
+    organizationId: string;
+    accountId: string;
+    orderId: string | null;
 
     createdAt: string;
     updatedAt: string;
 
-    organizations?: OrganizationSchema[];
-    permissions?: RoleAccessSchema[];
-    invites?: InviteSchema[];
+    account?: Account | null;
+    order?: Order | null;
+    organization?: Organization | null;
 }
