@@ -56,7 +56,15 @@ const CategoryList: React.FC<CategoryListProps> = ({ categories, loading, error,
             </div>
         );
     }
-    return <TableComponent columns={columns} data={categories} />;
+    return (
+        <TableComponent
+            columns={columns}
+            data={categories}
+            allowPagination={true}
+            allowSearch={true}
+            allowSelection={true}
+        />
+    );
 };
 
 export default CategoryList;

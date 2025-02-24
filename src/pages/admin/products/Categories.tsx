@@ -49,7 +49,10 @@ const OrgCategories = () => {
     return (
         <div className="">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">Categories</h2>
+                <div className="">
+                    <h2 className="text-2xl font-bold text-gray-800">Categories</h2>
+                    <p className="text-gray-600">Manage your categories here</p>
+                </div>
                 <AddCategory onAddCategory={addCategory} />
             </div>
             <CategoryList categories={categories} loading={loading} onRetry={() => {}} />

@@ -15,11 +15,16 @@ import OrgProducts from "./pages/admin/products/Products";
 import EntityInfo from "./pages/admin/basic/Entity";
 import CreateAccountPage from "./pages/admin/accounts/CreateAccount";
 import ViewAccountPage from "./pages/admin/accounts/ViewAccount";
-import CreateProductPage from "./pages/admin/products/CreateProduct";
 import OrderViewPage from "./pages/admin/order/view";
 import CreateOrderPage from "./pages/admin/order/create";
 import SingleOrderPage from "./pages/admin/order/SingleOrderPage";
 import DashboardPage from "./pages/admin/basic/Dashboard";
+import AllTransactionPage from "./pages/admin/transactions/all";
+import BuyTransactionPage from "./pages/admin/transactions/buy";
+import SellTransactionPage from "./pages/admin/transactions/sell";
+import BankAccounts from "./pages/admin/accounts/bank";
+import BuyOrderPage from "./pages/admin/order/buy";
+import SellOrderPage from "./pages/admin/order/sell";
 
 export const routes: RouteObject[] = [
     {
@@ -70,6 +75,10 @@ export const routes: RouteObject[] = [
                                 element: <ViewAccountPage />,
                                 path: "view",
                             },
+                            {
+                                element: <BankAccounts />,
+                                path: "bank",
+                            },
                         ],
                     },
                     {
@@ -78,16 +87,7 @@ export const routes: RouteObject[] = [
                     },
                     {
                         path: "products",
-                        children: [
-                            {
-                                element: <OrgProducts />,
-                                path: "list",
-                            },
-                            {
-                                element: <CreateProductPage />,
-                                path: "create",
-                            },
-                        ],
+                        element: <OrgProducts />,
                     },
                     {
                         path: "entity",
@@ -107,6 +107,31 @@ export const routes: RouteObject[] = [
                             {
                                 element: <SingleOrderPage />,
                                 path: ":orderId",
+                            },
+                            {
+                                element: <BuyOrderPage />,
+                                path: "buy",
+                            },
+                            {
+                                element: <SellOrderPage />,
+                                path: "sell",
+                            },
+                        ],
+                    },
+                    {
+                        path: "transactions",
+                        children: [
+                            {
+                                element: <AllTransactionPage />,
+                                path: "all",
+                            },
+                            {
+                                element: <BuyTransactionPage />,
+                                path: "buy",
+                            },
+                            {
+                                element: <SellTransactionPage />,
+                                path: "sell",
                             },
                         ],
                     },

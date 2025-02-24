@@ -9,6 +9,8 @@ interface AccountCardProps {
     accountNumber: string;
     bankName: string;
     balance: number;
+    onClick?: () => void;
+    isSelected?: boolean;
 }
 
 const AccountCard: React.FC<AccountCardProps> = ({
@@ -16,6 +18,8 @@ const AccountCard: React.FC<AccountCardProps> = ({
     accountNumber,
     bankName,
     balance,
+    onClick,
+    isSelected,
 }) => {
     const [showBalance, setShowBalance] = useState(false);
 
@@ -24,7 +28,12 @@ const AccountCard: React.FC<AccountCardProps> = ({
     const maskedAccountNumber = accountNumber.replace(/\d(?=\d{4})/g, "*");
 
     return (
-        <div className="bg-white border border-gray-500 rounded-xl p-6 w-full max-w-sm">
+        <div
+            className={`bg-white border-2 rounded-xl p-6 w-full max-w-sm cursor-pointer transition-all duration-300 ${
+                isSelected ? "border-blue-500" : ""
+            }`}
+            onClick={onClick}
+        >
             <div className="flex flex-col space-y-4">
                 <div className="flex gap-3 items-center justify-between">
                     <div className="flex items-center space-x-3">

@@ -2,11 +2,7 @@
 
 import { ChevronRight, type LucideIcon } from "lucide-react";
 
-import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -18,6 +14,7 @@ import {
     SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { Link } from "react-router-dom";
+import { IconType } from "react-icons/lib";
 
 export function NavMain({
     items,
@@ -25,7 +22,7 @@ export function NavMain({
     items: {
         title: string;
         url: string;
-        icon?: LucideIcon;
+        icon?: IconType;
         isActive?: boolean;
         items?: {
             title: string;

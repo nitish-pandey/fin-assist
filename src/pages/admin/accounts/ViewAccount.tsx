@@ -1,13 +1,33 @@
 import { useOrg } from "@/providers/org-provider";
 import { api } from "@/utils/api";
 import { Account } from "@/data/types";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import AccountCard from "@/components/cards/AccountCard";
+import CreateAccountForm from "@/components/forms/CreateAccountForm";
+import { Plus } from "lucide-react";
+
+interface EmptyAccountCardProps {
+    text?: string;
+    onClick: () => void;
+}
+
+const EmptyAccountCard = ({ onClick, text }: EmptyAccountCardProps) => {
+    return (
+        <div
+            className="bg-white flex gap-2 min-h-40 items-center justify-center border border-gray-400 rounded-xl p-4 w-72 cursor-pointer"
+            onClick={onClick}
+        >
+            <Plus />
+            <p className="text-sm text-gray-600">{text || "Add a Account"}</p>
+        </div>
+    );
+};
 
 const ViewAccountPage = () => {
     const { orgId } = useOrg();
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const createButtonRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         const fetchAccounts = async () => {
@@ -17,6 +37,14 @@ const ViewAccountPage = () => {
         fetchAccounts();
     }, [orgId]);
 
+    const onSubmit = async (account: Account) => {
+        await api.post(`orgs/${orgId}/accounts`, account);
+    };
+
+    const triggerButton = () => {
+        createButtonRef.current?.click();
+    };
+
     return (
         <div className="container mx-auto max-w-7xl px-6 py-8">
             <div className="flex items-center justify-between">
@@ -24,12 +52,13 @@ const ViewAccountPage = () => {
                     <h2 className="text-2xl font-bold text-gray-800">Accounts</h2>
                     <p className="text-sm text-gray-400">View and manage accounts</p>
                 </div>
-                <Link
-                    to={`/org/${orgId}/accounts/create`}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500"
-                >
-                    Create Account
-                </Link>
+                <CreateAccountForm
+                    onSubmit={onSubmit}
+                    avoidCashCounter={
+                        accounts.filter((account) => account.type === "CASH_COUNTER").length > 0
+                    }
+                    ref={createButtonRef}
+                />
             </div>
             <div className="">
                 <h2 className="text-lg font-semibold text-gray-800 mt-8">Bank Accounts</h2>
@@ -45,6 +74,7 @@ const ViewAccountPage = () => {
                                 balance={account.balance}
                             />
                         ))}
+                    <EmptyAccountCard onClick={triggerButton} text="Add a bank account" />
                 </div>
             </div>
             <div className="">
@@ -62,9 +92,7 @@ const ViewAccountPage = () => {
                             />
                         ))}
                     {/* if no  */}
-                    {accounts.filter((account) => account.type === "BANK_OD").length === 0 && (
-                        <p className="text-gray-400">No Bank OD accounts found</p>
-                    )}
+                    <EmptyAccountCard onClick={() => {}} />
                 </div>
             </div>
             <div className="">
@@ -81,9 +109,7 @@ const ViewAccountPage = () => {
                             </div>
                         ))}
                     {/* if no  */}
-                    {accounts.filter((account) => account.type === "CASH_COUNTER").length === 0 && (
-                        <p className="text-gray-400">No Cash accounts found</p>
-                    )}
+                    <EmptyAccountCard onClick={() => {}} />
                 </div>
             </div>
             <div className="">
@@ -100,9 +126,7 @@ const ViewAccountPage = () => {
                             </div>
                         ))}
                     {/* if no  */}
-                    {accounts.filter((account) => account.type === "CHEQUE").length === 0 && (
-                        <p className="text-gray-400">No Cheque accounts found</p>
-                    )}
+                    <EmptyAccountCard onClick={() => {}} />
                 </div>
             </div>
             <div className="">
@@ -119,9 +143,7 @@ const ViewAccountPage = () => {
                             </div>
                         ))}
                     {/* if no  */}
-                    {accounts.filter((account) => account.type === "MISC").length === 0 && (
-                        <p className="text-gray-400">No Miscellaneous accounts found</p>
-                    )}
+                    <EmptyAccountCard onClick={() => {}} />
                 </div>
             </div>
         </div>

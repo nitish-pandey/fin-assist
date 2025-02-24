@@ -54,9 +54,9 @@ export const ProductList = ({ products, isLoading, error }: ProductListProps) =>
                 columns={productCols}
                 data={products}
                 showFooter={true}
-                allowSearch={false}
-                allowPagination={false}
-                allowSelection={false}
+                allowSearch={true}
+                allowPagination={true}
+                allowSelection={true}
             />
         </div>
     );

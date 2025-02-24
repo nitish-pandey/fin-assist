@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BookOpen, Info, LayoutDashboard, Notebook, SendToBackIcon, Users } from "lucide-react";
+import { Notebook } from "lucide-react";
 
 import { NavMain } from "../nav/Main";
 import { NavProjects } from "../nav/Projects";
@@ -16,6 +16,7 @@ import {
     SidebarRail,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/providers/auth-provider";
+import { getDropDownItems, getMainNavItems } from "@/utils/sidebarItems";
 
 interface OrgData {
     id: string;
@@ -48,102 +49,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             current: perm.organizationId == orgId,
         })) || [];
 
-    const data = {
-        user: {
-            name: user?.name || "John Doe",
-            email: user?.email || "email@domain.com",
-            avatar: "https://i.pras.co/100",
-        },
-        teams: [...ownedOrgs, ...permittedOrgs],
-        navMain: [
-            {
-                title: "Accounts",
-                url: "/org/" + orgId + "/accounts/list",
-                icon: SendToBackIcon,
-                isActive: true,
-                items: [
-                    {
-                        title: "View",
-                        url: "/org/" + orgId + "/accounts/view",
-                    },
-                    {
-                        title: "Create",
-                        url: "/org/" + orgId + "/accounts/create",
-                    },
-                ],
-            },
-            {
-                title: "Products",
-                url: "#",
-                icon: Notebook,
-                isActive: true,
-                items: [
-                    {
-                        title: "Categories",
-                        url: "/org/" + orgId + "/categories",
-                    },
-                    {
-                        title: "Products",
-                        url: "/org/" + orgId + "/products/list",
-                    },
-                    {
-                        title: "Add Product",
-                        url: "/org/" + orgId + "/products/create",
-                    },
-                ],
-            },
-            {
-                title: "Orders",
-                url: "#",
-                icon: BookOpen,
-                isActive: true,
-                items: [
-                    {
-                        title: "Add",
-                        url: "/org/" + orgId + "/orders/create",
-                    },
-                    {
-                        title: "View",
-                        url: "/org/" + orgId + "/orders/view",
-                    },
-                ],
-            },
-        ],
-        projects: [
-            {
-                name: "Dashboard",
-                url: "/org/" + orgId + "/dashboard",
-                icon: LayoutDashboard,
-            },
-            {
-                name: "Info",
-                url: "/org/" + orgId + "/info",
-                icon: Info,
-            },
-            {
-                name: "Users",
-                url: "/org/" + orgId + "/users",
-                icon: Users,
-            },
-            {
-                name: "Entity",
-                url: "/org/" + orgId + "/entity",
-                icon: Notebook,
-            },
-        ],
+    const teams = [...ownedOrgs, ...permittedOrgs];
+    const userData = {
+        name: user?.name || "John Doe",
+        email: user?.email || "email@domain.com",
+        avatar: "https://i.pras.co/100",
     };
+
+    const mainNavItems = getMainNavItems(orgId || "");
+    const dropDownItems = getDropDownItems(orgId || "");
 
     return (
         <Sidebar collapsible="icon" {...props}>
             <SidebarHeader>
-                <TeamSwitcher teams={data.teams} />
+                <TeamSwitcher teams={teams} />
             </SidebarHeader>
             <SidebarContent>
-                <NavProjects projects={data.projects} />
-                <NavMain items={data.navMain} />
+                <NavProjects projects={mainNavItems} />
+                <NavMain items={dropDownItems} />
             </SidebarContent>
             <SidebarFooter>
-                <NavUser user={data.user} />
+                <NavUser user={userData} />
             </SidebarFooter>
             <SidebarRail />
         </Sidebar>

@@ -9,6 +9,7 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Link } from "react-router-dom";
+import { IconType } from "react-icons/lib";
 
 export function NavProjects({
     projects,
@@ -16,7 +17,7 @@ export function NavProjects({
     projects: {
         name: string;
         url: string;
-        icon: LucideIcon;
+        icon: IconType;
     }[];
 }) {
     return (

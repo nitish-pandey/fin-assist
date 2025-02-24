@@ -62,6 +62,8 @@ export interface Account {
     organizationId: string;
     createdAt: string;
     updatedAt: string;
+
+    transactions?: Transaction[];
 }
 
 export interface Entity {

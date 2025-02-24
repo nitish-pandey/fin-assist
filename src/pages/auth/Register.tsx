@@ -20,7 +20,7 @@ const Register = () => {
 
     const onSubmit = async (data: RegisterData) => {
         try {
-            await api.post("/auth/register", data);
+            await api.post("/users/register", data);
             toast({
                 title: "Registration successful",
                 description: "You are now registered.",

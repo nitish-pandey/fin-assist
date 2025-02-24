@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProductList } from "@/components/lists/ProductList";
+import CreateProduct from "@/components/forms/CreateProduct";
 
 const OrgProducts = () => {
     const { orgId } = useParams<{ orgId: string }>() as { orgId: string };
@@ -22,13 +23,11 @@ const OrgProducts = () => {
     return (
         <div className="">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold mb-8">Products</h1>
-                <Link to={`/org/${orgId}/products/create`}>
-                    <Button>
-                        <Plus size={16} className="mr-2" />
-                        Add Product
-                    </Button>
-                </Link>
+                <div className="">
+                    <h1 className="text-2xl font-bold">Products</h1>
+                    <p className="text-gray-600">Manage your products here</p>
+                </div>
+                <CreateProduct orgId={orgId} />
             </div>
             <ProductList products={products} isLoading={false} error="" />
         </div>
