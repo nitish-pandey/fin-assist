@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/modules/AppSidebar";
+import PopUp from "@/components/modules/pop-up";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { OrgProvider } from "@/providers/org-provider";
 import { Outlet } from "react-router-dom";
@@ -14,6 +15,7 @@ export function MainLayout() {
                     </section>
                 </SidebarInset>
             </SidebarProvider>
+            <PopUp />
         </OrgProvider>
     );
 }

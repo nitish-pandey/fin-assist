@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
     Building,
     Mail,
@@ -21,108 +21,83 @@ import { useOrg } from "@/providers/org-provider";
 export default function OrgInfoPage() {
     const { orgId, refetch, organization } = useOrg();
 
-    if (!organization) {
-        return <ErrorMessage />;
-    }
-    const onEditSubmit = async ({ name, contact, pan, vat, domain }: Partial<Organization>) => {
-        await api.put(`/orgs/${orgId}`, {
-            name,
-            contact,
-            pan,
-            vat,
-            domain,
-            description: organization.description,
-        });
+    if (!organization) return <ErrorMessage />;
+
+    const onEditSubmit = async (updatedData: Partial<Organization>) => {
+        await api.put(`/orgs/${orgId}`, { ...organization, ...updatedData });
         refetch();
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <header className="bg-white shadow">
-                <div className="max-w-7xl mx-auto py-4 px-6">
-                    <h1 className="text-3xl font-bold text-gray-900">Organization Info</h1>
-                </div>
-            </header>
-            <main className="max-w-7xl mx-auto py-6 px-6">
-                <Card className="shadow-lg border">
-                    <CardHeader className="bg-primary text-primary-foreground flex flex-row justify-between items-center p-4">
-                        <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                            <Building className="h-6 w-6" />
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4">
+            <Card className="w-full max-w-4xl shadow-xl border rounded-xl">
+                <CardHeader className="bg-primary text-primary-foreground flex flex-row justify-between items-center p-5 rounded-t-xl">
+                    <div className="flex items-center gap-3">
+                        <Building className="h-7 w-7" />
+                        <CardTitle className="text-2xl font-semibold">
                             {organization.name}
                         </CardTitle>
-                        <EditOrgModal orgData={organization} onSubmit={onEditSubmit} />
-                    </CardHeader>
-                    <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-4">
-                            <InfoItem icon={Building} label="Name" value={organization.name} />
-                            <InfoItem
-                                icon={Mail}
-                                label="Contact"
-                                value={organization.contact || "N/A"}
+                    </div>
+                    <EditOrgModal orgData={organization} onSubmit={onEditSubmit} />
+                </CardHeader>
+                <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InfoItem icon={Mail} label="Contact" value={organization.contact} />
+                    <InfoItem icon={Globe} label="Domain" value={organization.domain} />
+                    <InfoItem icon={CreditCard} label="PAN" value={organization.pan} />
+                    <InfoItem icon={CreditCard} label="VAT" value={organization.vat} />
+                    <InfoItem icon={User} label="Owner ID" value={organization.ownerId} />
+                    <InfoItem
+                        icon={Calendar}
+                        label="Created At"
+                        value={formatDate(organization.createdAt)}
+                    />
+                    <InfoItem
+                        icon={Calendar}
+                        label="Updated At"
+                        value={formatDate(organization.updatedAt)}
+                    />
+                </CardContent>
+                {organization.logo && (
+                    <div className="flex justify-center py-6">
+                        <Avatar className="h-32 w-32 border-4 border-primary shadow-md rounded-full">
+                            <AvatarImage
+                                src={organization.logo}
+                                alt={`${organization.name} logo`}
                             />
-                            <InfoItem
-                                icon={Globe}
-                                label="Domain"
-                                value={organization.domain || "N/A"}
-                            />
-                            <InfoItem
-                                icon={CreditCard}
-                                label="PAN"
-                                value={organization.pan || "N/A"}
-                            />
-                        </div>
-                        <div className="space-y-4">
-                            <InfoItem
-                                icon={CreditCard}
-                                label="VAT"
-                                value={organization.vat || "N/A"}
-                            />
-                            <InfoItem icon={User} label="Owner ID" value={organization.ownerId} />
-                            <InfoItem
-                                icon={Calendar}
-                                label="Created At"
-                                value={new Date(organization.createdAt || "").toLocaleString()}
-                            />
-                            <InfoItem
-                                icon={Calendar}
-                                label="Updated At"
-                                value={new Date(organization.updatedAt || "").toLocaleString()}
-                            />
-                        </div>
-                    </CardContent>
-                    {organization.logo && (
-                        <div className="flex justify-center mt-6">
-                            <Avatar className="h-40 w-40 border-4 border-primary shadow-lg">
-                                <AvatarImage
-                                    src={organization.logo}
-                                    alt={`${organization.name} logo`}
-                                />
-                                <AvatarFallback>
-                                    <ImageIcon className="h-20 w-20 text-muted-foreground" />
-                                </AvatarFallback>
-                            </Avatar>
-                        </div>
-                    )}
-                </Card>
-            </main>
+                            <AvatarFallback>
+                                <ImageIcon className="h-16 w-16 text-muted-foreground" />
+                            </AvatarFallback>
+                        </Avatar>
+                    </div>
+                )}
+            </Card>
         </div>
     );
 }
 
-const LoadingSkeleton = () => (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-            <Loader2 className="h-16 w-16 animate-spin text-primary mx-auto" />
-            <p className="mt-4 text-lg font-medium text-gray-600">
-                Loading organization details...
-            </p>
+const InfoItem = ({
+    icon: Icon,
+    label,
+    value,
+}: {
+    icon: React.ElementType;
+    label: string;
+    value?: string | null;
+}) => (
+    <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-md border border-gray-200">
+        <div className="bg-primary/10 p-2 rounded-full">
+            <Icon className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+            <p className="text-sm font-medium text-gray-500">{label}</p>
+            <p className="text-base font-semibold text-gray-900">{value || "N/A"}</p>
         </div>
     </div>
 );
 
 const ErrorMessage = () => (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-        <Card className="max-w-md w-full shadow-lg border">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+        <Card className="max-w-md w-full shadow-lg border rounded-lg">
             <CardHeader>
                 <CardTitle className="text-center text-red-600">Error</CardTitle>
             </CardHeader>
@@ -135,22 +110,5 @@ const ErrorMessage = () => (
     </div>
 );
 
-const InfoItem = ({
-    icon: Icon,
-    label,
-    value,
-}: {
-    icon: React.ElementType;
-    label: string;
-    value?: string;
-}) => (
-    <div className="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="bg-primary/10 p-2 rounded-full">
-            <Icon className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-            <p className="text-sm font-medium text-gray-500">{label}</p>
-            <p className="text-base font-semibold text-gray-900">{value || "N/A"}</p>
-        </div>
-    </div>
-);
+const formatDate = (dateString?: string) =>
+    dateString ? new Date(dateString).toLocaleString() : "N/A";

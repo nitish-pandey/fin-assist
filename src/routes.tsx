@@ -25,6 +25,8 @@ import SellTransactionPage from "./pages/admin/transactions/sell";
 import BankAccounts from "./pages/admin/accounts/bank";
 import BuyOrderPage from "./pages/admin/order/buy";
 import SellOrderPage from "./pages/admin/order/sell";
+import ChequeAccounts from "./pages/admin/accounts/cheques";
+import BankODAccounts from "./pages/admin/accounts/bank-od";
 
 export const routes: RouteObject[] = [
     {
@@ -78,6 +80,14 @@ export const routes: RouteObject[] = [
                             {
                                 element: <BankAccounts />,
                                 path: "bank",
+                            },
+                            {
+                                element: <ChequeAccounts />,
+                                path: "cheques",
+                            },
+                            {
+                                element: <BankODAccounts />,
+                                path: "bank-od",
                             },
                         ],
                     },

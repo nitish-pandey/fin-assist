@@ -6,7 +6,7 @@ import AccountCard from "@/components/cards/AccountCard";
 import AccountDetails from "@/components/modules/AccountDetails";
 import CreateAccountForm from "@/components/forms/CreateAccountForm";
 
-export default function BankAccounts() {
+export default function BankODAccounts() {
     const { orgId } = useOrg();
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
@@ -50,21 +50,21 @@ export default function BankAccounts() {
             {/* Header Section */}
             <div className="flex items-center justify-between border-b pb-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Bank Accounts</h2>
-                    <p className="text-sm text-gray-500">View and manage your bank accounts</p>
+                    <h2 className="text-2xl font-bold text-gray-800">Bank OverDraft Accounts</h2>
+                    <p className="text-sm text-gray-500">View and manage your bank-od accounts</p>
                 </div>
-                <CreateAccountForm type="BANK" onSubmit={onSubmit} disableType={true} />
+                <CreateAccountForm type="BANK_OD" onSubmit={onSubmit} disableType={true} />
             </div>
 
             {/* Loading State */}
             {loading ? (
                 <div className="flex justify-center items-center h-40">
-                    <p className="text-gray-500">Loading bank accounts...</p>
+                    <p className="text-gray-500">Loading bank-od accounts...</p>
                 </div>
             ) : error ? (
                 <p className="text-center text-red-500">{error}</p>
             ) : accounts.length === 0 ? (
-                <p className="text-center text-gray-500 mt-6">No bank accounts found.</p>
+                <p className="text-center text-gray-500 mt-6">No bank-od accounts found.</p>
             ) : (
                 <>
                     {/* Account List */}

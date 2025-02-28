@@ -193,6 +193,7 @@ export default function BuyProductForm({
                         </div>
                     </CardContent>
                 </Card>
+                <BillUpload onUpload={(file) => console.log(file)} />
                 <Button type="submit" className="w-full py-6 text-lg">
                     Buy
                 </Button>
@@ -200,3 +201,46 @@ export default function BuyProductForm({
         </div>
     );
 }
+
+interface BillUploadProps {
+    onUpload: (file: File) => void;
+    file?: File;
+    error?: string;
+}
+
+const BillUpload: React.FC<BillUploadProps> = ({ onUpload, file, error }) => {
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            onUpload(file);
+        }
+    };
+
+    return (
+        <div className="space-y-2 flex justify-between items-center py-8">
+            <Label className="text-xl">Bill Image</Label>
+            <div className="flex items-center space-x-4">
+                <input
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    onChange={handleFileChange}
+                    id="bill-upload"
+                />
+                <label
+                    htmlFor="bill-upload"
+                    className="flex items-center justify-center w-32 h-12 border border-dashed border-primary rounded-lg cursor-pointer"
+                >
+                    <span className="text-primary">Upload Bill</span>
+                </label>
+                {selectedFile && (
+                    <span className="text-sm text-muted-foreground">{selectedFile.name}</span>
+                )}
+            </div>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+        </div>
+    );
+};

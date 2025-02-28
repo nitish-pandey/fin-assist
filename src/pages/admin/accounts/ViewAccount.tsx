@@ -12,22 +12,9 @@ interface EmptyAccountCardProps {
     onClick: () => void;
 }
 
-const EmptyAccountCard = ({ onClick, text }: EmptyAccountCardProps) => {
-    return (
-        <div
-            className="bg-white flex gap-2 min-h-40 items-center justify-center border border-gray-400 rounded-xl p-4 w-72 cursor-pointer"
-            onClick={onClick}
-        >
-            <Plus />
-            <p className="text-sm text-gray-600">{text || "Add a Account"}</p>
-        </div>
-    );
-};
-
 const ViewAccountPage = () => {
     const { orgId } = useOrg();
     const [accounts, setAccounts] = useState<Account[]>([]);
-    const createButtonRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         const fetchAccounts = async () => {
@@ -39,10 +26,6 @@ const ViewAccountPage = () => {
 
     const onSubmit = async (account: Account) => {
         await api.post(`orgs/${orgId}/accounts`, account);
-    };
-
-    const triggerButton = () => {
-        createButtonRef.current?.click();
     };
 
     return (
@@ -57,7 +40,6 @@ const ViewAccountPage = () => {
                     avoidCashCounter={
                         accounts.filter((account) => account.type === "CASH_COUNTER").length > 0
                     }
-                    ref={createButtonRef}
                 />
             </div>
             <div className="">
@@ -74,7 +56,13 @@ const ViewAccountPage = () => {
                                 balance={account.balance}
                             />
                         ))}
-                    <EmptyAccountCard onClick={triggerButton} text="Add a bank account" />
+                    {accounts.filter((account) => account.type === "BANK").length === 0 && (
+                        <div className="bg-white shadow rounded p-4 w-72">
+                            <div className="flex items-center justify-center">
+                                <p className="text-gray-400">No bank accounts found</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="">
@@ -91,8 +79,13 @@ const ViewAccountPage = () => {
                                 balance={account.balance}
                             />
                         ))}
-                    {/* if no  */}
-                    <EmptyAccountCard onClick={() => {}} />
+                    {accounts.filter((account) => account.type === "BANK_OD").length === 0 && (
+                        <div className="bg-white rounded p-4 w-72">
+                            <div className="flex items-center justify-center">
+                                <p className="text-gray-400">No bank OD accounts found</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="">
@@ -108,8 +101,13 @@ const ViewAccountPage = () => {
                                 <p className="text-sm text-gray-400">Balance: {account.balance}</p>
                             </div>
                         ))}
-                    {/* if no  */}
-                    <EmptyAccountCard onClick={() => {}} />
+                    {accounts.filter((account) => account.type === "CASH_COUNTER").length === 0 && (
+                        <div className="bg-white rounded p-4 w-72">
+                            <div className="flex items-center justify-center">
+                                <p className="text-gray-400">No cash accounts found</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="">
@@ -125,8 +123,13 @@ const ViewAccountPage = () => {
                                 <p className="text-sm text-gray-400">Balance: {account.balance}</p>
                             </div>
                         ))}
-                    {/* if no  */}
-                    <EmptyAccountCard onClick={() => {}} />
+                    {accounts.filter((account) => account.type === "CHEQUE").length === 0 && (
+                        <div className="bg-white rounded p-4 w-72">
+                            <div className="flex items-center justify-center">
+                                <p className="text-gray-400">No cheque accounts found</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="">
@@ -142,8 +145,13 @@ const ViewAccountPage = () => {
                                 <p className="text-sm text-gray-400">Balance: {account.balance}</p>
                             </div>
                         ))}
-                    {/* if no  */}
-                    <EmptyAccountCard onClick={() => {}} />
+                    {accounts.filter((account) => account.type === "MISC").length === 0 && (
+                        <div className="bg-white rounded p-4 w-72">
+                            <div className="flex items-center justify-center">
+                                <p className="text-gray-400">No miscellaneous accounts found</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

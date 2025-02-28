@@ -29,6 +29,7 @@ interface CreateAccountFormProps {
     ref?: React.RefObject<HTMLButtonElement>;
     onSubmit: (account: Account) => Promise<void>;
     avoidCashCounter?: boolean;
+    disableType?: boolean;
 }
 
 const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
@@ -36,6 +37,7 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
     type,
     ref,
     avoidCashCounter,
+    disableType = false,
 }) => {
     const [formState, setFormState] = useState<"idle" | "submitting" | "success" | "error">("idle");
     const { toast } = useToast();
@@ -128,7 +130,11 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
                             control={control}
                             rules={{ required: "Account type is required" }}
                             render={({ field }) => (
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    disabled={disableType}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select Account Type" />
                                     </SelectTrigger>

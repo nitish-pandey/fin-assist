@@ -94,11 +94,11 @@ export const getDropDownItems = (orgId: string): DropDownItems[] => {
                 },
                 {
                     title: "Bank OD",
-                    url: "/org/" + orgId + "/accounts/view",
+                    url: "/org/" + orgId + "/accounts/bank-od",
                 },
                 {
                     title: "Cheque",
-                    url: "/org/" + orgId + "/accounts/view",
+                    url: "/org/" + orgId + "/accounts/cheques",
                 },
             ],
         },
