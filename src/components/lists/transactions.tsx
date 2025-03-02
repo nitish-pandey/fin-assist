@@ -35,11 +35,6 @@ const columns: ColumnDef<Transaction>[] = [
     },
 ];
 
-export const TransactionsList: React.FC<TransactionsListProps> = ({
-    transactions,
-    isLoading,
-    error,
-    refetch,
-}) => {
+export const TransactionsList: React.FC<TransactionsListProps> = ({ transactions, isLoading }) => {
     return <TableComponent columns={columns} data={transactions} isLoading={isLoading} />;
 };

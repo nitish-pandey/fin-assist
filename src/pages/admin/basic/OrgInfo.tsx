@@ -1,16 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-    Building,
-    Mail,
-    Globe,
-    User,
-    CreditCard,
-    Calendar,
-    ImageIcon,
-    Loader2,
-} from "lucide-react";
+import { Building, Mail, Globe, User, CreditCard, Calendar, ImageIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Organization } from "@/data/types";

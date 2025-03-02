@@ -19,9 +19,15 @@ interface AddPaymentDialogProps {
     accounts: Account[];
     type: "BUY" | "SELL";
     onAddPayment: (amount: number, accountId: string) => void;
+    remainingAmount?: number;
 }
 
-const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({ accounts, type, onAddPayment }) => {
+const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
+    accounts,
+    type,
+    onAddPayment,
+    remainingAmount,
+}) => {
     const [isOpen, setIsOpen] = useState(false);
     const [amount, setAmount] = useState<number | "">("");
     const [selectedAccount, setSelectedAccount] = useState("");
@@ -62,6 +68,11 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({ accounts, type, onA
             <Dialog open={isOpen} onOpenChange={handleClose}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>Add Payment</DialogHeader>
+                    {remainingAmount && (
+                        <div className="col-span-3 text-sm text-gray-800">
+                            Remaining Amount: ${remainingAmount.toFixed(2)}
+                        </div>
+                    )}
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="amount" className="text-right">
@@ -103,6 +114,7 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({ accounts, type, onA
                         </div>
                     </div>
                     {error && <div className="text-red-500 text-sm font-medium py-2">{error}</div>}
+
                     <DialogFooter>
                         <Button onClick={handleAddPayment} type="button">
                             Add Payment

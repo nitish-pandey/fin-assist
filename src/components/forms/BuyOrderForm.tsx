@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import { Trash2 } from "lucide-react";
+import React, { useState, useCallback, useMemo } from "react";
+import { Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -19,13 +19,18 @@ import AddEntity from "../modals/AddEntity";
 import { Entity, Product, Account } from "@/data/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProductDetails } from "./ProductDetails";
-
+import { useToast } from "@/hooks/use-toast";
 interface BuyProductFormProps {
     entities: Entity[];
     products: Product[];
     accounts: Account[];
     addEntity: (entity: Partial<Entity>) => Promise<void>;
-    onSubmit: (data: any) => void;
+    onSubmit: (
+        products: { id: string; quantity: number }[],
+        payments: { amount: number; accountId: string }[],
+        entityId?: string,
+        billFiles?: File[]
+    ) => Promise<void> | void;
 }
 
 export default function BuyProductForm({
@@ -43,26 +48,89 @@ export default function BuyProductForm({
     const [selectedPayments, setSelectedPayments] = useState<
         { amount: number; accountId: string }[]
     >([]);
+    const [billFiles, setBillFiles] = useState<File[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const { toast } = useToast();
+
+    // Calculate the total price of selected products.
+    const totalProductPrice = useMemo(() => {
+        return selectedProducts.reduce((acc, prod) => {
+            const product = products.find((p) => p.id === prod.id);
+            return acc + prod.quantity * (product?.price || 0);
+        }, 0);
+    }, [selectedProducts, products]);
+
+    // Calculate the total payment amount.
+    const totalPayments = useMemo(() => {
+        return selectedPayments.reduce((acc, payment) => acc + payment.amount, 0);
+    }, [selectedPayments]);
+
+    // Calculate the remaining amount.
+    const remainingAmount = totalProductPrice - totalPayments;
 
     const removePayment = useCallback((index: number) => {
         setSelectedPayments((prev) => prev.filter((_, i) => i !== index));
     }, []);
 
+    const clearForm = useCallback(() => {
+        setSelectedEntity(null);
+        setSelectedProducts([]);
+        setSelectedPayments([]);
+        setBillFiles([]);
+        setError(null);
+    }, []);
+
     const handleSubmit = useCallback(
-        (e: React.FormEvent) => {
+        async (e: React.FormEvent) => {
             e.preventDefault();
-            if (!selectedEntity) return;
-            onSubmit({ entity: selectedEntity, selectedProducts, selectedPayments });
+            setError(null);
+
+            // Validate entity selection.
+            if (!selectedEntity) {
+                setError("Please select an entity.");
+                return;
+            }
+            const filteredProducts = selectedProducts.filter(
+                (product) => product.quantity > 0 && product.id
+            );
+            // Validate product selection.
+            if (filteredProducts.length === 0) {
+                setError("Please select at least one product.");
+                return;
+            }
+            // Validate payment completion.
+            if (selectedPayments.length === 0) {
+                setError("Payment is not completed yet. Please add at least one payment.");
+                return;
+            }
+            // Optionally, validate that bill files are uploaded if required.
+            // if (billFiles.length === 0) {
+            //   setError("Please upload at least one bill file.");
+            //   return;
+            // }
+
+            try {
+                await onSubmit(filteredProducts, selectedPayments, selectedEntity.id, billFiles);
+                clearForm();
+                toast({
+                    title: "Purchase Successful",
+                    description: "The product has been purchased successfully.",
+                    variant: "default",
+                });
+            } catch (err) {
+                setError("An error occurred during submission. Please try again.");
+            }
         },
-        [selectedEntity, selectedProducts, selectedPayments, onSubmit]
+        [selectedEntity, selectedProducts, selectedPayments, billFiles, onSubmit, clearForm, toast]
     );
 
     return (
         <div className="max-w-5xl mx-auto p-6">
             <h2 className="text-2xl font-semibold mb-2">Buy Product</h2>
             <p className="text-muted-foreground mb-8">
-                Add product to buy and select client to buy
+                Add product to buy and select client to buy.
             </p>
+
             <form onSubmit={handleSubmit}>
                 <Card className="mb-8">
                     <CardHeader>
@@ -109,6 +177,16 @@ export default function BuyProductForm({
                                         </PopoverContent>
                                     </Popover>
                                     <AddEntity addEntity={addEntity} text="Add New" />
+                                    {selectedEntity && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => setSelectedEntity(null)}
+                                            title="Clear Selected Entity"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                             <div className="space-y-2">
@@ -142,6 +220,7 @@ export default function BuyProductForm({
                                 <AddPaymentDialog
                                     type="BUY"
                                     accounts={accounts}
+                                    remainingAmount={remainingAmount}
                                     onAddPayment={(amount, accountId) =>
                                         setSelectedPayments((prev) => [
                                             ...prev,
@@ -150,6 +229,13 @@ export default function BuyProductForm({
                                     }
                                 />
                             </div>
+
+                            {selectedProducts.length > 0 && remainingAmount > 0 && (
+                                <div className="p-3 bg-blue-50 text-blue-600 rounded">
+                                    Payment is not completed yet.
+                                </div>
+                            )}
+
                             <ScrollArea className="h-[200px] w-full rounded-md border p-4">
                                 {selectedPayments.length === 0 ? (
                                     <p className="text-muted-foreground text-center">
@@ -193,7 +279,12 @@ export default function BuyProductForm({
                         </div>
                     </CardContent>
                 </Card>
-                <BillUpload onUpload={(file) => console.log(file)} />
+                <BillUpload onUpload={setBillFiles} />
+                {error && (
+                    <div className="mb-4 p-3 border border-red-500 bg-red-50 text-red-600 rounded">
+                        {error}
+                    </div>
+                )}
                 <Button type="submit" className="w-full py-6 text-lg">
                     Buy
                 </Button>
@@ -203,29 +294,36 @@ export default function BuyProductForm({
 }
 
 interface BillUploadProps {
-    onUpload: (file: File) => void;
-    file?: File;
+    onUpload: (files: File[]) => void;
     error?: string;
 }
 
-const BillUpload: React.FC<BillUploadProps> = ({ onUpload, file, error }) => {
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+const BillUpload: React.FC<BillUploadProps> = ({ onUpload, error }) => {
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setSelectedFile(file);
-            onUpload(file);
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+            const newFiles = [...selectedFiles, ...files];
+            setSelectedFiles(newFiles);
+            onUpload(newFiles);
         }
     };
 
+    const handleRemoveFile = (index: number) => {
+        const newFiles = selectedFiles.filter((_, i) => i !== index);
+        setSelectedFiles(newFiles);
+        onUpload(newFiles);
+    };
+
     return (
-        <div className="space-y-2 flex justify-between items-center py-8">
-            <Label className="text-xl">Bill Image</Label>
-            <div className="flex items-center space-x-4">
+        <div className="space-y-2 py-8">
+            <div className="flex items-center justify-between">
+                <Label className="text-xl">Bill Files</Label>
                 <input
                     type="file"
-                    accept=".pdf"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    multiple
                     className="hidden"
                     onChange={handleFileChange}
                     id="bill-upload"
@@ -236,8 +334,28 @@ const BillUpload: React.FC<BillUploadProps> = ({ onUpload, file, error }) => {
                 >
                     <span className="text-primary">Upload Bill</span>
                 </label>
-                {selectedFile && (
-                    <span className="text-sm text-muted-foreground">{selectedFile.name}</span>
+            </div>
+            <div className="mt-4">
+                {selectedFiles.length === 0 ? (
+                    <p className="text-muted-foreground text-center">No files uploaded.</p>
+                ) : (
+                    <ul className="space-y-2">
+                        {selectedFiles.map((file, index) => (
+                            <li
+                                key={index}
+                                className="flex items-center justify-between border p-2 rounded"
+                            >
+                                <span className="truncate">{file.name}</span>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleRemoveFile(index)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </li>
+                        ))}
+                    </ul>
                 )}
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}

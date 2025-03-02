@@ -1,13 +1,6 @@
 import { Account, Transaction } from "@/data/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface AccountDetailsProps {
     account: Account | null;
     isLoading: boolean;
@@ -21,10 +14,6 @@ const paymentColumns: ColumnDef<Transaction>[] = [
     {
         header: "ID",
         accessorKey: "id",
-    },
-    {
-        header: "Type",
-        accessorKey: "type",
     },
     {
         header: "Amount",
@@ -48,6 +37,7 @@ const AccountDetails = ({ account, isLoading, error }: AccountDetailsProps) => {
     if (!account) {
         return <div>No account found</div>;
     }
+    console.log(account.transactions);
 
     return (
         <div className="mt-8">
@@ -84,7 +74,7 @@ const AccountDetails = ({ account, isLoading, error }: AccountDetailsProps) => {
                                     <CardTitle>All Payments</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    {account.transactions && account.transactions.length === 0 ? (
+                                    {account.transactions && account.transactions.length > 0 ? (
                                         <TableComponent
                                             columns={paymentColumns}
                                             data={account.transactions}
@@ -103,10 +93,14 @@ const AccountDetails = ({ account, isLoading, error }: AccountDetailsProps) => {
                                     <CardTitle>Buy Payments</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    {account.transactions && account.transactions.length === 0 ? (
+                                    {account.transactions &&
+                                    account.transactions.filter((t) => t.type === "BUY").length >
+                                        0 ? (
                                         <TableComponent
                                             columns={paymentColumns}
-                                            data={account.transactions}
+                                            data={account.transactions.filter(
+                                                (t) => t.type === "BUY"
+                                            )}
                                         />
                                     ) : (
                                         <p>No buy payments found.</p>
@@ -122,10 +116,14 @@ const AccountDetails = ({ account, isLoading, error }: AccountDetailsProps) => {
                                     <CardTitle>Sell Payments</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    {account.transactions && account.transactions.length === 0 ? (
+                                    {account.transactions &&
+                                    account.transactions.filter((t) => t.type === "SELL").length >
+                                        0 ? (
                                         <TableComponent
                                             columns={paymentColumns}
-                                            data={account.transactions}
+                                            data={account.transactions.filter(
+                                                (t) => t.type === "SELL"
+                                            )}
                                         />
                                     ) : (
                                         <p>No sell payments found.</p>

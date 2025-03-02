@@ -19,7 +19,8 @@ export default function BankODAccounts() {
         setError(null);
         try {
             const { data } = await api.get<Account[]>(`orgs/${orgId}/accounts`);
-            const filteredAccounts = data.filter((acc) => acc.type === "BANK");
+            const filteredAccounts = data.filter((acc) => acc.type === "BANK_OD");
+            console.log(filteredAccounts);
             setAccounts(filteredAccounts);
             if (filteredAccounts.length > 0) {
                 setSelectedAccount(filteredAccounts[0]);

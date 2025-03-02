@@ -1,10 +1,8 @@
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Product } from "@/data/types";
 import { useEffect } from "react";
 import { api } from "@/utils/api";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { ProductList } from "@/components/lists/ProductList";
 import CreateProduct from "@/components/forms/CreateProduct";
 

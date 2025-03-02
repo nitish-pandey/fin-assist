@@ -31,15 +31,41 @@ const UserInviteList: React.FC<UserInviteListProps> = ({ invites, removeInvite }
             cell: (props) => new Date(props.row.original.updatedAt).toLocaleDateString(),
         },
         {
+            accessorKey: "status",
+            header: "Status",
+            cell: (props) => {
+                const status = props.row.original.status;
+                return (
+                    <span
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            status === "PENDING"
+                                ? "bg-yellow-200 text-yellow-800"
+                                : status === "ACCEPTED"
+                                ? "bg-green-200 text-green-800"
+                                : status === "REJECTED"
+                                ? "bg-red-200 text-red-800"
+                                : "bg-gray-200 text-gray-800"
+                        }`}
+                    >
+                        {status}
+                    </span>
+                );
+            },
+        },
+        {
             accessorKey: "id",
             header: "Actions",
             enableSorting: false,
             cell: (props) => (
-                <RemoveModal
-                    title="Remove Invite"
-                    description={`Are you sure you want to remove the invite for ${props.row.original.email}?`}
-                    onRemove={() => removeInvite(props.row.original.id)}
-                />
+                <div className="">
+                    {props.row.original.status === "PENDING" && (
+                        <RemoveModal
+                            title="Remove Invite"
+                            description={`Are you sure you want to remove the invite for ${props.row.original.email}?`}
+                            onRemove={() => removeInvite(props.row.original.id)}
+                        />
+                    )}
+                </div>
             ),
         },
     ];

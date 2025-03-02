@@ -4,7 +4,7 @@ import { api } from "@/utils/api";
 import { Account } from "@/data/types";
 import AccountDetails from "@/components/modules/AccountDetails";
 import CreateAccountForm from "@/components/forms/CreateAccountForm";
-import { FaUniversity, FaCreditCard, FaMoneyBillWave } from "react-icons/fa";
+import { FaUniversity } from "react-icons/fa";
 
 export default function ChequeAccounts() {
     const { orgId } = useOrg();

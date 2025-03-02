@@ -39,8 +39,11 @@ export interface Invite {
     id: string;
     organizationId: string;
     email: string;
+    status: "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED";
     createdAt: string;
     updatedAt: string;
+
+    organization?: Organization;
 }
 
 export type ACCOUNT_TYPE = "BANK" | "BANK_OD" | "CASH_COUNTER" | "CHEQUE" | "MISC";
@@ -150,6 +153,7 @@ export interface Transaction {
     organizationId: string;
     accountId: string;
     orderId: string | null;
+    type: "BUY" | "SELL";
 
     createdAt: string;
     updatedAt: string;

@@ -1,7 +1,6 @@
 import { Category } from "@/data/types";
 import { TableComponent } from "../modules/Table";
 import { ColumnDef } from "@tanstack/react-table";
-import { RemoveModal } from "../modals/RemoveModal";
 interface CategoryListProps {
     categories: Category[];
     loading: boolean;

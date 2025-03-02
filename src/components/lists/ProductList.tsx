@@ -1,7 +1,6 @@
 import { Product } from "@/data/types";
 import { TableComponent } from "../modules/Table";
 import { ColumnDef } from "@tanstack/react-table";
-import { RemoveModal } from "../modals/RemoveModal";
 interface ProductListProps {
     products: Product[];
     isLoading: boolean;

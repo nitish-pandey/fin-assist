@@ -80,7 +80,7 @@ export const BuyOrderPage = () => {
                 entities={entities}
                 accounts={accounts}
                 // onCreateOrder={onCreateOrder}
-                onSubmit={(data) => console.log(data)}
+                onSubmit={onCreateOrder}
                 addEntity={addEntity}
             />
         </section>

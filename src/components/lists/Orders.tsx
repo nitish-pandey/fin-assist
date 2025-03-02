@@ -41,6 +41,12 @@ const columns: ColumnDef<Order>[] = [
                         PENDING
                     </span>
                 );
+            } else if (props.row.original.paymentStatus === "PARTIAL") {
+                return (
+                    <span className="bg-blue-500 text-white px-2 py-1 my-1 rounded-lg">
+                        PARTIAL
+                    </span>
+                );
             }
             return <span className="bg-red-500 text-white px-2 py-1 my-1 rounded-lg">FAILED</span>;
         },

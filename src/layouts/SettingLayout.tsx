@@ -26,6 +26,11 @@ const SettingLayout = () => {
             url: "/settings/orgs",
             icon: Inbox,
         },
+        {
+            title: "Invites",
+            url: "/settings/invites",
+            icon: Inbox,
+        },
     ];
     return (
         <SidebarProvider>
@@ -53,10 +58,7 @@ const SettingLayout = () => {
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <SidebarMenuButton>
-                                <Link
-                                    to="/auth/logout"
-                                    className="flex items-center gap-2"
-                                >
+                                <Link to="/auth/logout" className="flex items-center gap-2">
                                     <LogOut />
                                     <span>Logout</span>
                                 </Link>

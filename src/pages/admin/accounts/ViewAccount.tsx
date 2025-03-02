@@ -1,16 +1,9 @@
 import { useOrg } from "@/providers/org-provider";
 import { api } from "@/utils/api";
 import { Account } from "@/data/types";
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import AccountCard from "@/components/cards/AccountCard";
 import CreateAccountForm from "@/components/forms/CreateAccountForm";
-import { Plus } from "lucide-react";
-
-interface EmptyAccountCardProps {
-    text?: string;
-    onClick: () => void;
-}
 
 const ViewAccountPage = () => {
     const { orgId } = useOrg();

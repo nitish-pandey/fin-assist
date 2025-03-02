@@ -27,6 +27,7 @@ import BuyOrderPage from "./pages/admin/order/buy";
 import SellOrderPage from "./pages/admin/order/sell";
 import ChequeAccounts from "./pages/admin/accounts/cheques";
 import BankODAccounts from "./pages/admin/accounts/bank-od";
+import UserInvitePages from "./pages/settings/invites";
 
 export const routes: RouteObject[] = [
     {
@@ -159,6 +160,10 @@ export const routes: RouteObject[] = [
                     {
                         path: "orgs",
                         element: <UserOrgs />,
+                    },
+                    {
+                        path: "invites",
+                        element: <UserInvitePages />,
                     },
                 ],
             },
