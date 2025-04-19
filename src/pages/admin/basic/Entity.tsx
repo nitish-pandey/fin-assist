@@ -40,7 +40,7 @@ const EntityInfo = () => {
     return (
         <div className="w-full mx-auto">
             <div className="flex flex-row items-center justify-between">
-                <h2 className="text-2xl font-bold">Entities</h2>
+                <h2 className="text-3xl font-bold">Entities</h2>
                 <AddEntity addEntity={addEntity} />
             </div>
 

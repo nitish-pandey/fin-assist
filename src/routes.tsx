@@ -149,12 +149,12 @@ export const routes: RouteObject[] = [
                 ],
             },
             {
-                path: "settings",
+                path: "profile",
                 element: <SettingLayout />,
 
                 children: [
                     {
-                        path: "profile",
+                        path: "",
                         element: <ProfilePage />,
                     },
                     {

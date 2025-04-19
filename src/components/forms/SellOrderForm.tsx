@@ -20,7 +20,7 @@ import { Entity, Product, Account } from "@/data/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProductDetails } from "./ProductDetails";
 import { useToast } from "@/hooks/use-toast";
-interface BuyProductFormProps {
+interface SellProductFormProps {
     entities: Entity[];
     products: Product[];
     accounts: Account[];
@@ -33,13 +33,13 @@ interface BuyProductFormProps {
     ) => Promise<void> | void;
 }
 
-export default function BuyProductForm({
+export default function SellOrderForm({
     entities,
     products,
     accounts,
     onSubmit,
     addEntity,
-}: BuyProductFormProps) {
+}: SellProductFormProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [selectedEntity, setSelectedEntity] = useState<Entity | null>(null);
@@ -85,11 +85,13 @@ export default function BuyProductForm({
         async (e: React.FormEvent) => {
             e.preventDefault();
             setError(null);
-            setLoading(true);
 
             // Validate entity selection.
             if (!selectedEntity) {
-                setError("Please select an entity.");
+                // if payment is not completed yet, then don't show this error
+                if (remainingAmount > 0) {
+                    setError("Please select an entity.");
+                }
                 return;
             }
             const filteredProducts = selectedProducts.filter(
@@ -100,11 +102,17 @@ export default function BuyProductForm({
                 setError("Please select at least one product.");
                 return;
             }
+            // Validate payment completion.
+            if (selectedPayments.length === 0) {
+                setError("Payment is not completed yet. Please add at least one payment.");
+                return;
+            }
             // Optionally, validate that bill files are uploaded if required.
             // if (billFiles.length === 0) {
             //   setError("Please upload at least one bill file.");
             //   return;
             // }
+            setLoading(true);
 
             try {
                 await onSubmit(filteredProducts, selectedPayments, selectedEntity.id, billFiles);
@@ -123,13 +131,13 @@ export default function BuyProductForm({
     );
 
     return (
-        <div className="p-6">
-            <h2 className="text-2xl font-semibold mb-2">Buy Product</h2>
+        <div className="max-w-6xl p-6">
+            <h2 className="text-2xl font-semibold mb-2">Sell Product</h2>
             <p className="text-muted-foreground mb-8">
-                Add product to buy and select client to buy.
+                Add product to Sell and select client to Sell.
             </p>
 
-            <form>
+            <form onSubmit={handleSubmit}>
                 <Card className="mb-8">
                     <CardHeader>
                         <CardTitle>Client Information</CardTitle>
@@ -218,7 +226,7 @@ export default function BuyProductForm({
                             <div className="flex justify-between items-center">
                                 <h3 className="text-lg font-semibold">Selected Payments</h3>
                                 <AddPaymentDialog
-                                    type="BUY"
+                                    type="SELL"
                                     accounts={accounts}
                                     remainingAmount={remainingAmount}
                                     onAddPayment={(amount, accountId) =>
@@ -286,13 +294,8 @@ export default function BuyProductForm({
                         {error}
                     </div>
                 )}
-                <Button
-                    type="submit"
-                    className="w-full py-6 text-lg"
-                    onClick={handleSubmit}
-                    disabled={loading}
-                >
-                    {loading ? "Processing..." : "Create Order"}
+                <Button type="submit" className="w-full py-6 text-lg" disabled={loading}>
+                    {loading ? "Submitting..." : "Submit"}
                 </Button>
             </form>
         </div>
@@ -353,9 +356,9 @@ const BillUpload: React.FC<BillUploadProps> = ({ onUpload, error }) => {
                             >
                                 <span className="truncate">{file.name}</span>
                                 <Button
-                                    type="button"
                                     variant="ghost"
                                     size="icon"
+                                    type="button"
                                     onClick={() => handleRemoveFile(index)}
                                 >
                                     <Trash2 className="h-4 w-4" />

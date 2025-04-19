@@ -2,7 +2,7 @@ import { useOrg } from "@/providers/org-provider";
 import { useState, useEffect } from "react";
 import { Account, Entity, Product } from "@/data/types";
 import { api } from "@/utils/api";
-import { CreateOrderForm } from "@/components/forms/CreateOrderForm";
+import SellOrderForm from "@/components/forms/SellOrderForm";
 export const SellOrderPage = () => {
     const { orgId } = useOrg();
     const [products, setProducts] = useState<Product[]>([]);
@@ -38,14 +38,13 @@ export const SellOrderPage = () => {
     }, [orgId]);
 
     const onCreateOrder = async (
-        type: "BUY" | "SELL",
         products: { id: string; quantity: number }[],
         payments: { amount: number; accountId: string }[],
         entityId?: string
     ) => {
         try {
             const order = await api.post(`/orgs/${orgId}/orders`, {
-                type,
+                type: "SELL",
                 products,
                 payments,
                 entityId,
@@ -63,17 +62,24 @@ export const SellOrderPage = () => {
     if (error) {
         return <p className="text-center text-red-500">{error}</p>;
     }
+    const addEntity = async (entity: Partial<Entity>) => {
+        try {
+            const res = await api.post(`/orgs/${orgId}/entities`, entity);
+            setEntities((prev) => [...prev, res.data]);
+        } catch (error) {
+            console.error("Error adding entity:", error);
+            throw error;
+        }
+    };
 
     return (
-        <section className="container mx-auto max-w-7xl px-6 py-8">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-semibold text-gray-700">Create Order</h1>
-            </div>
-            <CreateOrderForm
+        <section className="container max-w-7xl p-4">
+            <SellOrderForm
                 products={products}
                 entities={entities}
                 accounts={accounts}
-                onCreateOrder={onCreateOrder}
+                onSubmit={onCreateOrder}
+                addEntity={addEntity}
             />
         </section>
     );

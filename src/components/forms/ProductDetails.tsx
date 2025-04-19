@@ -98,7 +98,11 @@ export function ProductDetails({ products, onUpdateProducts }: ProductDetailsPro
                             />
                         ))}
                     </ScrollArea>
-                    <Button onClick={handleAddEmptySlot} className="w-full max-w-40 mx-auto">
+                    <Button
+                        onClick={handleAddEmptySlot}
+                        className="w-full max-w-40 mx-auto"
+                        type="button"
+                    >
                         + Add more product
                     </Button>
                     <div className="flex justify-end items-center space-x-2 font-medium">
@@ -145,6 +149,7 @@ const ProductRow: React.FC<ProductRowProps> = React.memo(
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                             <Button
+                                type="button"
                                 variant="outline"
                                 role="combobox"
                                 aria-expanded={open}
@@ -192,6 +197,7 @@ const ProductRow: React.FC<ProductRowProps> = React.memo(
                         <Button
                             size="icon"
                             variant="outline"
+                            type="button"
                             onClick={() => onQuantityChange(index, item.quantity - 1)}
                         >
                             <Minus className="h-4 w-4" />
@@ -207,6 +213,7 @@ const ProductRow: React.FC<ProductRowProps> = React.memo(
                         <Button
                             size="icon"
                             variant="outline"
+                            type="button"
                             onClick={() => onQuantityChange(index, item.quantity + 1)}
                         >
                             <Plus className="h-4 w-4" />
@@ -223,6 +230,7 @@ const ProductRow: React.FC<ProductRowProps> = React.memo(
                     <Button
                         size="icon"
                         variant="ghost"
+                        type="button"
                         onClick={() => onRemoveProduct(index)}
                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >

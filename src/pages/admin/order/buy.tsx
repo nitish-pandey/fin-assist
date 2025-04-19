@@ -74,7 +74,7 @@ export const BuyOrderPage = () => {
     };
 
     return (
-        <section className="container mx-auto max-w-7xl px-6 py-8">
+        <section className="">
             <BuyOrderForm
                 products={products}
                 entities={entities}

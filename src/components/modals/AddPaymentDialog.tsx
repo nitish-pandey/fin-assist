@@ -66,18 +66,17 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
                 Add Payment
             </Button>
             <Dialog open={isOpen} onOpenChange={handleClose}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>Add Payment</DialogHeader>
-                    {remainingAmount && (
-                        <div className="col-span-3 text-sm text-gray-800">
-                            Remaining Amount: ${remainingAmount.toFixed(2)}
+                <DialogContent className="sm:max-w-[500px] p-6 rounded-lg shadow-lg">
+                    <DialogHeader className="text-lg font-semibold mb-4">Add Payment</DialogHeader>
+                    {remainingAmount !== undefined && (
+                        <div className="text-sm text-gray-700 mb-4 font-medium">
+                            Remaining Amount:{" "}
+                            <span className="text-primary">${remainingAmount.toFixed(2)}</span>
                         </div>
                     )}
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="amount" className="text-right">
-                                Amount
-                            </Label>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="amount">Amount</Label>
                             <Input
                                 id="amount"
                                 type="number"
@@ -86,13 +85,11 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
                                     setAmount(e.target.value ? Number(e.target.value) : "");
                                     setError(null);
                                 }}
-                                className="col-span-3"
+                                className="w-full"
                             />
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="account" className="text-right">
-                                Account
-                            </Label>
+                        <div className="space-y-2">
+                            <Label htmlFor="account">Account</Label>
                             <Select
                                 value={selectedAccount}
                                 onValueChange={(value) => {
@@ -100,10 +97,10 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
                                     setError(null);
                                 }}
                             >
-                                <SelectTrigger className="col-span-3">
+                                <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Select Account" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="w-full">
                                     {accounts.map((account) => (
                                         <SelectItem key={account.id} value={account.id}>
                                             {account.name} (Balance: ${account.balance.toFixed(2)})
@@ -114,8 +111,10 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
                         </div>
                     </div>
                     {error && <div className="text-red-500 text-sm font-medium py-2">{error}</div>}
-
-                    <DialogFooter>
+                    <DialogFooter className="mt-6 flex justify-end">
+                        <Button variant="outline" onClick={handleClose} className="mr-2">
+                            Cancel
+                        </Button>
                         <Button onClick={handleAddPayment} type="button">
                             Add Payment
                         </Button>

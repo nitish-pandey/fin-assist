@@ -133,7 +133,7 @@ export function TableComponent<T>({
                 </CardHeader>
             )}
             <CardContent>
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-4 flex items-center justify-between py-4">
                     {allowSearch && (
                         <Input
                             placeholder="Search all columns..."
