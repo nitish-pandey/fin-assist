@@ -4,7 +4,6 @@ import { api } from "@/utils/api";
 import { Account } from "@/data/types";
 import AccountDetails from "@/components/modules/AccountDetails";
 import CreateAccountForm from "@/components/forms/CreateAccountForm";
-import { FaUniversity } from "react-icons/fa";
 
 export default function ChequeAccounts() {
     const { orgId } = useOrg();
@@ -46,14 +45,18 @@ export default function ChequeAccounts() {
     };
 
     return (
-        <div className="container mx-auto max-w-6xl px-6 py-8">
+        <div className="container px-6">
             {/* Header Section */}
             <div className="flex items-center justify-between border-b pb-4">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">Cheque Accounts</h2>
                     <p className="text-sm text-gray-500">View and manage your Cheque accounts</p>
                 </div>
-                <CreateAccountForm type="CHEQUE" onSubmit={onSubmit} disableType={true} />
+                {accounts.length === 0 ? (
+                    <CreateAccountForm type="CHEQUE" onSubmit={onSubmit} disableType={true} />
+                ) : (
+                    <div></div>
+                )}
             </div>
 
             {/* Loading State */}
@@ -68,8 +71,8 @@ export default function ChequeAccounts() {
             ) : (
                 <>
                     {/* Account List */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                        {accounts.map((account) => (
+                    {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                        {accounts.slice(1).map((account) => (
                             <div
                                 className={`bg-white border-2 rounded-xl p-6 w-full max-w-sm cursor-pointer transition-all duration-300 ${
                                     selectedAccount?.id === account.id ? "border-blue-500" : ""
@@ -89,12 +92,13 @@ export default function ChequeAccounts() {
                                 </div>
                             </div>
                         ))}
-                    </div>
+                    </div> */}
 
                     {/* Account Details */}
                     {selectedAccount && (
-                        <div className="mt-8">
+                        <div className="">
                             <AccountDetails
+                                type="CHEQUE"
                                 account={selectedAccount}
                                 isLoading={loading}
                                 error={error || ""}

@@ -46,7 +46,7 @@ export default function BankAccounts() {
     };
 
     return (
-        <div className="container mx-auto max-w-6xl px-6 py-8">
+        <div className="container px-6">
             {/* Header Section */}
             <div className="flex items-center justify-between border-b pb-4">
                 <div>

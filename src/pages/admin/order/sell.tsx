@@ -38,9 +38,13 @@ export const SellOrderPage = () => {
     }, [orgId]);
 
     const onCreateOrder = async (
-        products: { id: string; quantity: number }[],
+        products: { id: string; quantity: number; rate: number }[],
         payments: { amount: number; accountId: string }[],
-        entityId?: string
+        entityId: string,
+        billFiles: File[],
+        discount: number,
+        tax: number,
+        charge: number
     ) => {
         try {
             const order = await api.post(`/orgs/${orgId}/orders`, {
@@ -48,6 +52,8 @@ export const SellOrderPage = () => {
                 products,
                 payments,
                 entityId,
+                billFiles,
+                options: { discount, tax, charge },
             });
             console.log("Order created successfully:", order);
         } catch (err) {
@@ -73,7 +79,7 @@ export const SellOrderPage = () => {
     };
 
     return (
-        <section className="container max-w-7xl p-4">
+        <section className="container ">
             <SellOrderForm
                 products={products}
                 entities={entities}

@@ -2,11 +2,10 @@ import { useEffect, useState, useCallback } from "react";
 import { useOrg } from "@/providers/org-provider";
 import { api } from "@/utils/api";
 import { Account } from "@/data/types";
-import AccountCard from "@/components/cards/AccountCard";
 import AccountDetails from "@/components/modules/AccountDetails";
 import CreateAccountForm from "@/components/forms/CreateAccountForm";
 
-export default function BankODAccounts() {
+export default function CASHACCOUNTS() {
     const { orgId } = useOrg();
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
@@ -19,8 +18,7 @@ export default function BankODAccounts() {
         setError(null);
         try {
             const { data } = await api.get<Account[]>(`orgs/${orgId}/accounts`);
-            const filteredAccounts = data.filter((acc) => acc.type === "BANK_OD");
-            console.log(filteredAccounts);
+            const filteredAccounts = data.filter((acc) => acc.type === "CASH_COUNTER");
             setAccounts(filteredAccounts);
             if (filteredAccounts.length > 0) {
                 setSelectedAccount(filteredAccounts[0]);
@@ -51,42 +49,56 @@ export default function BankODAccounts() {
             {/* Header Section */}
             <div className="flex items-center justify-between border-b pb-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Bank OverDraft Accounts</h2>
-                    <p className="text-sm text-gray-500">View and manage your bank-od accounts</p>
+                    <h2 className="text-2xl font-bold text-gray-800">Cash Accounts</h2>
+                    <p className="text-sm text-gray-500">View and manage your Cash accounts</p>
                 </div>
-                <CreateAccountForm type="BANK_OD" onSubmit={onSubmit} disableType={true} />
+                {accounts.length === 0 ? (
+                    <CreateAccountForm type="CASH_COUNTER" onSubmit={onSubmit} disableType={true} />
+                ) : (
+                    <div></div>
+                )}
             </div>
 
             {/* Loading State */}
             {loading ? (
                 <div className="flex justify-center items-center h-40">
-                    <p className="text-gray-500">Loading bank-od accounts...</p>
+                    <p className="text-gray-500">Loading Cash accounts...</p>
                 </div>
             ) : error ? (
                 <p className="text-center text-red-500">{error}</p>
             ) : accounts.length === 0 ? (
-                <p className="text-center text-gray-500 mt-6">No bank-od accounts found.</p>
+                <p className="text-center text-gray-500 mt-6">No Cash accounts found.</p>
             ) : (
                 <>
                     {/* Account List */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                        {accounts.map((account) => (
-                            <AccountCard
+                    {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                        {accounts.slice(1).map((account) => (
+                            <div
+                                className={`bg-white border-2 rounded-xl p-6 w-full max-w-sm cursor-pointer transition-all duration-300 ${
+                                    selectedAccount?.id === account.id ? "border-blue-500" : ""
+                                }`}
                                 key={account.id}
-                                accountName={account.name}
-                                accountNumber={account.details.accountNumber}
-                                bankName={account.details.bankName}
-                                balance={account.balance}
                                 onClick={() => setSelectedAccount(account)}
-                                isSelected={selectedAccount?.id === account.id}
-                            />
+                            >
+                                <div className="flex flex-col space-y-4">
+                                    <div className="flex gap-3 items-center justify-between">
+                                        <div className="flex items-center space-x-3">
+                                            <FaUniversity className="text-blue-600 text-2xl" />
+                                            <h3 className="text-xl font-semibold text-gray-800">
+                                                {account.name}
+                                            </h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         ))}
-                    </div>
+                    </div> */}
 
                     {/* Account Details */}
                     {selectedAccount && (
-                        <div className="mt-8">
+                        <div className="">
                             <AccountDetails
+                                type="CASH_COUNTER"
                                 account={selectedAccount}
                                 isLoading={loading}
                                 error={error || ""}

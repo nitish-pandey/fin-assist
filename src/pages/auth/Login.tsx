@@ -26,7 +26,7 @@ const Login = () => {
                 title: "Login successful",
                 description: "You are now logged in.",
             });
-            navigate("/settings/profile"); // Navigate without a delay
+            navigate("/profile"); // Navigate without a delay
         } catch (error: any) {
             console.error("Login Error:", error);
             const errorMessage = error.response?.data?.message || "Login failed. Please try again.";

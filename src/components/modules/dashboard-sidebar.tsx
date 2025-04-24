@@ -74,7 +74,7 @@ export function DashboardSidebar() {
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter className="border-t">
-                <Link to="/profile" className="flex items-center p-2 gap-2">
+                <Link to="/logout" className="flex items-center p-2 gap-2">
                     <LogOut className="h-6 w-6 text-red-500" />
                     <span className="text-red-500">Logout</span>
                 </Link>

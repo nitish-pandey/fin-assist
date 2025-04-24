@@ -28,6 +28,7 @@ import SellOrderPage from "./pages/admin/order/sell";
 import ChequeAccounts from "./pages/admin/accounts/cheques";
 import BankODAccounts from "./pages/admin/accounts/bank-od";
 import UserInvitePages from "./pages/settings/invites";
+import CASHACCOUNTS from "./pages/admin/accounts/cash";
 
 export const routes: RouteObject[] = [
     {
@@ -89,6 +90,10 @@ export const routes: RouteObject[] = [
                             {
                                 element: <BankODAccounts />,
                                 path: "bank-od",
+                            },
+                            {
+                                element: <CASHACCOUNTS />,
+                                path: "cash",
                             },
                         ],
                     },

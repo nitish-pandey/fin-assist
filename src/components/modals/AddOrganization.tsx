@@ -8,6 +8,7 @@ import { useAuth } from "@/providers/auth-provider";
 import { useForm } from "react-hook-form";
 import { api } from "@/utils/api";
 import { useToast } from "@/hooks/use-toast";
+import { Plus } from "lucide-react";
 
 interface AddOrganizationFormData {
     name: string;
@@ -54,7 +55,8 @@ export function AddOrganizationForm() {
 
     return (
         <>
-            <Button onClick={() => setOpen(true)} className="w-full max-w-60">
+            <Button onClick={() => setOpen(true)} className="w-full max-w-60" variant="outline">
+                <Plus className="mr-2 h-4 w-4" />
                 Add Organization
             </Button>
             <Dialog open={open} onOpenChange={setOpen}>

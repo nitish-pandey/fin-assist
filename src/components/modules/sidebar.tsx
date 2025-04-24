@@ -21,11 +21,12 @@ import BankAccountIcon from "@/assets/icons/sidebar-bank-account.svg";
 import { useAuth } from "@/providers/auth-provider"; // Replace with your auth provider
 import { Notebook } from "lucide-react";
 import { useOrg } from "@/providers/org-provider";
+import CashIcon from "@/assets/icons/sidebar-cash-icon.svg"; // Assuming you have a cash icon
 
 interface OrgData {
     id: string;
     name: string;
-    logo: React.ElementType;
+    logo: React.ReactElement;
     type: string;
     current: boolean;
 }
@@ -84,7 +85,7 @@ export default function Sidebar() {
         },
         {
             name: "Entities",
-            path: getPathname("entitiy"),
+            path: getPathname("entity"),
             icon: EntityIcon,
         },
         {
@@ -112,6 +113,7 @@ export default function Sidebar() {
                 { name: "Bank", path: getPathname("accounts/bank"), icon: BankAccountIcon },
                 { name: "Bank-OD", path: getPathname("accounts/bank-od"), icon: BankAccountIcon },
                 { name: "Cheque", path: getPathname("accounts/cheques"), icon: ChequeAccountIcon },
+                { name: "Cash", path: getPathname("accounts/cash"), icon: CashIcon },
             ],
         },
         {
@@ -138,7 +140,7 @@ export default function Sidebar() {
             .map((org) => ({
                 id: org.id as string,
                 name: org.name,
-                logo: Notebook,
+                logo: <Notebook />,
                 type: "Owned",
                 current: org.id === orgId,
             })) || [];
@@ -146,7 +148,7 @@ export default function Sidebar() {
         permissions?.map((perm) => ({
             id: perm.organizationId,
             name: perm.organizationId || "Organization",
-            logo: Notebook,
+            logo: <Notebook />,
             type: "Shared",
             current: perm.organizationId == orgId,
         })) || [];

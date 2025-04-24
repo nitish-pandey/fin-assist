@@ -62,7 +62,9 @@ const AddEntity: React.FC<AddEntityProps> = ({ addEntity, text, entity }) => {
 
     return (
         <>
-            <Button onClick={() => setIsOpen(true)}>{text || "Add Entity"}</Button>
+            <Button type="button" onClick={() => setIsOpen(true)}>
+                {text || "Add Entity"}
+            </Button>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent>
                     <DialogHeader>

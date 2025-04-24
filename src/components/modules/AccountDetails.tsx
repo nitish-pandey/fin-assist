@@ -1,7 +1,7 @@
 import { Account, Transaction } from "@/data/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface AccountDetailsProps {
+    type?: "BANK" | "BANK_OD" | "CASH_COUNTER" | "CHEQUE" | "MISC";
     account: Account | null;
     isLoading: boolean;
     error: string;
@@ -9,6 +9,8 @@ interface AccountDetailsProps {
 
 import { ColumnDef } from "@tanstack/react-table";
 import { TableComponent } from "./Table";
+import { api } from "@/utils/api";
+import { AddTransactionDialog } from "../modals/AddTransaction";
 
 const paymentColumns: ColumnDef<Transaction>[] = [
     {
@@ -25,7 +27,7 @@ const paymentColumns: ColumnDef<Transaction>[] = [
     },
 ];
 
-const AccountDetails = ({ account, isLoading, error }: AccountDetailsProps) => {
+const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDetailsProps) => {
     if (isLoading) {
         return <div>Loading...</div>;
     }
@@ -37,7 +39,12 @@ const AccountDetails = ({ account, isLoading, error }: AccountDetailsProps) => {
     if (!account) {
         return <div>No account found</div>;
     }
-    console.log(account.transactions);
+    const handleAddTransaction = async (amount: number, description: string) => {
+        await api.post(`/orgs/${account.organizationId}/accounts/${account.id}/transactions`, {
+            amount,
+            description,
+        });
+    };
 
     return (
         <div className="mt-8">
@@ -52,84 +59,100 @@ const AccountDetails = ({ account, isLoading, error }: AccountDetailsProps) => {
                         <p className="text-sm text-gray-500">Balance</p>
                         <p className="text-lg font-semibold text-gray-800">{account.balance}</p>
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-500">Bank Name</p>
-                        <p className="text-lg font-semibold text-gray-800">
-                            {account.details.bankName}
-                        </p>
-                    </div>
+                    {type === "BANK" && (
+                        <>
+                            <div>
+                                <p className="text-sm text-gray-500">Account Number</p>
+                                <p className="text-lg font-semibold text-gray-800">
+                                    {account.details.accountNumber}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500">Bank Name</p>
+                                <p className="text-lg font-semibold text-gray-800">
+                                    {account.details.bankName}
+                                </p>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
             <div className="mt-4 border border-gray-500 rounded-xl p-6">
                 <Tabs defaultValue="all">
-                    <TabsList>
-                        <TabsTrigger value="all">All Transactions</TabsTrigger>
-                        <TabsTrigger value="buy">Buy Transactions</TabsTrigger>
-                        <TabsTrigger value="sell">Sell Transactions</TabsTrigger>
+                    <TabsList className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-4">
+                            <TabsTrigger value="all">All Transactions</TabsTrigger>
+                            <TabsTrigger value="buy">Buy Transactions</TabsTrigger>
+                            <TabsTrigger value="sell">Sell Transactions</TabsTrigger>
+                            <TabsTrigger value="others">Other Transactions</TabsTrigger>
+                        </div>
+                        <AddTransactionDialog
+                            account={account}
+                            onAddTransaction={handleAddTransaction}
+                        />
                     </TabsList>
                     <TabsContent value="all" defaultChecked>
                         <div>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>All Payments</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    {account.transactions && account.transactions.length > 0 ? (
-                                        <TableComponent
-                                            columns={paymentColumns}
-                                            data={account.transactions}
-                                        />
-                                    ) : (
-                                        <p>No payments found.</p>
-                                    )}
-                                </CardContent>
-                            </Card>
+                            {account.transactions && account.transactions.length > 0 ? (
+                                <TableComponent
+                                    title="All Payments"
+                                    columns={paymentColumns}
+                                    data={account.transactions}
+                                />
+                            ) : (
+                                <p className="bg-white rounded-lg p-2">No payments found.</p>
+                            )}
                         </div>
                     </TabsContent>
                     <TabsContent value="buy">
                         <div>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Buy Payments</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    {account.transactions &&
-                                    account.transactions.filter((t) => t.type === "BUY").length >
-                                        0 ? (
-                                        <TableComponent
-                                            columns={paymentColumns}
-                                            data={account.transactions.filter(
-                                                (t) => t.type === "BUY"
-                                            )}
-                                        />
-                                    ) : (
-                                        <p>No buy payments found.</p>
-                                    )}
-                                </CardContent>
-                            </Card>
+                            {account.transactions &&
+                            account.transactions.filter((t) => t.type === "BUY").length > 0 ? (
+                                <TableComponent
+                                    title="Buy Payments"
+                                    columns={paymentColumns}
+                                    data={account.transactions.filter((t) => t.type === "BUY")}
+                                />
+                            ) : (
+                                <p className="bg-white rounded-lg p-2">No buy payments found.</p>
+                            )}
                         </div>
                     </TabsContent>
                     <TabsContent value="sell">
                         <div>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Sell Payments</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    {account.transactions &&
-                                    account.transactions.filter((t) => t.type === "SELL").length >
-                                        0 ? (
-                                        <TableComponent
-                                            columns={paymentColumns}
-                                            data={account.transactions.filter(
-                                                (t) => t.type === "SELL"
-                                            )}
-                                        />
-                                    ) : (
-                                        <p>No sell payments found.</p>
-                                    )}
-                                </CardContent>
-                            </Card>
+                            {account.transactions &&
+                            account.transactions.filter((t) => t.type === "SELL").length > 0 ? (
+                                <TableComponent
+                                    title="Sell Payments"
+                                    columns={paymentColumns}
+                                    data={account.transactions.filter((t) => t.type === "SELL")}
+                                />
+                            ) : (
+                                <p className="bg-white rounded-lg p-2">No sell payments found.</p>
+                            )}
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="others">
+                        <div>
+                            {account.transactions &&
+                            account.transactions.filter((t) => t.type === "MISC").length > 0 ? (
+                                <TableComponent
+                                    title="Other Payments"
+                                    allowSearch={false}
+                                    allowExport={false}
+                                    allowPagination={false}
+                                    columns={[
+                                        ...paymentColumns,
+                                        {
+                                            header: "Description",
+                                            accessorKey: "description",
+                                        },
+                                    ]}
+                                    data={account.transactions.filter((t) => t.type === "MISC")}
+                                />
+                            ) : (
+                                <p className="bg-white rounded-lg p-2">No other payments found.</p>
+                            )}
                         </div>
                     </TabsContent>
                 </Tabs>

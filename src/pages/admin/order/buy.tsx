@@ -38,9 +38,13 @@ export const BuyOrderPage = () => {
     }, [orgId]);
 
     const onCreateOrder = async (
-        products: { id: string; quantity: number }[],
+        products: { id: string; quantity: number; rate: number }[],
         payments: { amount: number; accountId: string }[],
-        entityId?: string
+        entityId: string,
+        billFiles: File[],
+        discount: number,
+        tax: number,
+        charge: number
     ) => {
         try {
             const order = await api.post(`/orgs/${orgId}/orders`, {
@@ -48,6 +52,8 @@ export const BuyOrderPage = () => {
                 products,
                 payments,
                 entityId,
+                billFiles,
+                options: { discount, tax, charge },
             });
             console.log("Order created successfully:", order);
         } catch (err) {

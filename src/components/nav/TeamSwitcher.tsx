@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown } from "lucide-react";
-
+import { Check, ChevronsUpDown } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -17,105 +16,106 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar";
-import { Link } from "react-router-dom";
+import { Avatar } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 import { AddOrganizationForm } from "../modals/AddOrganization";
 
-export function TeamSwitcher({
-    teams,
-}: {
-    teams: {
-        name: string;
-        id: string;
-        logo: React.ElementType;
-        type: string;
-        current: boolean;
-    }[];
-}) {
+interface Team {
+    id: string;
+    name: string;
+    logo: React.ReactElement;
+    type: string;
+    current: boolean;
+}
+
+interface TeamSwitcherProps {
+    teams: Team[];
+    onTeamChange?: (teamId: string) => void;
+}
+
+export function TeamSwitcher({ teams, onTeamChange }: TeamSwitcherProps) {
     const { isMobile } = useSidebar();
-    const [activeTeam, setActiveTeam] = React.useState<
-        | {
-              name: string;
-              id: string;
-              logo: React.ElementType;
-              type: string;
-              current: boolean;
-          }
-        | undefined
-    >(undefined);
-    const [isOpen, setIsOpen] = React.useState(false);
+    const [open, setOpen] = React.useState(false);
 
-    React.useEffect(() => {
-        setActiveTeam(teams.find((team) => team.current));
-    }, [teams]);
+    const currentTeam = React.useMemo(
+        () => teams.find((team) => team.current) || teams[0],
+        [teams]
+    );
 
-    if (!activeTeam) {
+    // Early return if no teams
+    if (!teams.length || !currentTeam) {
         return null;
     }
 
-    if (teams.length === 0) {
-        return null;
-    }
-
-    const handleTeamClick = (team: typeof activeTeam) => {
-        setActiveTeam(team);
-        setIsOpen(false);
+    const handleTeamSelect = (teamId: string) => {
+        setOpen(false);
+        if (onTeamChange) {
+            onTeamChange(teamId);
+        } else {
+            // Redirect to the selected team dashboard
+            window.location.href = `/org/${teamId}/dashboard`;
+        }
     };
 
     return (
-        <SidebarMenu>
-            <SidebarMenuItem>
-                <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-                    <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton
-                            size="lg"
-                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                        >
-                            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                                <activeTeam.logo className="size-4" />
-                            </div>
-                            <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-semibold">{activeTeam.name}</span>
-                                <span className="truncate text-xs">{activeTeam.type}</span>
-                            </div>
-                            <ChevronsUpDown className="ml-auto" />
-                        </SidebarMenuButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                        align="start"
-                        side={isMobile ? "bottom" : "right"}
-                        sideOffset={4}
-                    >
-                        <DropdownMenuLabel className="text-xs text-muted-foreground">
-                            Teams
-                        </DropdownMenuLabel>
-                        {teams.map((team) => (
-                            <DropdownMenuItem
-                                key={team.name}
-                                onClick={() => handleTeamClick(team)}
-                                className={`gap-2 p-2 border-2 rounded-lg 
-                                ${
-                                    team.current
-                                        ? "bg-blue-500 text-white hover:bg-blue-800 hover:border-blue-500"
-                                        : ""
-                                }`}
+        <>
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <DropdownMenu open={open} onOpenChange={setOpen}>
+                        <DropdownMenuTrigger asChild>
+                            <SidebarMenuButton
+                                size="lg"
+                                className="transition-all duration-200 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground border rounded-xl"
                             >
-                                <Link
-                                    to={`/org/${team.id}/dashboard`}
-                                    className="flex items-center justify-between gap-2"
-                                >
-                                    <div className="flex size-6 items-center justify-center rounded-sm border">
-                                        <team.logo className="size-4 shrink-0" />
-                                    </div>
-                                    {team.name}
-                                </Link>
-                            </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator />
-                        <AddOrganizationForm />
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </SidebarMenuItem>
-        </SidebarMenu>
+                                <TeamAvatar team={currentTeam} />
+                                <div className="flex flex-col gap-0.5 text-left leading-none">
+                                    <span className="font-medium">{currentTeam.name}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                        {currentTeam.type}
+                                    </span>
+                                </div>
+                                <ChevronsUpDown className="ml-auto h-4 w-4 opacity-50" />
+                            </SidebarMenuButton>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="start"
+                            side={isMobile ? "bottom" : "right"}
+                            className="w-[--radix-dropdown-menu-trigger-width] min-w-[220px] p-2"
+                        >
+                            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                                Your teams
+                            </DropdownMenuLabel>
+                            <div className="mt-2 max-h-[60vh] space-y-1 overflow-y-auto">
+                                {teams.map((team) => (
+                                    <DropdownMenuItem
+                                        key={team.id}
+                                        className={cn(
+                                            "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm",
+                                            team.current && "bg-accent/50 font-medium"
+                                        )}
+                                        onClick={() => handleTeamSelect(team.id)}
+                                    >
+                                        <TeamAvatar team={team} className="" />
+                                        <span className="flex-1 truncate">{team.name}</span>
+                                        {team.current && <Check className="h-4 w-4 text-primary" />}
+                                    </DropdownMenuItem>
+                                ))}
+                            </div>
+                            <DropdownMenuSeparator className="my-2" />
+
+                            <AddOrganizationForm />
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        </>
+    );
+}
+
+function TeamAvatar({ team, className }: { team: Team; className?: string }) {
+    return (
+        <Avatar className={cn("flex items-center justify-center border bg-muted", className)}>
+            {team.logo}
+        </Avatar>
     );
 }

@@ -16,14 +16,18 @@ interface OrgProviderProps {
 
 export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
     const { orgId } = useParams<{ orgId: string }>() as { orgId: string };
+    const [status, setStatus] = useState<"loading" | "error" | "success">("loading");
     const [organization, setOrganization] = useState<Organization | null>(null);
 
     const fetchOrganization = async (orgId: string) => {
         try {
+            setStatus("loading");
             const data = await (await api.get(`/orgs/${orgId}`)).data;
             setOrganization(data);
         } catch (error) {
             console.error("Error fetching organization:", error);
+        } finally {
+            setStatus("success");
         }
     };
 
@@ -45,6 +49,15 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
     return (
         <OrgContext.Provider value={{ orgId, organization, refetch }}>
             {children}
+            {status === "loading" ? (
+                <div className="flex items-center justify-center h-screen w-screen bg-gray-100">
+                    <div className="flex items-center justify-center h-16 w-16 border-4 border-gray-200 rounded-full animate-spin"></div>
+                </div>
+            ) : status === "error" ? (
+                <div className="flex items-center justify-center h-screen w-screen bg-gray-100">
+                    <p className="text-red-500">Error fetching organization data</p>
+                </div>
+            ) : null}
         </OrgContext.Provider>
     );
 };

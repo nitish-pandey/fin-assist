@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 interface AddPaymentDialogProps {
     accounts: Account[];
     type: "BUY" | "SELL";
-    onAddPayment: (amount: number, accountId: string) => void;
+    onAddPayment: (amount: number, accountId: string, details: object) => void;
     remainingAmount?: number;
 }
 
@@ -49,7 +49,7 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
             return;
         }
 
-        onAddPayment(Number(amount), selectedAccount);
+        onAddPayment(Number(amount), selectedAccount, {});
         handleClose();
     };
 

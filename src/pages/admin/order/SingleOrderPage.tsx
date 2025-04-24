@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { Order, OrderItem, Transaction, Entity } from "@/data/types";
 import { useOrg } from "@/providers/org-provider";
@@ -34,6 +34,8 @@ const SingleOrderPage = () => {
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+
+    const printContentRef = useRef<HTMLDivElement>(null);
 
     const fetchOrder = async () => {
         try {
@@ -70,7 +72,22 @@ const SingleOrderPage = () => {
     }, [orgId, orderId]);
 
     const handlePrint = () => {
-        window.print();
+        // window.print();
+        // print only the content inside the printContentRef with styles, take the styles from the page
+        if (printContentRef.current) {
+            const printWindow = window.open("", "_blank");
+            if (printWindow) {
+                printWindow.document.write("<html><head><title>Print</title>");
+                printWindow.document.write(
+                    `<style>${document.querySelector("style")?.innerHTML}</style>`
+                );
+                printWindow.document.write("</head><body>");
+                printWindow.document.write(printContentRef.current.innerHTML);
+                printWindow.document.write("</body></html>");
+                printWindow.document.close();
+                printWindow.print();
+            }
+        }
     };
 
     if (loading) {
@@ -128,7 +145,7 @@ const SingleOrderPage = () => {
                 </div>
             </div>
 
-            <div className="space-y-6 print:space-y-4">
+            <div className="space-y-6 print:space-y-4" ref={printContentRef}>
                 <OrderHeader order={order} />
 
                 {order.entity && <EntityDetails entity={order.entity} />}

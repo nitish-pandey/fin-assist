@@ -1,8 +1,5 @@
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
 import { useAuth } from "@/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,33 +11,14 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Building2, Plus } from "lucide-react";
+import { AddOrganizationForm } from "@/components/modals/AddOrganization";
+import { Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/hooks/use-toast";
-import type { Organization, RoleAccess } from "@/data/types";
+import type { RoleAccess } from "@/data/types";
 import { Link } from "react-router-dom";
 
 export default function OrganizationsPage() {
     const { orgs, permissions } = useAuth();
-    const [newOrg, setNewOrg] = useState<Partial<Organization>>({
-        name: "",
-        description: "",
-        contact: "",
-        domain: "",
-    });
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     // Group permissions by organization ID
     const groupedPermissions: Record<string, RoleAccess[]> = {};
@@ -51,31 +29,6 @@ export default function OrganizationsPage() {
         groupedPermissions[perm.organizationId].push(perm);
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setNewOrg((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // In a real app, you would submit this to your API
-        console.log("Creating new organization:", newOrg);
-
-        setNewOrg({
-            name: "",
-            description: "",
-            contact: "",
-            domain: "",
-        });
-        setIsDialogOpen(false);
-
-        toast({
-            title: "Organization created",
-            description: `${newOrg.name} has been created successfully.`,
-        });
-    };
-
     return (
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-center">
@@ -85,70 +38,7 @@ export default function OrganizationsPage() {
                         Manage your organizations and access settings
                     </p>
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" />
-                            New Organization
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Create New Organization</DialogTitle>
-                            <DialogDescription>
-                                Add a new organization to your account
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit}>
-                            <div className="grid gap-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Organization Name</Label>
-                                    <Input
-                                        id="name"
-                                        name="name"
-                                        value={newOrg.name}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="description">Description</Label>
-                                    <Textarea
-                                        id="description"
-                                        name="description"
-                                        value={newOrg.description || ""}
-                                        onChange={handleChange}
-                                        rows={3}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="contact">Contact Email</Label>
-                                        <Input
-                                            id="contact"
-                                            name="contact"
-                                            type="email"
-                                            value={newOrg.contact || ""}
-                                            onChange={handleChange}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="domain">Domain</Label>
-                                        <Input
-                                            id="domain"
-                                            name="domain"
-                                            value={newOrg.domain || ""}
-                                            onChange={handleChange}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button type="submit">Create Organization</Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                <AddOrganizationForm />
             </div>
 
             <Tabs defaultValue="organizations" className="w-full">

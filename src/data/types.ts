@@ -109,7 +109,7 @@ export interface Order {
     orderNumber: string;
     description?: string | null;
 
-    type: "BUY" | "SELL";
+    type: "BUY" | "SELL" | "MISC";
 
     baseAmount: number;
     discount: number;
@@ -153,7 +153,7 @@ export interface Transaction {
     organizationId: string;
     accountId: string;
     orderId: string | null;
-    type: "BUY" | "SELL";
+    type: "BUY" | "SELL" | "MISC" | "TRANSFER" | "REFUND" | "CHEQUE" | "CASH_COUNTER";
 
     createdAt: string;
     updatedAt: string;
