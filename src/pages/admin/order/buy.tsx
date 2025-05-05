@@ -39,7 +39,7 @@ export const BuyOrderPage = () => {
 
     const onCreateOrder = async (
         products: { id: string; quantity: number; rate: number }[],
-        payments: { amount: number; accountId: string }[],
+        payments: { amount: number; accountId: string; details?: object }[],
         entityId: string,
         billFiles: File[],
         discount: number,

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import type { Order, OrderItem, Transaction, Entity } from "@/data/types";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import type { Order, OrderItem, Transaction, Entity, Account } from "@/data/types";
 import { useOrg } from "@/providers/org-provider";
 import { api } from "@/utils/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
+    TableFooter,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,75 +26,173 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
-import AddTransaction from "@/components/forms/AddTransaction";
+import { Printer, RefreshCw, ArrowLeft } from "lucide-react";
+import AddPaymentDialog from "@/components/modals/AddPaymentDialog";
+import { useToast } from "@/hooks/use-toast";
 
 const SingleOrderPage = () => {
     const { orgId } = useOrg();
     const { orderId } = useParams<{ orderId: string }>();
+    const navigate = useNavigate();
+    const { toast } = useToast();
+
     const [order, setOrder] = useState<Order | null>(null);
+    const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [refreshing, setRefreshing] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
     const printContentRef = useRef<HTMLDivElement>(null);
 
-    const fetchOrder = async () => {
+    const fetchOrder = useCallback(async () => {
+        if (!orgId || !orderId) return;
+
         try {
-            setLoading(true);
-            const fetchedOrder = await (await api.get(`/orgs/${orgId}/orders/${orderId}`)).data;
-            setOrder(fetchedOrder);
+            setRefreshing(true);
+            const response = await api.get(`/orgs/${orgId}/orders/${orderId}`);
+            setOrder(response.data);
             setError(null);
         } catch (err) {
             setError("Failed to fetch order data");
+            toast({
+                title: "Error",
+                description: "Failed to fetch order data",
+                variant: "destructive",
+            });
             setOrder(null);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
-    };
+    }, [orgId, orderId, toast]);
+
+    const fetchAccounts = useCallback(async () => {
+        if (!orgId) return;
+
+        try {
+            const response = await api.get(`/orgs/${orgId}/accounts`);
+            setAccounts(response.data);
+        } catch (err) {
+            console.error("Failed to fetch accounts", err);
+            toast({
+                title: "Error",
+                description: "Failed to fetch accounts",
+                variant: "destructive",
+            });
+        }
+    }, [orgId, toast]);
 
     useEffect(() => {
         if (!orgId || !orderId) return;
 
-        const fetchOrder = async () => {
-            try {
-                setLoading(true);
-                const fetchedOrder = await (await api.get(`/orgs/${orgId}/orders/${orderId}`)).data;
-                setOrder(fetchedOrder);
-                setError(null);
-            } catch (err) {
-                setError("Failed to fetch order data");
-                setOrder(null);
-            } finally {
-                setLoading(false);
-            }
+        const loadData = async () => {
+            setLoading(true);
+            await Promise.all([fetchOrder(), fetchAccounts()]);
         };
 
-        fetchOrder();
-    }, [orgId, orderId]);
+        loadData();
+    }, [orgId, orderId, fetchOrder, fetchAccounts]);
 
     const handlePrint = () => {
-        // window.print();
-        // print only the content inside the printContentRef with styles, take the styles from the page
         if (printContentRef.current) {
             const printWindow = window.open("", "_blank");
             if (printWindow) {
-                printWindow.document.write("<html><head><title>Print</title>");
-                printWindow.document.write(
-                    `<style>${document.querySelector("style")?.innerHTML}</style>`
-                );
-                printWindow.document.write("</head><body>");
-                printWindow.document.write(printContentRef.current.innerHTML);
-                printWindow.document.write("</body></html>");
+                const styles = Array.from(document.styleSheets)
+                    .map((styleSheet) => {
+                        try {
+                            return Array.from(styleSheet.cssRules)
+                                .map((rule) => rule.cssText)
+                                .join("\n");
+                        } catch (e) {
+                            return "";
+                        }
+                    })
+                    .join("\n");
+
+                printWindow.document.write(`
+          <html>
+            <head>
+              <title>Order #${order?.orderNumber} - Invoice</title>
+              <style>${styles}</style>
+              <style>
+                @media print {
+                  @page { margin: 20mm; }
+                  body { 
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                  }
+                  .card {
+                    border: 1px solid #e2e8f0;
+                    border-radius: 0.375rem;
+                    box-shadow: none;
+                    break-inside: avoid;
+                    page-break-inside: avoid;
+                    margin-bottom: 1rem;
+                  }
+                  table { width: 100%; border-collapse: collapse; }
+                  th, td { 
+                    border: 1px solid #e2e8f0;
+                    padding: 0.5rem;
+                    text-align: left;
+                  }
+                  th { background-color: #f7fafc !important; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container mx-auto p-6">
+                ${printContentRef.current.innerHTML}
+              </div>
+            </body>
+          </html>
+        `);
                 printWindow.document.close();
-                printWindow.print();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 500);
             }
         }
+    };
+
+    const handleAddPayment = async (amount: number, accountId: string, details: object) => {
+        try {
+            setRefreshing(true);
+            await api.post(`/orgs/${orgId}/orders/${orderId}/transactions`, {
+                amount,
+                accountId,
+                details,
+            });
+            await fetchOrder();
+            toast({
+                title: "Success",
+                description: "Payment added successfully",
+            });
+        } catch (err) {
+            toast({
+                title: "Error",
+                description: "Failed to add payment",
+                variant: "destructive",
+            });
+        } finally {
+            setRefreshing(false);
+        }
+    };
+
+    const handleRefresh = () => {
+        fetchOrder();
+    };
+
+    const handleGoBack = () => {
+        navigate(`/org/${orgId}/orders/view`);
     };
 
     if (loading) {
         return (
             <div className="container mx-auto p-6 space-y-4">
-                <Skeleton className="h-10 w-3/4" />
+                <div className="flex justify-between items-center">
+                    <Skeleton className="h-10 w-40" />
+                    <Skeleton className="h-10 w-32" />
+                </div>
                 <Skeleton className="h-32 w-full" />
                 <Skeleton className="h-64 w-full" />
                 <Skeleton className="h-64 w-full" />
@@ -110,6 +209,11 @@ const SingleOrderPage = () => {
                         {error || "Order not found. Please try again later."}
                     </AlertDescription>
                 </Alert>
+                <div className="mt-4">
+                    <Button variant="outline" onClick={handleGoBack}>
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+                    </Button>
+                </div>
             </div>
         );
     }
@@ -126,20 +230,30 @@ const SingleOrderPage = () => {
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbLink href="#">Order #{order.orderNumber}</BreadcrumbLink>
+                            <BreadcrumbLink>Order #{order.orderNumber}</BreadcrumbLink>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
                 <div className="flex gap-4">
-                    <Button onClick={handlePrint}>
+                    <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
+                        <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+                        Refresh
+                    </Button>
+                    <Button variant="outline" onClick={handlePrint}>
                         <Printer className="mr-2 h-4 w-4" /> Print Invoice
                     </Button>
                     {order.paymentStatus !== "PAID" && (
-                        <AddTransaction
-                            remainingBalance={order.totalAmount}
-                            orgId={orgId}
-                            orderId={order.id}
-                            refetch={fetchOrder}
+                        <AddPaymentDialog
+                            remainingAmount={
+                                order.totalAmount -
+                                (order.transactions?.reduce(
+                                    (sum, transaction) => sum + transaction.amount,
+                                    0
+                                ) || 0)
+                            }
+                            type={order.type}
+                            accounts={accounts}
+                            onAddPayment={handleAddPayment}
                         />
                     )}
                 </div>
@@ -158,75 +272,29 @@ const SingleOrderPage = () => {
 
                 <OrderSummary order={order} />
             </div>
-
-            <style>{`
-                @media print {
-                    @page {
-                        margin: 20mm;
-                    }
-
-                    body {
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                    }
-
-                    .container {
-                        max-width: 100% !important;
-                    }
-
-                    .print\\:hidden {
-                        display: none !important;
-                    }
-
-                    .print\\:space-y-4 > * + * {
-                        margin-top: 1rem !important;
-                    }
-
-                    .card {
-                        border: 1px solid #e2e8f0;
-                        border-radius: 0.375rem;
-                        box-shadow: none;
-                        break-inside: avoid;
-                        page-break-inside: avoid;
-                    }
-
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                    }
-
-                    th,
-                    td {
-                        border: 1px solid #e2e8f0;
-                        padding: 0.5rem;
-                        text-align: left;
-                    }
-
-                    th {
-                        background-color: #f7fafc !important;
-                    }
-                }
-            `}</style>
         </div>
     );
 };
 
 const OrderHeader = ({ order }: { order: Order }) => (
     <Card>
-        <CardHeader>
-            <CardTitle className="text-2xl font-bold">Order #{order.orderNumber}</CardTitle>
-            <p className="text-sm text-muted-foreground">
-                {new Date(order.createdAt).toLocaleString()}
-            </p>
-        </CardHeader>
-        <CardContent>
+        <CardHeader className="bg-muted/50">
             <div className="flex justify-between items-center">
+                <CardTitle className="text-2xl font-bold">Order #{order.orderNumber}</CardTitle>
                 <Badge
                     variant={order.paymentStatus === "PAID" ? "outline" : "destructive"}
                     className="px-3 py-1 text-lg"
                 >
                     {order.paymentStatus}
                 </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+                Created: {new Date(order.createdAt).toLocaleDateString()} at{" "}
+                {new Date(order.createdAt).toLocaleTimeString()}
+            </p>
+        </CardHeader>
+        <CardContent className="pt-4">
+            <div className="flex justify-end">
                 <p className="text-xl font-semibold">Total: ${order.totalAmount.toFixed(2)}</p>
             </div>
         </CardContent>
@@ -235,93 +303,131 @@ const OrderHeader = ({ order }: { order: Order }) => (
 
 const EntityDetails = ({ entity }: { entity: Entity }) => (
     <Card>
-        <CardHeader>
-            <CardTitle>Entity Details</CardTitle>
+        <CardHeader className="bg-muted/50">
+            <CardTitle>Customer Details</CardTitle>
         </CardHeader>
-        <CardContent>
-            <p>
-                <strong>Name:</strong> {entity.name}
-            </p>
-            <p>
-                <strong>Phone:</strong> {entity.phone}
-            </p>
-            {entity.email && (
-                <p>
-                    <strong>Email:</strong> {entity.email}
-                </p>
-            )}
-            {entity.description && (
-                <p>
-                    <strong>Description:</strong> {entity.description}
-                </p>
-            )}
+        <CardContent className="pt-4">
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <p className="font-medium text-sm text-muted-foreground">Name</p>
+                    <p>{entity.name}</p>
+                </div>
+                <div>
+                    <p className="font-medium text-sm text-muted-foreground">Phone</p>
+                    <p>{entity.phone}</p>
+                </div>
+                {entity.email && (
+                    <div>
+                        <p className="font-medium text-sm text-muted-foreground">Email</p>
+                        <p>{entity.email}</p>
+                    </div>
+                )}
+                {entity.description && (
+                    <div className="col-span-2">
+                        <p className="font-medium text-sm text-muted-foreground">Description</p>
+                        <p>{entity.description}</p>
+                    </div>
+                )}
+            </div>
         </CardContent>
     </Card>
 );
 
-const OrderItems = ({ items }: { items: OrderItem[] }) => (
-    <Card>
-        <CardHeader>
-            <CardTitle>Order Items</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Subtotal</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {items.map((item) => (
-                        <TableRow key={item.id}>
-                            <TableCell>{item.name}</TableCell>
-                            <TableCell>{item.quantity}</TableCell>
-                            <TableCell>${item.price.toFixed(2)}</TableCell>
-                            <TableCell>${(item.quantity * item.price).toFixed(2)}</TableCell>
+const OrderItems = ({ items }: { items: OrderItem[] }) => {
+    const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+
+    return (
+        <Card>
+            <CardHeader className="bg-muted/50">
+                <CardTitle>Order Items</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Product</TableHead>
+                            <TableHead className="text-right">Quantity</TableHead>
+                            <TableHead className="text-right">Price</TableHead>
+                            <TableHead className="text-right">Subtotal</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </CardContent>
-    </Card>
-);
-
-const OrderTransactions = ({ transactions }: { transactions: Transaction[] }) => (
-    <Card>
-        <CardHeader>
-            <CardTitle>Order Transactions</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Transaction ID</TableHead>
-                        <TableHead>Account</TableHead>
-                        <TableHead>Account Type</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Created At</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {transactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
-                            <TableCell>{transaction.id}</TableCell>
-                            <TableCell>{transaction.account?.name}</TableCell>
-                            <TableCell>{transaction.account?.type}</TableCell>
-                            <TableCell>${transaction.amount.toFixed(2)}</TableCell>
-                            <TableCell>
-                                {new Date(transaction.createdAt).toLocaleString()}
+                    </TableHeader>
+                    <TableBody>
+                        {items.map((item, index) => (
+                            <TableRow key={item.id || index} className="hover:bg-muted/50">
+                                <TableCell className="font-medium">{item.name}</TableCell>
+                                <TableCell className="text-right">{item.quantity}</TableCell>
+                                <TableCell className="text-right">
+                                    ${item.price.toFixed(2)}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    ${(item.quantity * item.price).toFixed(2)}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                    <TableFooter>
+                        <TableRow>
+                            <TableCell colSpan={3} className="text-right font-medium">
+                                Total
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                                ${totalAmount.toFixed(2)}
                             </TableCell>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </CardContent>
-    </Card>
-);
+                    </TableFooter>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+};
+
+const OrderTransactions = ({ transactions }: { transactions: Transaction[] }) => {
+    const totalAmount = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+
+    return (
+        <Card>
+            <CardHeader className="bg-muted/50">
+                <CardTitle>Payment History</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Account</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {transactions.map((transaction) => (
+                            <TableRow key={transaction.id} className="hover:bg-muted/50">
+                                <TableCell>
+                                    {new Date(transaction.createdAt).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell>{transaction.account?.name || "N/A"}</TableCell>
+                                <TableCell>{transaction.account?.type || "N/A"}</TableCell>
+                                <TableCell className="text-right">
+                                    ${transaction.amount.toFixed(2)}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                    <TableFooter>
+                        <TableRow>
+                            <TableCell colSpan={3} className="text-right font-medium">
+                                Total Paid
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                                ${totalAmount.toFixed(2)}
+                            </TableCell>
+                        </TableRow>
+                    </TableFooter>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+};
 
 const OrderSummary = ({ order }: { order: Order }) => {
     const totalPaid =
@@ -330,29 +436,55 @@ const OrderSummary = ({ order }: { order: Order }) => {
 
     return (
         <Card>
-            <CardHeader>
+            <CardHeader className="bg-muted/50">
                 <CardTitle>Order Summary</CardTitle>
             </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
-                    <p>
-                        <strong>Subtotal:</strong> ${order.baseAmount.toFixed(2)}
-                    </p>
-                    <p>
-                        <strong>Discount:</strong> ${order.discount.toFixed(2)}
-                    </p>
-                    <p>
-                        <strong>Tax:</strong> ${order.tax.toFixed(2)}
-                    </p>
-                    <p>
-                        <strong>Total Amount:</strong> ${order.totalAmount.toFixed(2)}
-                    </p>
-                    <p>
-                        <strong>Total Paid:</strong> ${totalPaid.toFixed(2)}
-                    </p>
-                    <p className="text-lg font-semibold">
-                        <strong>Remaining to Pay:</strong> ${remainingToPay.toFixed(2)}
-                    </p>
+            <CardContent className="pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Subtotal:</span>
+                            <span>${order.baseAmount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Discount:</span>
+                            <span>-${order.discount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Tax:</span>
+                            <span>${order.tax.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-medium">
+                            <span>Total Amount:</span>
+                            <span>${order.totalAmount.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div className="space-y-2 border-l pl-4">
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Total Paid:</span>
+                            <span>${totalPaid.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-medium">
+                            <span>Remaining to Pay:</span>
+                            <span
+                                className={
+                                    remainingToPay > 0 ? "text-destructive" : "text-green-600"
+                                }
+                            >
+                                ${remainingToPay.toFixed(2)}
+                            </span>
+                        </div>
+                        {order.paymentStatus === "PAID" && (
+                            <div className="mt-2 p-2 bg-green-50 text-green-700 rounded-md text-center">
+                                This order has been fully paid
+                            </div>
+                        )}
+                        {order.paymentStatus !== "PAID" && remainingToPay > 0 && (
+                            <div className="mt-2 p-2 bg-amber-50 text-amber-700 rounded-md text-center">
+                                Payment pending
+                            </div>
+                        )}
+                    </div>
                 </div>
             </CardContent>
         </Card>

@@ -120,8 +120,8 @@ export default function PaymentSelector({
         setSelectedPayments(remainingPayments);
     };
 
-    const handleAddPayment = (amount: number, accountId: string) => {
-        setSelectedPayments([...selectedPayments, { amount, accountId, details: {} }]);
+    const handleAddPayment = (amount: number, accountId: string, details: object) => {
+        setSelectedPayments([...selectedPayments, { amount, accountId, details }]);
     };
 
     return (

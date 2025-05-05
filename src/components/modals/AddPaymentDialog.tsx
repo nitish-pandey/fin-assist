@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useMemo } from "react";
-import type { Account } from "@/data/types";
+import type { Account, TransactionDetails } from "@/data/types";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogHeader, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 
 interface AddPaymentDialogProps {
     accounts: Account[];
-    type: "BUY" | "SELL";
+    type: "BUY" | "SELL" | "MISC";
     onAddPayment: (amount: number, accountId: string, details: object) => void;
     remainingAmount?: number;
 }
@@ -32,6 +32,7 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
     const [amount, setAmount] = useState<number | "">("");
     const [selectedAccount, setSelectedAccount] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const [details, setDetails] = useState<TransactionDetails>({});
 
     const selectedAccountDetails = useMemo(
         () => accounts.find((account) => account.id === selectedAccount),
@@ -49,7 +50,7 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
             return;
         }
 
-        onAddPayment(Number(amount), selectedAccount, {});
+        onAddPayment(Number(amount), selectedAccount, details);
         handleClose();
     };
 
@@ -66,7 +67,7 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
                 Add Payment
             </Button>
             <Dialog open={isOpen} onOpenChange={handleClose}>
-                <DialogContent className="sm:max-w-[500px] p-6 rounded-lg shadow-lg">
+                <DialogContent className="sm:max-w-[500px] p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader className="text-lg font-semibold mb-4">Add Payment</DialogHeader>
                     {remainingAmount !== undefined && (
                         <div className="text-sm text-gray-700 mb-4 font-medium">
@@ -109,6 +110,72 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
                                 </SelectContent>
                             </Select>
                         </div>
+                        {selectedAccount &&
+                            accounts.find((a) => a.id === selectedAccount && a.type === "CHEQUE")
+                                ?.details && (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="details">Cheque Issuer</Label>
+                                        <Input
+                                            id="details"
+                                            type="text"
+                                            value={details.chequeIssuer || ""}
+                                            onChange={(e) => {
+                                                setDetails({
+                                                    ...details,
+                                                    chequeIssuer: e.target.value,
+                                                });
+                                            }}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="details">Cheque Issuer Bank</Label>
+                                        <Input
+                                            id="details"
+                                            type="text"
+                                            value={details.chequeIssuerBank || ""}
+                                            onChange={(e) => {
+                                                setDetails({
+                                                    ...details,
+                                                    chequeIssuerBank: e.target.value,
+                                                });
+                                            }}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="details">Cheque Number</Label>
+                                        <Input
+                                            id="details"
+                                            type="text"
+                                            value={details.chequeNumber || ""}
+                                            onChange={(e) => {
+                                                setDetails({
+                                                    ...details,
+                                                    chequeNumber: e.target.value,
+                                                });
+                                            }}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="details">Cheque Date</Label>
+                                        <Input
+                                            id="details"
+                                            type="date"
+                                            value={details.chequeDate || ""}
+                                            onChange={(e) => {
+                                                setDetails({
+                                                    ...details,
+                                                    chequeDate: e.target.value,
+                                                });
+                                            }}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                </>
+                            )}
                     </div>
                     {error && <div className="text-red-500 text-sm font-medium py-2">{error}</div>}
                     <DialogFooter className="mt-6 flex justify-end">

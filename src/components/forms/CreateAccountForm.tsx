@@ -39,6 +39,7 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
     avoidCashCounter,
     disableType = false,
 }) => {
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [formState, setFormState] = useState<"idle" | "submitting" | "success" | "error">("idle");
     const { toast } = useToast();
     const {
@@ -62,6 +63,7 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
                 title: "Account created",
                 description: "Your account has been successfully created.",
             });
+            setIsDialogOpen(false);
             reset();
         } catch (error) {
             setFormState("error");
@@ -76,7 +78,7 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
     };
 
     return (
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild ref={ref}>
                 <Button>Create New Account</Button>
             </DialogTrigger>

@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils"; // Utility for classNames
 import { ChevronDown, ChevronRight } from "lucide-react"; // Replace with your icon set
 import { TeamSwitcher } from "../nav/TeamSwitcher";
@@ -133,27 +133,29 @@ export default function Sidebar() {
     };
 
     const { orgs, permissions } = useAuth();
+    const [teams, setTeams] = useState<OrgData[]>([]);
 
-    const ownedOrgs: OrgData[] =
-        orgs
-            ?.filter((org) => org.id !== undefined)
-            .map((org) => ({
-                id: org.id as string,
-                name: org.name,
+    useEffect(() => {
+        const ownedOrgs: OrgData[] =
+            orgs
+                ?.filter((org) => org.id !== undefined)
+                .map((org) => ({
+                    id: org.id as string,
+                    name: org.name,
+                    logo: <Notebook />,
+                    type: "Owned",
+                    current: org.id === orgId,
+                })) || [];
+        const permittedOrgs: OrgData[] =
+            permissions?.map((perm) => ({
+                id: perm.organizationId,
+                name: perm.organizationId || "Organization",
                 logo: <Notebook />,
-                type: "Owned",
-                current: org.id === orgId,
+                type: "Shared",
+                current: perm.organizationId == orgId,
             })) || [];
-    const permittedOrgs: OrgData[] =
-        permissions?.map((perm) => ({
-            id: perm.organizationId,
-            name: perm.organizationId || "Organization",
-            logo: <Notebook />,
-            type: "Shared",
-            current: perm.organizationId == orgId,
-        })) || [];
-
-    const teams = [...ownedOrgs, ...permittedOrgs];
+        setTeams([...ownedOrgs, ...permittedOrgs]);
+    }, [orgs, permissions, orgId]);
 
     const renderItem = (item: any) => {
         const isActive = openMenus[item.name];

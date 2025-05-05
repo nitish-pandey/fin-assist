@@ -21,11 +21,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { Account } from "@/data/types";
+import { Account, TransactionDetails } from "@/data/types";
 
 interface AddTransactionProps {
     account: Account | null;
-    onAddTransaction: (amount: number, description: string) => Promise<void>;
+    onAddTransaction: (amount: number, description: string, details: object) => Promise<void>;
 }
 
 export function AddTransactionDialog({ account, onAddTransaction }: AddTransactionProps) {
@@ -33,6 +33,7 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [details, setDetails] = useState<TransactionDetails>({});
 
     const { toast } = useToast();
 
@@ -62,7 +63,7 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
         setIsLoading(true);
 
         try {
-            await onAddTransaction(numericAmount, description);
+            await onAddTransaction(numericAmount, description, details || {});
             toast({
                 title: "Success",
                 description: "Transaction added successfully",
@@ -100,7 +101,7 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
                     Add Transaction
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Add Transaction</DialogTitle>
                     <DialogDescription>Add a new transaction to your account.</DialogDescription>
@@ -167,6 +168,71 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
                             />
                         </div>
                     </div>
+                    {account.type === "CHEQUE" && (
+                        <>
+                            <div className="grid gap-2 py-4">
+                                <Label htmlFor="details">Cheque Issuer</Label>
+                                <Input
+                                    id="chequeIssuer"
+                                    name="chequeIssuer"
+                                    placeholder="Enter cheque issuer name"
+                                    value={details?.chequeIssuer || ""}
+                                    onChange={(e) =>
+                                        setDetails({
+                                            ...details,
+                                            chequeIssuer: e.target.value,
+                                        })
+                                    }
+                                />
+                            </div>
+                            <div className="grid gap-2 py-4">
+                                <Label htmlFor="details">Cheque Issuer Bank</Label>
+                                <Input
+                                    id="chequeIssuerBank"
+                                    name="chequeIssuerBank"
+                                    placeholder="Enter cheque issuer bank name"
+                                    value={details?.chequeIssuerBank || ""}
+                                    onChange={(e) =>
+                                        setDetails({
+                                            ...details,
+                                            chequeIssuerBank: e.target.value,
+                                        })
+                                    }
+                                />
+                            </div>
+                            <div className="grid gap-2 py-4">
+                                <Label htmlFor="details">Cheque Number</Label>
+                                <Input
+                                    id="chequeNumber"
+                                    name="chequeNumber"
+                                    placeholder="Enter cheque number"
+                                    value={details?.chequeNumber || ""}
+                                    onChange={(e) =>
+                                        setDetails({
+                                            ...details,
+                                            chequeNumber: e.target.value,
+                                        })
+                                    }
+                                />
+                            </div>
+                            <div className="grid gap-2 py-4">
+                                <Label htmlFor="details">Cheque Date</Label>
+                                <Input
+                                    id="chequeDate"
+                                    name="chequeDate"
+                                    type="date"
+                                    placeholder="Enter cheque date"
+                                    value={details?.chequeDate || ""}
+                                    onChange={(e) =>
+                                        setDetails({
+                                            ...details,
+                                            chequeDate: e.target.value,
+                                        })
+                                    }
+                                />
+                            </div>
+                        </>
+                    )}
                     <DialogFooter>
                         <Button type="submit" disabled={isLoading}>
                             {isLoading ? "Adding..." : "Add Transaction"}

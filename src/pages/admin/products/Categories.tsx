@@ -11,19 +11,6 @@ const OrgCategories = () => {
     const [loading, setLoading] = useState(false);
     const [, setError] = useState<string | null>(null);
 
-    const refetch = async () => {
-        setLoading(true);
-        try {
-            const { data } = await api.get(`/orgs/${orgId}/category`);
-            setCategories(data);
-            setError(null);
-        } catch (err) {
-            setError("An error occurred while fetching categories");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
         setLoading(true);
         const fetchCategories = async () => {
@@ -42,8 +29,9 @@ const OrgCategories = () => {
     }, [orgId]);
 
     const addCategory = async (name: string, description: string) => {
-        await api.post(`/orgs/${orgId}/category`, { name, description });
-        refetch();
+        const newCategory = await api.post(`/orgs/${orgId}/category`, { name, description });
+        setCategories((prev) => [...prev, newCategory.data]);
+        setError(null);
     };
 
     return (

@@ -46,12 +46,12 @@ export default function AccountsDashboard() {
 
     const handleCreateAccount = async (account: Account) => {
         try {
-            await api.post(`orgs/${orgId}/accounts`, account);
+            const newlyCreated = await api.post(`orgs/${orgId}/accounts`, account);
             toast({
                 title: "Success",
                 description: "Account created successfully",
             });
-            fetchAccounts();
+            setAccounts((prev) => [...prev, newlyCreated.data]);
             setIsCreateDialogOpen(false);
         } catch (err) {
             toast({

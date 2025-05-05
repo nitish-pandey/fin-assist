@@ -145,10 +145,18 @@ export interface OrderItem {
     updatedAt: string;
 }
 
+export interface TransactionDetails {
+    chequeNumber?: string | null;
+    chequeDate?: string | null;
+    chequeIssuer?: string | null;
+    chequeIssuerBank?: string | null;
+}
+
 export interface Transaction {
     id: string;
     description: string | null;
     amount: number;
+    details?: TransactionDetails | null;
 
     organizationId: string;
     accountId: string;

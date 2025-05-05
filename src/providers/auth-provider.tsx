@@ -9,7 +9,7 @@ interface AuthContextData {
     login: (email: string, password: string) => Promise<void>;
     logout: () => void;
     loading: boolean;
-    refetch: () => void;
+    refetch: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData | undefined>(undefined);

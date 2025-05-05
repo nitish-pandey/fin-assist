@@ -15,19 +15,22 @@ import { AddOrganizationForm } from "@/components/modals/AddOrganization";
 import { Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { RoleAccess } from "@/data/types";
-import { Link } from "react-router-dom";
+import { useMemo } from "react";
 
 export default function OrganizationsPage() {
     const { orgs, permissions } = useAuth();
 
     // Group permissions by organization ID
-    const groupedPermissions: Record<string, RoleAccess[]> = {};
-    permissions?.forEach((perm) => {
-        if (!groupedPermissions[perm.organizationId]) {
-            groupedPermissions[perm.organizationId] = [];
-        }
-        groupedPermissions[perm.organizationId].push(perm);
-    });
+    const groupedPermissions = useMemo(() => {
+        const groups: Record<string, RoleAccess[]> = {};
+        permissions?.forEach((perm) => {
+            if (!groups[perm.organizationId]) {
+                groups[perm.organizationId] = [];
+            }
+            groups[perm.organizationId].push(perm);
+        });
+        return groups;
+    }, [permissions]);
 
     return (
         <div className="p-6 space-y-6">
@@ -82,12 +85,12 @@ export default function OrganizationsPage() {
                                     </div>
                                 </CardContent>
                                 <CardFooter className="pt-2">
-                                    <Link to={`/org/${org.id}/dashboard`} className="w-full">
+                                    <a href={`/org/${org.id}/dashboard`} className="w-full">
                                         <Button variant="outline" className="w-full">
                                             <Building2 className="mr-2 h-4 w-4" />
                                             Access Organization
                                         </Button>
-                                    </Link>
+                                    </a>
                                 </CardFooter>
                             </Card>
                         ))}

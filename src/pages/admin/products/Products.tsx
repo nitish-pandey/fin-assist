@@ -18,6 +18,10 @@ const OrgProducts = () => {
         fetchProducts();
     }, [orgId]);
 
+    const handleProductCreated = (newProduct: Product) => {
+        setProducts((prevProducts) => [...prevProducts, newProduct]);
+    };
+
     return (
         <div className="">
             <div className="flex justify-between items-center mb-6">
@@ -25,7 +29,7 @@ const OrgProducts = () => {
                     <h1 className="text-2xl font-bold">Products</h1>
                     <p className="text-gray-600">Manage your products here</p>
                 </div>
-                <CreateProduct orgId={orgId} />
+                <CreateProduct orgId={orgId} afterCreate={handleProductCreated} />
             </div>
             <ProductList products={products} isLoading={false} error="" />
         </div>

@@ -11,6 +11,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { TableComponent } from "./Table";
 import { api } from "@/utils/api";
 import { AddTransactionDialog } from "../modals/AddTransaction";
+import { useEffect, useState } from "react";
 
 const paymentColumns: ColumnDef<Transaction>[] = [
     {
@@ -27,7 +28,28 @@ const paymentColumns: ColumnDef<Transaction>[] = [
     },
 ];
 
+const chequeColumns: ColumnDef<Transaction>[] = [
+    {
+        header: "Cheque Number",
+        accessorKey: "details.chequeNumber",
+    },
+    {
+        header: "Cheque Date",
+        accessorKey: "details.chequeDate",
+    },
+
+    {
+        header: "Cheque Issuer",
+        accessorKey: "details.chequeIssuer",
+    },
+];
+
 const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDetailsProps) => {
+    const [localAccount, setLocalAccount] = useState<Account | null>(account);
+
+    useEffect(() => {
+        setLocalAccount(account);
+    }, [account]);
     if (isLoading) {
         return <div>Loading...</div>;
     }
@@ -39,10 +61,29 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
     if (!account) {
         return <div>No account found</div>;
     }
-    const handleAddTransaction = async (amount: number, description: string) => {
-        await api.post(`/orgs/${account.organizationId}/accounts/${account.id}/transactions`, {
-            amount,
-            description,
+    if (!localAccount) {
+        return <div>No account found</div>;
+    }
+
+    const handleAddTransaction = async (
+        amount: number,
+        description: string,
+        details: object = {}
+    ) => {
+        const created = await api.post(
+            `/orgs/${account.organizationId}/accounts/${account.id}/transactions`,
+            {
+                amount,
+                description,
+                details,
+            }
+        );
+        setLocalAccount((prev) => {
+            if (!prev) return null;
+            return {
+                ...prev,
+                transactions: [...(prev.transactions || []), created.data],
+            };
         });
     };
 
@@ -53,24 +94,26 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
                 <div className="flex items-center justify-between mt-4">
                     <div>
                         <p className="text-sm text-gray-500">Account Name</p>
-                        <p className="text-lg font-semibold text-gray-800">{account.name}</p>
+                        <p className="text-lg font-semibold text-gray-800">{localAccount.name}</p>
                     </div>
                     <div>
                         <p className="text-sm text-gray-500">Balance</p>
-                        <p className="text-lg font-semibold text-gray-800">{account.balance}</p>
+                        <p className="text-lg font-semibold text-gray-800">
+                            {localAccount.balance}
+                        </p>
                     </div>
                     {type === "BANK" && (
                         <>
                             <div>
                                 <p className="text-sm text-gray-500">Account Number</p>
                                 <p className="text-lg font-semibold text-gray-800">
-                                    {account.details.accountNumber}
+                                    {localAccount.details.accountNumber}
                                 </p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Bank Name</p>
                                 <p className="text-lg font-semibold text-gray-800">
-                                    {account.details.bankName}
+                                    {localAccount.details.bankName}
                                 </p>
                             </div>
                         </>
@@ -87,17 +130,21 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
                             <TabsTrigger value="others">Other Transactions</TabsTrigger>
                         </div>
                         <AddTransactionDialog
-                            account={account}
+                            account={localAccount}
                             onAddTransaction={handleAddTransaction}
                         />
                     </TabsList>
                     <TabsContent value="all" defaultChecked>
                         <div>
-                            {account.transactions && account.transactions.length > 0 ? (
+                            {localAccount.transactions && localAccount.transactions.length > 0 ? (
                                 <TableComponent
                                     title="All Payments"
-                                    columns={paymentColumns}
-                                    data={account.transactions}
+                                    columns={
+                                        type === "CHEQUE"
+                                            ? [...paymentColumns, ...chequeColumns]
+                                            : paymentColumns
+                                    }
+                                    data={localAccount.transactions}
                                 />
                             ) : (
                                 <p className="bg-white rounded-lg p-2">No payments found.</p>
@@ -106,12 +153,16 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
                     </TabsContent>
                     <TabsContent value="buy">
                         <div>
-                            {account.transactions &&
-                            account.transactions.filter((t) => t.type === "BUY").length > 0 ? (
+                            {localAccount.transactions &&
+                            localAccount.transactions.filter((t) => t.type === "BUY").length > 0 ? (
                                 <TableComponent
                                     title="Buy Payments"
-                                    columns={paymentColumns}
-                                    data={account.transactions.filter((t) => t.type === "BUY")}
+                                    columns={
+                                        type === "CHEQUE"
+                                            ? [...paymentColumns, ...chequeColumns]
+                                            : paymentColumns
+                                    }
+                                    data={localAccount.transactions.filter((t) => t.type === "BUY")}
                                 />
                             ) : (
                                 <p className="bg-white rounded-lg p-2">No buy payments found.</p>
@@ -120,12 +171,19 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
                     </TabsContent>
                     <TabsContent value="sell">
                         <div>
-                            {account.transactions &&
-                            account.transactions.filter((t) => t.type === "SELL").length > 0 ? (
+                            {localAccount.transactions &&
+                            localAccount.transactions.filter((t) => t.type === "SELL").length >
+                                0 ? (
                                 <TableComponent
                                     title="Sell Payments"
-                                    columns={paymentColumns}
-                                    data={account.transactions.filter((t) => t.type === "SELL")}
+                                    columns={
+                                        type === "CHEQUE"
+                                            ? [...paymentColumns, ...chequeColumns]
+                                            : paymentColumns
+                                    }
+                                    data={localAccount.transactions.filter(
+                                        (t) => t.type === "SELL"
+                                    )}
                                 />
                             ) : (
                                 <p className="bg-white rounded-lg p-2">No sell payments found.</p>
@@ -134,21 +192,29 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
                     </TabsContent>
                     <TabsContent value="others">
                         <div>
-                            {account.transactions &&
-                            account.transactions.filter((t) => t.type === "MISC").length > 0 ? (
+                            {localAccount.transactions &&
+                            localAccount.transactions.filter((t) => t.type === "MISC").length >
+                                0 ? (
                                 <TableComponent
                                     title="Other Payments"
                                     allowSearch={false}
                                     allowExport={false}
                                     allowPagination={false}
-                                    columns={[
-                                        ...paymentColumns,
-                                        {
-                                            header: "Description",
-                                            accessorKey: "description",
-                                        },
-                                    ]}
-                                    data={account.transactions.filter((t) => t.type === "MISC")}
+                                    // columns={[
+                                    //     ...paymentColumns,
+                                    //     {
+                                    //         header: "Description",
+                                    //         accessorKey: "description",
+                                    //     },
+                                    // ]}
+                                    columns={
+                                        type === "CHEQUE"
+                                            ? [...paymentColumns, ...chequeColumns]
+                                            : paymentColumns
+                                    }
+                                    data={localAccount.transactions.filter(
+                                        (t) => t.type === "MISC"
+                                    )}
                                 />
                             ) : (
                                 <p className="bg-white rounded-lg p-2">No other payments found.</p>

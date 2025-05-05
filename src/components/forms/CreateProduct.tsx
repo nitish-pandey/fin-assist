@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/utils/api";
-import { Category } from "@/data/types";
+import { Category, Product } from "@/data/types";
 import {
     Dialog,
     DialogTrigger,
@@ -24,6 +24,7 @@ import {
 
 interface CreateProductFormProps {
     orgId: string;
+    afterCreate?: (product: Product) => void;
 }
 
 interface CreateProductFormData {
@@ -34,7 +35,8 @@ interface CreateProductFormData {
     categoryId: string;
 }
 
-const CreateProduct: React.FC<CreateProductFormProps> = ({ orgId }) => {
+const CreateProduct: React.FC<CreateProductFormProps> = ({ orgId, afterCreate }) => {
+    const [isOpen, setIsOpen] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
@@ -78,12 +80,17 @@ const CreateProduct: React.FC<CreateProductFormProps> = ({ orgId }) => {
     const onSubmit: SubmitHandler<CreateProductFormData> = async (data) => {
         setIsLoading(true);
         try {
-            await api.post(`/orgs/${orgId}/products`, data);
+            const createdProduct = await api.post(`/orgs/${orgId}/products`, data);
+            if (afterCreate) {
+                afterCreate(createdProduct.data);
+            }
             reset();
             toast({
                 title: "Success",
                 description: "Product has been added successfully!",
             });
+            // Close the dialog if needed
+            setIsOpen(false);
         } catch (error) {
             console.error("Failed to create product:", error);
             toast({
@@ -98,7 +105,7 @@ const CreateProduct: React.FC<CreateProductFormProps> = ({ orgId }) => {
 
     return (
         <>
-            <Dialog>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogTrigger asChild>
                     <Button>Add New Product</Button>
                 </DialogTrigger>

@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { AddOrganizationForm } from "../modals/AddOrganization";
 
 interface Team {
     id: string;
@@ -102,8 +101,6 @@ export function TeamSwitcher({ teams, onTeamChange }: TeamSwitcherProps) {
                                 ))}
                             </div>
                             <DropdownMenuSeparator className="my-2" />
-
-                            <AddOrganizationForm />
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </SidebarMenuItem>

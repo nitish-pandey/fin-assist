@@ -20,7 +20,6 @@ export function AddOrganizationForm() {
     const [loading, setLoading] = useState(false);
     const { user, refetch } = useAuth();
     const { toast } = useToast();
-
     const {
         register,
         handleSubmit,
@@ -39,9 +38,9 @@ export function AddOrganizationForm() {
                 description: "Organization created successfully!",
             });
 
+            await refetch(); // Fetch updated user data
             reset(); // Clear form fields
             setOpen(false); // Close modal
-            refetch(); // Fetch updated user data
         } catch (error) {
             toast({
                 title: "Error",

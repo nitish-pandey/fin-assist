@@ -37,8 +37,8 @@ export default function CASHACCOUNTS() {
     // Create a new account
     const onSubmit = async (account: Account) => {
         try {
-            await api.post(`orgs/${orgId}/accounts`, account);
-            fetchAccounts(); // Refresh the account list
+            const created = await api.post(`orgs/${orgId}/accounts`, account);
+            setAccounts((prev) => [...prev, created.data]);
         } catch {
             setError("Failed to create account. Please try again.");
         }
