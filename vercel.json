@@ -1,3 +1,12 @@
 {
-    "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+    "rewrites": [
+        {
+            "source": "/api/(.*)",
+            "destination": "https://fin-assist-backend.agrimkafle.com.np/api/$1"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/"
+        }
+    ]
 }
