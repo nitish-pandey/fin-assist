@@ -1,13 +1,16 @@
 import "./App.css";
 import { Outlet } from "react-router-dom";
 import { Toaster } from "./components/ui/toaster";
+import { AuthProvider } from "./providers/auth-provider";
 
 function App() {
     return (
-        <main className="w-full">
-            <Outlet />
-            <Toaster />
-        </main>
+        <AuthProvider>
+            <main className="w-full">
+                <Outlet />
+                <Toaster />
+            </main>
+        </AuthProvider>
     );
 }
 

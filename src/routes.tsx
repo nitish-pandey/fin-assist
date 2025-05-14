@@ -29,6 +29,7 @@ import ChequeAccounts from "./pages/admin/accounts/cheques";
 import BankODAccounts from "./pages/admin/accounts/bank-od";
 import UserInvitePages from "./pages/settings/invites";
 import CASHACCOUNTS from "./pages/admin/accounts/cash";
+import NotFoundPage from "./pages/error/404";
 
 export const routes: RouteObject[] = [
     {
@@ -176,7 +177,7 @@ export const routes: RouteObject[] = [
     },
     {
         path: "*",
-        element: <h1>404 Not Found </h1>,
+        element: <NotFoundPage />,
     },
 ];
 

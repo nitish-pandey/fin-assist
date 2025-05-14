@@ -1,6 +1,7 @@
 import { Organization, User, RoleAccess } from "@/data/types";
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { api } from "@/utils/api";
+import { useNavigate } from "react-router-dom";
 
 interface AuthContextData {
     user: User | null;
@@ -23,6 +24,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [orgs, setOrgs] = useState<Organization[] | null>(null);
     const [permissions, setPermissions] = useState<RoleAccess[] | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
+    const router = useNavigate();
 
     const initializeAuth = async () => {
         setLoading(true);
@@ -32,9 +34,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(res);
             setOrgs(res.organizations || []);
             setPermissions(res.permissions || []);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to fetch user details:", error);
-            logout();
+            if (error.response?.status === 401) {
+                // User is not authenticated
+                setUser(null);
+                setOrgs(null);
+                setPermissions(null);
+                router("/auth/login");
+            } else {
+                logout();
+            }
         } finally {
             setLoading(false);
         }
