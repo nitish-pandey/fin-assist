@@ -106,7 +106,7 @@ export default function SellProductForm({
         }, 0);
     }, [state.selectedProducts, products]);
 
-    const tax = useMemo(() => totalProductPrice * 0.1, [totalProductPrice]);
+    const tax = 0;
 
     const totalPayments = useMemo(() => {
         return state.selectedPayments.reduce((sum, p) => sum + p.amount, 0);
@@ -196,7 +196,6 @@ export default function SellProductForm({
                 <CalculationSelector
                     subTotal={totalProductPrice}
                     discount={state.discount}
-                    tax={tax}
                     charge={state.charge}
                     setDiscount={(d) => dispatch({ type: "SET_DISCOUNT", payload: d })}
                     setCharge={(c) => dispatch({ type: "SET_CHARGE", payload: c })}

@@ -21,6 +21,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import AddCategory from "../modals/AddCategory";
 
 interface CreateProductFormProps {
     orgId: string;
@@ -102,6 +103,10 @@ const CreateProduct: React.FC<CreateProductFormProps> = ({ orgId, afterCreate })
             setIsLoading(false);
         }
     };
+    const addCategory = async (name: string, description: string) => {
+        const newCategory = await api.post(`/orgs/${orgId}/category`, { name, description });
+        setCategories((prev) => [...prev, newCategory.data]);
+    };
 
     return (
         <>
@@ -178,6 +183,7 @@ const CreateProduct: React.FC<CreateProductFormProps> = ({ orgId, afterCreate })
                                     ))}
                                 </SelectContent>
                             </Select>
+                            <AddCategory onAddCategory={addCategory} />
                         </div>
 
                         <div className="flex justify-end space-x-3">

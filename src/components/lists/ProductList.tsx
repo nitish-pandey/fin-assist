@@ -1,52 +1,49 @@
 import { Product } from "@/data/types";
 import { TableComponent } from "../modules/Table";
 import { ColumnDef } from "@tanstack/react-table";
+import { useOrg } from "@/providers/org-provider";
+import { Link } from "react-router-dom";
 interface ProductListProps {
     products: Product[];
     isLoading: boolean;
     error: string;
 }
 
-const productCols: ColumnDef<Product>[] = [
-    {
-        accessorKey: "name",
-        header: "Name",
-    },
-    {
-        accessorKey: "description",
-        header: "Description",
-    },
-    {
-        accessorKey: "price",
-        header: "Price",
-    },
-    {
-        accessorKey: "stock",
-        header: "Stock",
-    },
-    // {
-    //     accessorKey: "id",
-    //     header: "Actions",
-    //     cell: (props) => {
-    //         return (
-    //             <RemoveModal
-    //                 title="Delete Product"
-    //                 description="Are you sure you want to delete this product?"
-    //                 onRemove={() => {}}
-    //             />
-    //         );
-    //     },
-    //     enableSorting: false,
-    // },
-];
-
 export const ProductList = ({ products, isLoading, error }: ProductListProps) => {
-    if (isLoading) {
-        return <div>Loading...</div>;
-    }
     if (error) {
         return <div>{error}</div>;
     }
+    const { orgId } = useOrg();
+    const productCols: ColumnDef<Product>[] = [
+        {
+            accessorKey: "name",
+            header: "Name",
+            cell: (props) => {
+                return (
+                    <div className="flex items-center">
+                        <Link
+                            to={`/org/${orgId}/products/${props.row.original.id}`}
+                            className="text-blue-500 hover:underline"
+                        >
+                            {props.row.original.name}
+                        </Link>
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: "description",
+            header: "Description",
+        },
+        {
+            accessorKey: "price",
+            header: "Price",
+        },
+        {
+            accessorKey: "stock",
+            header: "Stock",
+        },
+    ];
     return (
         <div className="">
             <TableComponent
@@ -55,6 +52,7 @@ export const ProductList = ({ products, isLoading, error }: ProductListProps) =>
                 showFooter={true}
                 allowSearch={true}
                 allowPagination={true}
+                isLoading={isLoading}
                 allowSelection={true}
             />
         </div>

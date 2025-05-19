@@ -76,6 +76,7 @@ export default function Sidebar() {
             icon: ProductIcon,
             subItems: [
                 { name: "All", path: getPathname("products"), icon: ProductIcon },
+                { name: "Create", path: getPathname("products/create"), icon: ProductIcon },
                 {
                     name: "Categories",
                     path: getPathname("categories"),
@@ -164,15 +165,15 @@ export default function Sidebar() {
                 <div
                     onClick={() => item.subItems && toggleMenu(item.name)}
                     className={cn(
-                        "flex relative items-center justify-between gap-2  px-4 py-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md text-sm text-gray-700 dark:text-gray-300",
-                        !item.subItems && "justify-start"
+                        "flex relative items-center border-r-4 border-transparent justify-between gap-2 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 text-sm",
+                        !item.subItems && "justify-start",
+                        item.path === window.location.pathname &&
+                            "bg-gray-200 dark:bg-gray-800 text-black dark:text-white border-gray-500"
                     )}
                 >
                     <div className="flex items-center gap-4">
                         <img src={item.icon} alt={item.name} className="w-5 h-5" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {item.name}
-                        </span>
+                        <span className="text-sm">{item.name}</span>
                     </div>
                     {!item.subItems && (
                         <NavLink
@@ -189,7 +190,11 @@ export default function Sidebar() {
                             <NavLink
                                 key={sub.name}
                                 to={sub.path}
-                                className="text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:bg-gray-700 rounded-md "
+                                className={cn(
+                                    "text-sm text-gray-600 px-2 dark:text-gray-400 border-r-4 border-transparent hover:text-black dark:hover:text-white hover:bg-gray-200 dark:bg-gray-700 rounded-md",
+                                    sub.path === window.location.pathname &&
+                                        "bg-gray-200 dark:bg-gray-800 text-black dark:text-white border-gray-500"
+                                )}
                             >
                                 <div className="flex items-center gap-3 px-2 py-2">
                                     <img src={sub.icon} alt={sub.name} className="w-4 h-4" />

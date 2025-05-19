@@ -89,6 +89,23 @@ export interface Category {
     updatedAt: string;
 }
 
+export interface ProductVariant {
+    id: string;
+    name: string;
+    description: string | null;
+    productId: string;
+
+    price: number;
+    stock: number;
+
+    values: object;
+    code: string;
+    sku: string;
+
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface Product {
     id: string;
     name: string;
@@ -96,10 +113,15 @@ export interface Product {
     image: string | null;
     price: number;
     stock: number;
+    code: string;
+    sku: string;
     description: string | null;
     organizationId: string;
     createdAt: string;
     updatedAt: string;
+
+    variants?: ProductVariant[];
+    category?: Category | null;
 }
 
 export type PaymentStatus = "PAID" | "PENDING" | "FAILED" | "CANCELLED" | "PARTIAL";
@@ -136,7 +158,7 @@ export interface OrderItem {
     description?: string | null;
 
     orderId: string;
-    productId: string;
+    productVariantId: string;
     quantity: number;
     price: number;
     subTotal: number;

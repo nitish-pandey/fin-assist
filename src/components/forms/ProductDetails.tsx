@@ -1,24 +1,18 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
-import { Minus, Plus, X, Search, DollarSign } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Minus, Plus, X, Search, DollarSign, ChevronDown } from "lucide-react";
 import { Command } from "cmdk";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-
-interface Product {
-    id: string;
-    name: string;
-    price: number;
-}
+import { Product } from "@/data/types";
 
 interface SelectedProduct {
-    id: string;
+    productId: string;
+    id: string; // variant id
     quantity: number;
     rate: number;
 }
@@ -30,67 +24,65 @@ interface ProductDetailsProps {
 
 export function ProductDetails({ products, onUpdateProducts }: ProductDetailsProps) {
     const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([
-        { id: "", quantity: 1, rate: 0 },
+        { productId: "", id: "", quantity: 1, rate: 0 },
     ]);
 
-    const handleAddEmptySlot = useCallback(() => {
-        setSelectedProducts((prev) => [...prev, { id: "", quantity: 1, rate: 0 }]);
-    }, []);
+    const handleAddEmptySlot = () => {
+        setSelectedProducts((prev) => [...prev, { productId: "", id: "", quantity: 1, rate: 0 }]);
+    };
 
-    const handleProductSelect = useCallback(
-        (index: number, productId: string) => {
-            const product = products.find((p) => p.id === productId);
-            const basePrice = product?.price || 0;
+    const handleProductSelect = (index: number, productId: string) => {
+        setSelectedProducts((prev) => {
+            const updated = [...prev];
+            updated[index] = {
+                ...updated[index],
+                productId,
+                id: "",
+                rate: 0,
+            };
+            return updated;
+        });
+    };
 
-            setSelectedProducts((prev) => {
-                const updated = [...prev];
-                updated[index] = {
-                    ...updated[index],
-                    id: productId,
-                    rate: basePrice, // Set the initial rate to the base price
-                };
-                return updated;
-            });
-        },
-        [products]
-    );
+    const handleVariantSelect = (index: number, variantId: string, rate: number) => {
+        setSelectedProducts((prev) => {
+            const updated = [...prev];
+            updated[index] = {
+                ...updated[index],
+                id: variantId,
+                rate,
+            };
+            return updated;
+        });
+    };
 
-    const handleQuantityChange = useCallback((index: number, quantity: number) => {
+    const handleQuantityChange = (index: number, quantity: number) => {
         setSelectedProducts((prev) => {
             const updated = [...prev];
             updated[index] = { ...updated[index], quantity: Math.max(1, quantity) };
             return updated;
         });
-    }, []);
+    };
 
-    const handleRateChange = useCallback((index: number, rate: number) => {
+    const handleRateChange = (index: number, rate: number) => {
         setSelectedProducts((prev) => {
             const updated = [...prev];
             updated[index] = { ...updated[index], rate };
             return updated;
         });
-    }, []);
+    };
 
-    const handleRemoveProduct = useCallback((index: number) => {
+    const handleRemoveProduct = (index: number) => {
         setSelectedProducts((prev) => {
-            if (prev.length === 1) {
-                return [{ id: "", quantity: 1, rate: 0 }];
-            }
+            if (prev.length === 1) return [{ productId: "", id: "", quantity: 1, rate: 0 }];
             return prev.filter((_, i) => i !== index);
         });
-    }, []);
+    };
 
-    const getProductDetails = useCallback(
-        (productId: string) => {
-            return products.find((p) => p.id === productId);
-        },
-        [products]
-    );
+    const getProductDetails = (id: string) => products.find((p) => p.id === id);
 
     const totalAmount = useMemo(() => {
-        return selectedProducts.reduce((total, item) => {
-            return total + item.quantity * item.rate;
-        }, 0);
+        return selectedProducts.reduce((total, item) => total + item.quantity * item.rate, 0);
     }, [selectedProducts]);
 
     React.useEffect(() => {
@@ -98,58 +90,166 @@ export function ProductDetails({ products, onUpdateProducts }: ProductDetailsPro
     }, [selectedProducts]);
 
     return (
-        <Card className="w-full border rounded-lg shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-t-lg">
-                <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-emerald-500" />
+        <Card className="w-full border rounded-xl shadow-md">
+            <CardHeader className="bg-gradient-to-r from-slate-100 to-slate-200 rounded-t-xl">
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-emerald-600" />
                     Item Details
                 </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-                <div className="space-y-6">
-                    <div className="grid grid-cols-12 gap-4 font-medium text-sm text-muted-foreground bg-slate-50 p-3 rounded-md">
-                        <div className="col-span-1">#</div>
-                        <div className="col-span-4">Item Name</div>
-                        <div className="col-span-2 text-center">Quantity</div>
-                        <div className="col-span-2 text-center">Rate ($)</div>
-                        <div className="col-span-2 text-center">Amount ($)</div>
-                        <div className="col-span-1"></div>
+            <CardContent className="p-6 space-y-6">
+                <div className="grid grid-cols-12 gap-4 font-medium text-sm text-muted-foreground bg-slate-50 p-3 rounded-md">
+                    <div className="col-span-1">#</div>
+                    <div className="col-span-2">Product</div>
+                    <div className="col-span-3">Variant</div>
+                    <div className="col-span-2 ">Quantity</div>
+                    <div className="col-span-2">Rate ($)</div>
+                    <div className="col-span-1">Amount</div>
+                    <div className="col-span-1" />
+                </div>
+
+                <ScrollArea className="max-h-[400px] pr-4">
+                    <div className="space-y-3">
+                        {selectedProducts.map((item, index) => {
+                            const product = getProductDetails(item.productId);
+                            const amount = item.quantity * item.rate;
+
+                            return (
+                                <div
+                                    key={index}
+                                    className="grid grid-cols-12 gap-4 items-center bg-white p-3 rounded-lg border"
+                                >
+                                    <div className="col-span-1 font-medium">{index + 1}</div>
+
+                                    {/* Product Dropdown */}
+                                    <div className="col-span-2">
+                                        <SelectPopover
+                                            items={products.map((p) => ({
+                                                id: p.id,
+                                                label: p.name,
+                                            }))}
+                                            selectedId={item.productId}
+                                            onSelect={(id) => handleProductSelect(index, id)}
+                                            placeholder="Select product"
+                                        />
+                                    </div>
+
+                                    {/* Variant Dropdown */}
+                                    <div className="col-span-3">
+                                        {product ? (
+                                            <SelectPopover
+                                                items={(product?.variants ?? []).map((v) => ({
+                                                    id: v.id,
+                                                    label: `${v.name} - $${v.price.toFixed(2)}`,
+                                                }))}
+                                                selectedId={item.id}
+                                                onSelect={(id) => {
+                                                    const v = product.variants?.find(
+                                                        (x) => x.id === id
+                                                    );
+                                                    if (v)
+                                                        handleVariantSelect(index, v.id, v.price);
+                                                }}
+                                                placeholder="Select variant"
+                                            />
+                                        ) : (
+                                            <span className="text-muted-foreground">
+                                                Select product first
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Quantity */}
+                                    <div className="col-span-2 flex items-center justify-center gap-1">
+                                        <Button
+                                            size="icon"
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() =>
+                                                handleQuantityChange(index, item.quantity - 1)
+                                            }
+                                            disabled={!item.id}
+                                            className="h-8 w-8"
+                                        >
+                                            <Minus className="h-3 w-3" />
+                                        </Button>
+                                        <Input
+                                            type="number"
+                                            value={item.quantity}
+                                            onChange={(e) =>
+                                                handleQuantityChange(
+                                                    index,
+                                                    Number.parseInt(e.target.value) || 1
+                                                )
+                                            }
+                                            min={1}
+                                            className="w-14 h-8 text-center"
+                                        />
+                                        <Button
+                                            size="icon"
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() =>
+                                                handleQuantityChange(index, item.quantity + 1)
+                                            }
+                                            disabled={!item.id}
+                                            className="h-8 w-8"
+                                        >
+                                            <Plus className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+
+                                    {/* Rate */}
+                                    <div className="col-span-2">
+                                        <Input
+                                            type="number"
+                                            value={item.rate.toFixed(2)}
+                                            onChange={(e) =>
+                                                handleRateChange(
+                                                    index,
+                                                    Number.parseFloat(e.target.value) || 0
+                                                )
+                                            }
+                                            className="text-right h-9"
+                                            disabled={!item.id}
+                                            step="0.01"
+                                        />
+                                    </div>
+
+                                    {/* Amount */}
+                                    <div className="col-span-1 text-right font-semibold">
+                                        ${amount.toFixed(2)}
+                                    </div>
+
+                                    {/* Remove */}
+                                    <div className="col-span-1 flex justify-center">
+                                        <Button
+                                            size="icon"
+                                            type="button"
+                                            variant="ghost"
+                                            onClick={() => handleRemoveProduct(index)}
+                                            className="h-8 w-8 text-slate-500 hover:text-red-500"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
-                    <ScrollArea className="h-full max-h-[350px] pr-4 overflow-y-auto">
-                        <div className="space-y-3">
-                            {selectedProducts.map((item, index) => (
-                                <ProductRow
-                                    key={`product-${index}`}
-                                    index={index}
-                                    item={item}
-                                    products={products}
-                                    getProductDetails={getProductDetails}
-                                    onProductSelect={handleProductSelect}
-                                    onQuantityChange={handleQuantityChange}
-                                    onRateChange={handleRateChange}
-                                    onRemoveProduct={handleRemoveProduct}
-                                />
-                            ))}
-                        </div>
-                    </ScrollArea>
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <Button
-                            onClick={handleAddEmptySlot}
-                            className="w-full sm:w-auto bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200"
-                            type="button"
-                            size="sm"
-                        >
-                            <Plus className="h-4 w-4 mr-2" /> Add Product
-                        </Button>
-                        <div className="flex items-center gap-3">
-                            <span className="text-muted-foreground font-medium">Total:</span>
-                            <Badge
-                                variant="outline"
-                                className="text-lg font-semibold px-3 py-1.5 bg-slate-50"
-                            >
-                                ${totalAmount.toFixed(2)}
-                            </Badge>
-                        </div>
+                </ScrollArea>
+
+                <div className="flex justify-between items-center">
+                    <Button
+                        type="button"
+                        onClick={handleAddEmptySlot}
+                        className="bg-emerald-600 text-white hover:bg-emerald-700"
+                        size="sm"
+                    >
+                        <Plus className="h-4 w-4 mr-2" /> Add Product
+                    </Button>
+                    <div className="text-lg font-semibold text-slate-700">
+                        Total: ${totalAmount.toFixed(2)}
                     </div>
                 </div>
             </CardContent>
@@ -157,184 +257,73 @@ export function ProductDetails({ products, onUpdateProducts }: ProductDetailsPro
     );
 }
 
-interface ProductRowProps {
-    index: number;
-    item: SelectedProduct;
-    products: Product[];
-    getProductDetails: (id: string) => Product | undefined;
-    onProductSelect: (index: number, productId: string) => void;
-    onQuantityChange: (index: number, quantity: number) => void;
-    onRateChange: (index: number, rate: number) => void;
-    onRemoveProduct: (index: number) => void;
+interface SelectPopoverProps {
+    items: { id: string; label: string }[];
+    selectedId: string;
+    onSelect: (id: string) => void;
+    placeholder?: string;
 }
 
-const ProductRow: React.FC<ProductRowProps> = React.memo(
-    ({
-        index,
-        item,
-        products,
-        getProductDetails,
-        onProductSelect,
-        onQuantityChange,
-        onRateChange,
-        onRemoveProduct,
-    }) => {
-        const [open, setOpen] = useState(false);
-        const [searchValue, setSearchValue] = useState("");
-        const amount = item.quantity * item.rate;
+const SelectPopover: React.FC<SelectPopoverProps> = ({
+    items,
+    selectedId,
+    onSelect,
+    placeholder,
+}) => {
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const selectedItem = items.find((item) => item.id === selectedId);
 
-        const selectedProduct = getProductDetails(item.id);
-        const isCustomRate = selectedProduct && item.rate !== selectedProduct.price;
-
-        return (
-            <div
-                className={cn(
-                    "grid grid-cols-12 gap-4 items-center py-3 px-2 w-full rounded-lg transition-all duration-200",
-                    item.id ? "bg-white border" : "bg-slate-50 border border-dashed"
-                )}
-            >
-                <div className="col-span-1 text-sm font-medium">{index + 1}</div>
-                <div className="col-span-4">
-                    <Popover open={open} onOpenChange={setOpen}>
-                        <PopoverTrigger asChild>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                role="combobox"
-                                aria-expanded={open}
-                                className={cn(
-                                    "w-full justify-between transition-all",
-                                    selectedProduct
-                                        ? "bg-white"
-                                        : "bg-slate-50 border-slate-200 text-slate-500"
-                                )}
-                            >
-                                {selectedProduct ? (
-                                    <span className="truncate">{selectedProduct.name}</span>
-                                ) : (
-                                    "Select product..."
-                                )}
-                                <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[300px] p-0">
-                            <Command>
-                                <div className="flex items-center px-3 border-b">
-                                    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                                    <Input
-                                        placeholder="Search products..."
-                                        value={searchValue}
-                                        onChange={(e) => setSearchValue(e.target.value)}
-                                        className="border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                                    />
-                                </div>
-                                <Command.List className="max-h-[300px] overflow-y-auto py-2">
-                                    <Command.Empty className="py-6 text-center text-sm">
-                                        No products found.
-                                    </Command.Empty>
-                                    {products
-                                        .filter((product) =>
-                                            product.name
-                                                .toLowerCase()
-                                                .includes(searchValue.toLowerCase())
-                                        )
-                                        .map((product) => (
-                                            <Command.Item
-                                                key={product.id}
-                                                value={product.id}
-                                                onSelect={() => {
-                                                    onProductSelect(index, product.id);
-                                                    setOpen(false);
-                                                    setSearchValue("");
-                                                }}
-                                                className="px-4 py-2 mx-1 rounded-md cursor-pointer hover:bg-slate-100 data-[selected=true]:bg-slate-100"
-                                            >
-                                                <div className="flex justify-between w-full">
-                                                    <span>{product.name}</span>
-                                                    <span className="text-sm text-muted-foreground">
-                                                        ${product.price.toFixed(2)}
-                                                    </span>
-                                                </div>
-                                            </Command.Item>
-                                        ))}
-                                </Command.List>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
-                </div>
-                <div className="col-span-2">
-                    <div className="flex items-center justify-center space-x-1">
-                        <Button
-                            size="icon"
-                            variant="outline"
-                            type="button"
-                            onClick={() => onQuantityChange(index, item.quantity - 1)}
-                            className="h-8 w-8"
-                            disabled={!item.id}
-                        >
-                            <Minus className="h-3 w-3" />
-                        </Button>
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-full justify-between"
+                >
+                    {selectedItem ? selectedItem.label : placeholder || "Select..."}
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[300px] p-0">
+                <Command>
+                    <div className="flex items-center px-3 border-b">
+                        <Search className="mr-2 h-4 w-4 opacity-50" />
                         <Input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) =>
-                                onQuantityChange(index, Number.parseInt(e.target.value) || 1)
-                            }
-                            className="w-14 h-8 text-center"
-                            min="1"
-                            disabled={!item.id}
+                            placeholder="Search..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="border-none focus:ring-0"
                         />
-                        <Button
-                            size="icon"
-                            variant="outline"
-                            type="button"
-                            onClick={() => onQuantityChange(index, item.quantity + 1)}
-                            className="h-8 w-8"
-                            disabled={!item.id}
-                        >
-                            <Plus className="h-3 w-3" />
-                        </Button>
                     </div>
-                </div>
-                <div className="col-span-2">
-                    <Input
-                        type="number"
-                        value={item.rate.toFixed(2)}
-                        onChange={(e) =>
-                            onRateChange(index, Number.parseFloat(e.target.value) || 0)
-                        }
-                        className={cn(
-                            "text-right h-9",
-                            isCustomRate ? "border-amber-300 bg-amber-50" : ""
-                        )}
-                        disabled={!item.id}
-                        step="0.01"
-                    />
-                </div>
-                <div className="col-span-2">
-                    <div
-                        className={cn(
-                            "bg-slate-50 border rounded-md py-1.5 px-3 text-right font-medium",
-                            amount > 0 ? "text-slate-900" : "text-slate-400"
-                        )}
-                    >
-                        {amount.toFixed(2)}
-                    </div>
-                </div>
-                <div className="col-span-1 flex justify-center">
-                    <Button
-                        size="icon"
-                        variant="ghost"
-                        type="button"
-                        onClick={() => onRemoveProduct(index)}
-                        className="h-8 w-8 text-slate-500 hover:text-red-500 hover:bg-red-50"
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-);
-
-ProductRow.displayName = "ProductRow";
+                    <Command.List className="max-h-[300px] overflow-y-auto py-1">
+                        <Command.Empty className="py-6 text-center text-sm">
+                            No results.
+                        </Command.Empty>
+                        {items
+                            .filter((item) =>
+                                item.label.toLowerCase().includes(search.toLowerCase())
+                            )
+                            .map((item) => (
+                                <Command.Item
+                                    key={item.id}
+                                    value={item.id}
+                                    onSelect={() => {
+                                        onSelect(item.id);
+                                        setOpen(false);
+                                        setSearch("");
+                                    }}
+                                    className="px-4 py-2 cursor-pointer hover:bg-slate-100"
+                                >
+                                    {item.label}
+                                </Command.Item>
+                            ))}
+                    </Command.List>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    );
+};

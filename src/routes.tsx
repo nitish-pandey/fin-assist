@@ -30,6 +30,8 @@ import BankODAccounts from "./pages/admin/accounts/bank-od";
 import UserInvitePages from "./pages/settings/invites";
 import CASHACCOUNTS from "./pages/admin/accounts/cash";
 import NotFoundPage from "./pages/error/404";
+import CreateProductPage from "./pages/admin/products/create-product";
+import SingleProductPage from "./pages/admin/products/single-product-page";
 
 export const routes: RouteObject[] = [
     {
@@ -52,6 +54,10 @@ export const routes: RouteObject[] = [
                         element: <Logout />,
                     },
                 ],
+            },
+            {
+                path: "/logout",
+                element: <Logout />,
             },
             {
                 path: "org/:orgId",
@@ -104,7 +110,21 @@ export const routes: RouteObject[] = [
                     },
                     {
                         path: "products",
-                        element: <OrgProducts />,
+                        // element: <OrgProducts />,
+                        children: [
+                            {
+                                element: <OrgProducts />,
+                                path: "",
+                            },
+                            {
+                                element: <CreateProductPage />,
+                                path: "create",
+                            },
+                            {
+                                element: <SingleProductPage />,
+                                path: ":productId",
+                            },
+                        ],
                     },
                     {
                         path: "entity",

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -31,6 +31,7 @@ interface TeamSwitcherProps {
     teams: Team[];
     onTeamChange?: (teamId: string) => void;
 }
+import { FaCaretRight } from "react-icons/fa";
 
 export function TeamSwitcher({ teams, onTeamChange }: TeamSwitcherProps) {
     const { isMobile } = useSidebar();
@@ -64,22 +65,20 @@ export function TeamSwitcher({ teams, onTeamChange }: TeamSwitcherProps) {
                         <DropdownMenuTrigger asChild>
                             <SidebarMenuButton
                                 size="lg"
-                                className="transition-all duration-200 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground border rounded-xl"
+                                className="border border-gray-400 rounded-xl py-0 bg-white hover:bg-gray-50"
                             >
-                                <TeamAvatar team={currentTeam} />
-                                <div className="flex flex-col gap-0.5 text-left leading-none">
-                                    <span className="font-medium">{currentTeam.name}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {currentTeam.type}
+                                <div className="flex flex-col gap-0.5 text-left leading-none ">
+                                    <span className="font-medium text-gray-800">
+                                        {currentTeam.name}
                                     </span>
                                 </div>
-                                <ChevronsUpDown className="ml-auto h-4 w-4 opacity-50" />
+                                <FaCaretRight className="ml-auto h-4 w-4" />
                             </SidebarMenuButton>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                             align="start"
                             side={isMobile ? "bottom" : "right"}
-                            className="w-[--radix-dropdown-menu-trigger-width] min-w-[220px] p-2"
+                            className="w-[--radix-dropdown-menu-trigger-width] min-w-[220px] p-2 border border-gray-300 shadow-none"
                         >
                             <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
                                 Your teams
@@ -89,14 +88,16 @@ export function TeamSwitcher({ teams, onTeamChange }: TeamSwitcherProps) {
                                     <DropdownMenuItem
                                         key={team.id}
                                         className={cn(
-                                            "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm",
-                                            team.current && "bg-accent/50 font-medium"
+                                            "flex items-center gap-2 rounded-md px-2 py-1 text-sm border border-gray-300",
+                                            team.current && "bg-accent/50 font-medium bg-blue-200"
                                         )}
                                         onClick={() => handleTeamSelect(team.id)}
                                     >
                                         <TeamAvatar team={team} className="" />
                                         <span className="flex-1 truncate">{team.name}</span>
-                                        {team.current && <Check className="h-4 w-4 text-primary" />}
+                                        {team.current && (
+                                            <Check className="h-4 w-4 text-blue-500" />
+                                        )}
                                     </DropdownMenuItem>
                                 ))}
                             </div>
