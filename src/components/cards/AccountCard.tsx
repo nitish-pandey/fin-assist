@@ -58,7 +58,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
                     <div className="flex items-center space-x-2">
                         {showBalance ? (
                             <p className="text-2xl font-bold text-green-600">
-                                $
+                                Rs
                                 {balance.toLocaleString("en-US", {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,

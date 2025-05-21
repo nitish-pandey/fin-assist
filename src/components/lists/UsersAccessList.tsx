@@ -95,8 +95,8 @@ const UserAccessList: React.FC<UserAccessListProps> = ({ access, removeUser, inv
     }
 
     return (
-        <div className="bg-gray-50 rounded-2xl shadow-sm">
-            <Card className="border-none w-full">
+        <div className="bg-gray-50 rounded-2xl shadow-none">
+            <Card className="border-none w-full shadow-none p-0">
                 <CardHeader className="flex flex-row justify-between items-center border-b pb-4">
                     <h2 className="text-xl font-bold text-gray-800">User Access</h2>
                     <InviteUser onInvite={inviteUser} />

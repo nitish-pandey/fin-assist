@@ -1,7 +1,7 @@
 import { Invite } from "@/data/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { TableComponent } from "../modules/Table";
-import { Card, CardHeader, CardContent } from "../ui/card";
+import { Card, CardContent } from "../ui/card";
 import { RemoveModal } from "../modals/RemoveModal";
 
 interface UserInviteListProps {
@@ -11,11 +11,6 @@ interface UserInviteListProps {
 
 const UserInviteList: React.FC<UserInviteListProps> = ({ invites, removeInvite }) => {
     const inviteCols: ColumnDef<Invite>[] = [
-        {
-            accessorKey: "id",
-            header: "ID",
-            enableSorting: false,
-        },
         {
             accessorKey: "email",
             header: "Email",
@@ -70,10 +65,10 @@ const UserInviteList: React.FC<UserInviteListProps> = ({ invites, removeInvite }
         },
     ];
     return (
-        <Card className="border-none shadow-md">
-            <CardHeader className="flex flex-row justify-start items-center border-b pb-4">
+        <Card className="border-none shadow-none p-0">
+            {/* <CardHeader className="flex flex-row justify-start items-center border-b pb-4">
                 <h2 className="text-xl font-bold text-gray-800">User Invites</h2>
-            </CardHeader>
+            </CardHeader> */}
             <CardContent className="pt-4">
                 {invites.length ? (
                     <TableComponent

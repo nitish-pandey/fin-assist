@@ -30,8 +30,7 @@ interface CreateOrderFormProps {
     ) => void;
 }
 
-export function 
-CreateOrderForm({
+export function CreateOrderForm({
     products,
     entities,
     accounts,
@@ -118,7 +117,7 @@ CreateOrderForm({
                                                         {productDetails?.name}
                                                     </span>
                                                     <Badge variant="secondary" className="ml-2">
-                                                        ${productDetails?.price.toFixed(2)}
+                                                        Rs{productDetails?.price.toFixed(2)}
                                                     </Badge>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
@@ -152,7 +151,7 @@ CreateOrderForm({
                                                     </Button>
                                                 </div>
                                                 <div className="w-24 text-right">
-                                                    $
+                                                    Rs
                                                     {(
                                                         (productDetails?.price || 0) *
                                                         product.quantity
@@ -199,7 +198,7 @@ CreateOrderForm({
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <span className="font-medium">
-                                                        ${payment.amount.toFixed(2)}
+                                                        Rs{payment.amount.toFixed(2)}
                                                     </span>
                                                     <Button
                                                         variant="ghost"
