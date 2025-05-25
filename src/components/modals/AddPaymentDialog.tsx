@@ -1,17 +1,16 @@
 "use client";
 
-import type React from "react";
 import { useState, useMemo } from "react";
 import type { Account, TransactionDetails } from "@/data/types";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogHeader, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
     Select,
-    SelectContent,
-    SelectItem,
     SelectTrigger,
     SelectValue,
+    SelectContent,
+    SelectItem,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
@@ -22,167 +21,168 @@ interface AddPaymentDialogProps {
     remainingAmount?: number;
 }
 
-const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
+export default function AddPaymentDialog({
     accounts,
     type,
     onAddPayment,
     remainingAmount,
-}) => {
+}: AddPaymentDialogProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [amount, setAmount] = useState<number | "">("");
-    const [selectedAccount, setSelectedAccount] = useState("");
+    const [accountId, setAccountId] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [details, setDetails] = useState<TransactionDetails>({});
 
-    const selectedAccountDetails = useMemo(
-        () => accounts.find((account) => account.id === selectedAccount),
-        [accounts, selectedAccount]
+    const selectedAccount = useMemo(
+        () => accounts.find((a) => a.id === accountId),
+        [accountId, accounts]
     );
 
-    const handleAddPayment = () => {
-        if (!amount || !selectedAccount) {
-            setError("Please enter an amount and select an account.");
-            return;
-        }
+    const isChequeAccount = selectedAccount?.type === "CHEQUE";
 
-        if (type === "BUY" && selectedAccountDetails && selectedAccountDetails.balance < amount) {
-            setError("Insufficient balance in the selected account.");
-            return;
-        }
-
-        onAddPayment(Number(amount), selectedAccount, details);
-        handleClose();
-    };
-
-    const handleClose = () => {
+    const resetState = () => {
         setIsOpen(false);
         setAmount("");
-        setSelectedAccount("");
+        setAccountId("");
+        setDetails({});
         setError(null);
+    };
+
+    const validateAndSubmit = () => {
+        if (!amount || !accountId) {
+            setError("Please enter a valid amount and select an account.");
+            return;
+        }
+
+        if (type === "BUY" && (selectedAccount?.balance || 0) < amount) {
+            setError("Insufficient balance in selected account.");
+            return;
+        }
+
+        onAddPayment(Number(amount), accountId, details);
+        resetState();
+    };
+
+    const handleChequeDetailChange = (key: keyof TransactionDetails, value: string) => {
+        setDetails({ ...details, [key]: value });
     };
 
     return (
         <>
-            <Button type="button" onClick={() => setIsOpen(true)}>
+            <Button onClick={() => setIsOpen(true)} type="button">
                 Add Payment
             </Button>
-            <Dialog open={isOpen} onOpenChange={handleClose}>
-                <DialogContent className="sm:max-w-[500px] p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
-                    <DialogHeader className="text-lg font-semibold mb-4">Add Payment</DialogHeader>
+
+            <Dialog open={isOpen} onOpenChange={resetState}>
+                <DialogContent className="sm:max-w-md p-6 space-y-6">
+                    <DialogHeader className="text-lg font-semibold">Add Payment</DialogHeader>
+
                     {remainingAmount !== undefined && (
-                        <div className="text-sm text-gray-700 mb-4 font-medium">
-                            Remaining Amount:{" "}
-                            <span className="text-primary">${remainingAmount.toFixed(2)}</span>
-                        </div>
+                        <p className="text-sm text-muted-foreground font-medium">
+                            Remaining:{" "}
+                            <span className="text-primary">Rs {remainingAmount.toFixed(2)}</span>
+                        </p>
                     )}
+
                     <div className="space-y-4">
-                        <div className="space-y-2">
+                        {/* Amount Input */}
+                        <div className="space-y-1">
                             <Label htmlFor="amount">Amount</Label>
                             <Input
                                 id="amount"
                                 type="number"
+                                placeholder="Enter amount"
                                 value={amount}
                                 onChange={(e) => {
-                                    setAmount(e.target.value ? Number(e.target.value) : "");
+                                    const value = e.target.value;
+                                    setAmount(value ? Number(value) : "");
                                     setError(null);
                                 }}
-                                className="w-full"
                             />
                         </div>
-                        <div className="space-y-2">
+
+                        {/* Account Selection */}
+                        <div className="space-y-1">
                             <Label htmlFor="account">Account</Label>
                             <Select
-                                value={selectedAccount}
-                                onValueChange={(value) => {
-                                    setSelectedAccount(value);
+                                value={accountId}
+                                onValueChange={(val) => {
+                                    setAccountId(val);
                                     setError(null);
                                 }}
                             >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select Account" />
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select account" />
                                 </SelectTrigger>
-                                <SelectContent className="w-full">
-                                    {accounts.map((account) => (
-                                        <SelectItem key={account.id} value={account.id}>
-                                            {account.name} (Balance: ${account.balance.toFixed(2)})
+                                <SelectContent>
+                                    {accounts.map((acc) => (
+                                        <SelectItem key={acc.id} value={acc.id}>
+                                            {acc.name} (Rs {acc.balance.toFixed(2)})
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
-                        {selectedAccount &&
-                            accounts.find((a) => a.id === selectedAccount && a.type === "CHEQUE")
-                                ?.details && (
-                                <>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="details">Cheque Issuer</Label>
-                                        <Input
-                                            id="details"
-                                            type="text"
-                                            value={details.chequeIssuer || ""}
-                                            onChange={(e) => {
-                                                setDetails({
-                                                    ...details,
-                                                    chequeIssuer: e.target.value,
-                                                });
-                                            }}
-                                            className="w-full"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="details">Cheque Issuer Bank</Label>
-                                        <Input
-                                            id="details"
-                                            type="text"
-                                            value={details.chequeIssuerBank || ""}
-                                            onChange={(e) => {
-                                                setDetails({
-                                                    ...details,
-                                                    chequeIssuerBank: e.target.value,
-                                                });
-                                            }}
-                                            className="w-full"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="details">Cheque Number</Label>
-                                        <Input
-                                            id="details"
-                                            type="text"
-                                            value={details.chequeNumber || ""}
-                                            onChange={(e) => {
-                                                setDetails({
-                                                    ...details,
-                                                    chequeNumber: e.target.value,
-                                                });
-                                            }}
-                                            className="w-full"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="details">Cheque Date</Label>
-                                        <Input
-                                            id="details"
-                                            type="date"
-                                            value={details.chequeDate || ""}
-                                            onChange={(e) => {
-                                                setDetails({
-                                                    ...details,
-                                                    chequeDate: e.target.value,
-                                                });
-                                            }}
-                                            className="w-full"
-                                        />
-                                    </div>
-                                </>
-                            )}
+
+                        {/* Cheque Fields */}
+                        {isChequeAccount && (
+                            <div className="space-y-4 pt-2 border-t">
+                                <div className="space-y-1">
+                                    <Label htmlFor="chequeIssuer">Cheque Issuer</Label>
+                                    <Input
+                                        id="chequeIssuer"
+                                        value={details.chequeIssuer || ""}
+                                        onChange={(e) =>
+                                            handleChequeDetailChange("chequeIssuer", e.target.value)
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="chequeIssuerBank">Cheque Issuer Bank</Label>
+                                    <Input
+                                        id="chequeIssuerBank"
+                                        value={details.chequeIssuerBank || ""}
+                                        onChange={(e) =>
+                                            handleChequeDetailChange(
+                                                "chequeIssuerBank",
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="chequeNumber">Cheque Number</Label>
+                                    <Input
+                                        id="chequeNumber"
+                                        value={details.chequeNumber || ""}
+                                        onChange={(e) =>
+                                            handleChequeDetailChange("chequeNumber", e.target.value)
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="chequeDate">Cheque Date</Label>
+                                    <Input
+                                        id="chequeDate"
+                                        type="date"
+                                        value={details.chequeDate || ""}
+                                        onChange={(e) =>
+                                            handleChequeDetailChange("chequeDate", e.target.value)
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Error Message */}
+                        {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
                     </div>
-                    {error && <div className="text-red-500 text-sm font-medium py-2">{error}</div>}
-                    <DialogFooter className="mt-6 flex justify-end">
-                        <Button variant="outline" onClick={handleClose} className="mr-2">
+
+                    <DialogFooter className="pt-4 flex justify-end">
+                        <Button variant="outline" onClick={resetState} type="button">
                             Cancel
                         </Button>
-                        <Button onClick={handleAddPayment} type="button">
+                        <Button onClick={validateAndSubmit} type="button">
                             Add Payment
                         </Button>
                     </DialogFooter>
@@ -190,6 +190,4 @@ const AddPaymentDialog: React.FC<AddPaymentDialogProps> = ({
             </Dialog>
         </>
     );
-};
-
-export default AddPaymentDialog;
+}

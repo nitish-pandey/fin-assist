@@ -23,6 +23,7 @@ export interface Product {
     price: number;
     stock: number;
     categoryId: string;
+    code: string;
 
     options?: ProductOptions[];
     variants?: ProductVariant[];

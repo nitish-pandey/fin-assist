@@ -6,7 +6,6 @@ import type { Entity } from "@/data/types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
 import AddEntity from "../modals/AddEntity";
 import { useToast } from "@/hooks/use-toast";
 import { useOrg } from "@/providers/org-provider";
@@ -20,23 +19,20 @@ import {
 
 interface EntitySelectorProps {
     entities: Entity[];
-    selectedEntityId?: string;
-    onSelectEntity: (entityId: string) => void;
+    selectedEntity?: Entity | null;
+    onSelectEntity: (entity: Entity) => void;
     onAddEntity: (entity: Partial<Entity>) => Promise<void>;
     error?: string | null;
 }
 
 const EntitySelector: React.FC<EntitySelectorProps> = ({
     entities,
-    selectedEntityId,
+    selectedEntity,
     onSelectEntity,
     onAddEntity,
     error,
 }) => {
     const { orgId } = useOrg();
-    const [selectedEntity, setSelectedEntity] = useState<Entity | null>(
-        entities.find((entity) => entity.id === selectedEntityId) || null
-    );
     const { toast } = useToast();
 
     const addEntity = async (entity: Partial<Entity>) => {
@@ -56,14 +52,8 @@ const EntitySelector: React.FC<EntitySelectorProps> = ({
         }
     };
 
-    const handleEntitySelect = (entityId: string) => {
-        const entity = entities.find((e) => e.id === entityId) || null;
-        setSelectedEntity(entity);
-        onSelectEntity(entityId);
-    };
-
     return (
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="bg-gray-100 border-0 shadow-none">
             <CardHeader className="border-b border-gray-100 pb-4">
                 <CardTitle className="text-xl font-semibold text-gray-800">
                     Basic Information
@@ -78,14 +68,23 @@ const EntitySelector: React.FC<EntitySelectorProps> = ({
                         </Label>
                         <div className="flex items-center gap-2">
                             <div className="relative flex-1">
-                                <Select value={selectedEntityId} onValueChange={handleEntitySelect}>
+                                <Select
+                                    value={selectedEntity?.id || ""}
+                                    onValueChange={(value) => {
+                                        const entity = entities.find((e) => e.id === value);
+                                        if (entity) {
+                                            onSelectEntity(entity);
+                                        }
+                                    }}
+                                >
                                     <SelectTrigger
                                         id="entity"
-                                        className="w-full bg-white border-gray-300 focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
+                                        className="w-full bg-white border-0 shadow-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
                                     >
                                         <SelectValue placeholder="Select entity..." />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="select">Select an entity</SelectItem>
                                         {entities.map((entity) => (
                                             <SelectItem key={entity.id} value={entity.id}>
                                                 {entity.name}
@@ -105,7 +104,7 @@ const EntitySelector: React.FC<EntitySelectorProps> = ({
                         <Input
                             id="address"
                             placeholder="Enter address"
-                            className="bg-white border-gray-300 focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
+                            className="bg-white border-0 shadow-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
                             value={selectedEntity?.email || ""}
                             readOnly
                         />
@@ -117,8 +116,8 @@ const EntitySelector: React.FC<EntitySelectorProps> = ({
                         <Input
                             id="phone"
                             placeholder="Enter phone number"
-                            className="bg-white border-gray-300 focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
-                            value={selectedEntity?.phone}
+                            className="bg-white border-0 shadow-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
+                            value={selectedEntity?.phone || ""}
                             readOnly
                         />
                     </div>
@@ -129,7 +128,7 @@ const EntitySelector: React.FC<EntitySelectorProps> = ({
                         <Input
                             id="fieldName"
                             placeholder="Enter Description"
-                            className="bg-white border-gray-300 focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
+                            className="bg-white border-0 shadow-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
                             value={selectedEntity?.description || ""}
                             readOnly
                         />

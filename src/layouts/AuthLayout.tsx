@@ -10,9 +10,7 @@ const AuthLayout = () => {
                     <Link to="/" className="block mb-6">
                         <h1 className="text-4xl font-bold mb-4">
                             <span className="block text-gray-600">Hello,</span>
-                            <span className="block text-teal-800">
-                                welcome!
-                            </span>
+                            <span className="block text-teal-800">welcome!</span>
                         </h1>
                     </Link>
                     <div className="mb-6">
@@ -23,15 +21,14 @@ const AuthLayout = () => {
                         />
                     </div>
                     <p className="text-gray-900 max-w-md font-medium">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                        Vivamus malesuada lorem purus. Cras suscipit metus a
-                        gravida consequat.
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus malesuada
+                        lorem purus. Cras suscipit metus a gravida consequat.
                     </p>
                 </div>
 
                 {/* Right Section - Login Form Outlet */}
                 <div className="flex-1 max-w-md">
-                    <div className="bg-white rounded-lg p-8">
+                    <div className="bg-white rounded-lg p-8 w-full">
                         <Outlet />
                     </div>
                 </div>

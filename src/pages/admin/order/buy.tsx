@@ -37,24 +37,9 @@ export const BuyOrderPage = () => {
         fetchAllData();
     }, [orgId]);
 
-    const onCreateOrder = async (
-        products: { id: string; quantity: number; rate: number }[],
-        payments: { amount: number; accountId: string; details?: object }[],
-        entityId: string,
-        billFiles: File[],
-        discount: number,
-        tax: number,
-        charge: number
-    ) => {
+    const onCreateOrder = async (data: object) => {
         try {
-            const order = await api.post(`/orgs/${orgId}/orders`, {
-                type: "BUY",
-                products,
-                payments,
-                entityId,
-                billFiles,
-                options: { discount, tax, charge },
-            });
+            const order = await api.post(`/orgs/${orgId}/orders`, data);
             console.log("Order created successfully:", order);
         } catch (err) {
             console.error("Error creating order:", err);
@@ -82,6 +67,7 @@ export const BuyOrderPage = () => {
     return (
         <section className="">
             <BuyOrderForm
+                type="BUY"
                 products={products}
                 entities={entities}
                 accounts={accounts}

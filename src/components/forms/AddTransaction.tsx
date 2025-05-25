@@ -76,7 +76,7 @@ const AddTransaction: React.FC<AddTransactionProps> = ({
             </DialogTrigger>
             <DialogContent>
                 <DialogTitle>Add Transaction</DialogTitle>
-                <p>Remaining Balance: ${remainingBalance.toFixed(2)}</p>
+                <p>Remaining Balance: Rs {remainingBalance.toFixed(2)}</p>
                 {error && <p className="text-red-500">{error}</p>}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <label htmlFor="amount">Amount</label>
@@ -97,12 +97,13 @@ const AddTransaction: React.FC<AddTransactionProps> = ({
                         <SelectTrigger>
                             {accounts.find((acc) => acc.id === selectedAccount)?.name ||
                                 "Select an account"}{" "}
-                            - ${accountBalance.toFixed(2)} ({accountType})
+                            - Rs {accountBalance.toFixed(2)} ({accountType})
                         </SelectTrigger>
                         <SelectContent>
                             {accounts.map((account) => (
                                 <SelectItem key={account.id} value={account.id}>
-                                    {account.name} - ${account.balance.toFixed(2)} ({account.type})
+                                    {account.name} - Rs {account.balance.toFixed(2)} ({account.type}
+                                    )
                                 </SelectItem>
                             ))}
                         </SelectContent>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Calculator, CreditCard, DollarSign, Tag, Plus, Trash2 } from "lucide-react";
+import { useMemo } from "react";
+import { Calculator, CreditCard, Tag, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,108 +17,61 @@ interface AdditionalCharge {
 interface CalculationSelectorProps {
     subTotal: number;
     discount: number;
-    charge: number;
+    charges: { id: string; amount: number; label: string }[];
     setDiscount: (value: number) => void;
-    setCharge: (value: number) => void;
+    setCharge: (charges: { id: string; amount: number; label: string }[]) => void;
 }
 
 export default function CalculationSelector({
     subTotal,
     discount,
-    charge,
+    charges,
     setDiscount,
     setCharge,
 }: CalculationSelectorProps) {
-    const [discountInput, setDiscountInput] = useState(discount.toString());
-    const [additionalCharges, setAdditionalCharges] = useState<AdditionalCharge[]>([
-        { id: "1", label: "TAX", amount: charge },
-    ]);
-    const [calculatedTotal, setCalculatedTotal] = useState(0);
+    const grandTotal = useMemo(() => {
+        const total = subTotal - discount + charges.reduce((sum, c) => sum + c.amount, 0);
+        return Math.max(total, 0);
+    }, [subTotal, discount, charges]);
 
-    // Format number as currency
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        }).format(value);
-    };
+    const discountPercentage = subTotal > 0 ? (discount / subTotal) * 100 : 0;
 
-    // Handle discount input change with validation
-    const handleDiscountChange = (value: string) => {
-        if (value === "" || /^-?\d*\.?\d*$/.test(value)) {
-            setDiscountInput(value);
-            const numValue = value === "" ? 0 : Number.parseFloat(value);
-            if (!isNaN(numValue)) {
-                setDiscount(numValue);
-            }
-        }
-    };
-
-    // Handle charge amount change
-    const handleChargeAmountChange = (id: string, value: string) => {
-        if (value === "" || /^-?\d*\.?\d*$/.test(value)) {
-            const numValue = value === "" ? 0 : Number.parseFloat(value);
-
-            if (!isNaN(numValue)) {
-                const updatedCharges = additionalCharges.map((charge) =>
-                    charge.id === id ? { ...charge, amount: numValue } : charge
-                );
-
-                setAdditionalCharges(updatedCharges);
-                updateTotalCharge(updatedCharges);
-            }
-        }
-    };
-
-    // Handle charge label change
-    const handleChargeLabelChange = (id: string, label: string) => {
-        const updatedCharges = additionalCharges.map((charge) =>
-            charge.id === id ? { ...charge, label } : charge
-        );
-        setAdditionalCharges(updatedCharges);
-    };
-
-    // Add a new charge
-    const addCharge = () => {
-        const newCharge = {
+    const handleAddNewCharge = () => {
+        const newCharge: AdditionalCharge = {
             id: Date.now().toString(),
-            label: "New Charge",
+            label: "",
             amount: 0,
         };
-        const updatedCharges = [...additionalCharges, newCharge];
-        setAdditionalCharges(updatedCharges);
-        updateTotalCharge(updatedCharges);
+        setCharge([...charges, newCharge]);
     };
 
-    // Remove a charge
+    const handleChargeLabelChange = (id: string, label: string) => {
+        const updatedCharges = charges.map((charge) =>
+            charge.id === id ? { ...charge, label } : charge
+        );
+        setCharge(updatedCharges);
+    };
+
+    const handleChargeAmountChange = (id: string, amount: string) => {
+        const parsedAmount = parseFloat(amount);
+        const updatedCharges = charges.map((charge) =>
+            charge.id === id
+                ? { ...charge, amount: isNaN(parsedAmount) ? 0 : parsedAmount }
+                : charge
+        );
+        setCharge(updatedCharges);
+    };
+
     const removeCharge = (id: string) => {
-        const updatedCharges = additionalCharges.filter((charge) => charge.id !== id);
-        setAdditionalCharges(updatedCharges);
-        updateTotalCharge(updatedCharges);
+        const updatedCharges = charges.filter((charge) => charge.id !== id);
+        setCharge(updatedCharges);
     };
-
-    // Update the total charge
-    const updateTotalCharge = (charges: AdditionalCharge[]) => {
-        const total = charges.reduce((sum, charge) => sum + charge.amount, 0);
-        setCharge(total);
-    };
-
-    // Calculate total whenever inputs change
-    useEffect(() => {
-        const total = subTotal - discount + charge;
-        setCalculatedTotal(total);
-    }, [subTotal, discount, charge]);
-
-    // Calculate discount percentage
-    const discountPercentage = subTotal > 0 ? (discount / subTotal) * 100 : 0;
 
     return (
         <div className="w-full">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 {/* Summary Card */}
-                <Card className="col-span-1 overflow-hidden md:col-span-2">
+                <Card className="col-span-1 overflow-hidden md:col-span-2 border-0 shadow-none bg-gray-100">
                     <div className="border-b p-3">
                         <h2 className="flex items-center gap-2 text-lg font-bold">
                             <Calculator className="h-5 w-5" />
@@ -133,7 +86,7 @@ export default function CalculationSelector({
                                 <Label className="text-sm font-medium text-slate-500">
                                     Subtotal
                                 </Label>
-                                <span className="font-semibold">{formatCurrency(subTotal)}</span>
+                                <span className="font-semibold">{subTotal}</span>
                             </div>
 
                             {/* Discount */}
@@ -145,7 +98,7 @@ export default function CalculationSelector({
                                     </Label>
                                     <div className="flex items-center gap-2">
                                         <span className="font-medium text-rose-500">
-                                            {formatCurrency(discount)}
+                                            {discount}
                                         </span>
                                         <span className="rounded-full bg-rose-100 px-1.5 py-0.5 text-xs font-medium text-rose-600">
                                             {discountPercentage.toFixed(1)}%
@@ -155,14 +108,16 @@ export default function CalculationSelector({
                                 <div className="mt-1 flex items-center">
                                     <div className="relative flex-1">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
-                                            $
+                                            Rs
                                         </span>
                                         <Input
-                                            type="text"
-                                            className="h-8 pl-7"
-                                            value={discountInput}
-                                            min={0}
-                                            onChange={(e) => handleDiscountChange(e.target.value)}
+                                            type="number"
+                                            className="h-8 pl-9"
+                                            value={discount}
+                                            onChange={(e) => {
+                                                const value = parseFloat(e.target.value);
+                                                setDiscount(isNaN(value) ? 0 : value);
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -177,12 +132,11 @@ export default function CalculationSelector({
                                         <CreditCard className="h-3.5 w-3.5 text-blue-500" />
                                         Additional Charges
                                     </Label>
-                                    <span className="font-medium">{formatCurrency(charge)}</span>
+                                    <span className="font-medium">{grandTotal}</span>
                                 </div>
 
-                                {/* List of charges */}
                                 <div className="space-y-2">
-                                    {additionalCharges.map((charge) => (
+                                    {charges.map((charge) => (
                                         <div
                                             key={charge.id}
                                             className="grid grid-cols-12 gap-2 items-center"
@@ -203,11 +157,11 @@ export default function CalculationSelector({
                                             </div>
                                             <div className="col-span-5 relative">
                                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
-                                                    $
+                                                    Rs
                                                 </span>
                                                 <Input
                                                     type="text"
-                                                    className="h-8 pl-7 text-sm"
+                                                    className="h-8 pl-9 text-sm"
                                                     value={charge.amount.toString()}
                                                     onChange={(e) =>
                                                         handleChargeAmountChange(
@@ -225,7 +179,7 @@ export default function CalculationSelector({
                                                     size="sm"
                                                     className="h-7 w-7"
                                                     onClick={() => removeCharge(charge.id)}
-                                                    disabled={additionalCharges.length === 1}
+                                                    disabled={charges.length <= 1}
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5 text-rose-500" />
                                                 </Button>
@@ -239,7 +193,7 @@ export default function CalculationSelector({
                                     size="sm"
                                     type="button"
                                     className="mt-2 h-7 text-xs"
-                                    onClick={addCharge}
+                                    onClick={handleAddNewCharge}
                                 >
                                     <Plus className="h-3.5 w-3.5 mr-1" /> Add Charge
                                 </Button>
@@ -249,19 +203,14 @@ export default function CalculationSelector({
                 </Card>
 
                 {/* Total Card */}
-                <Card className="col-span-1 overflow-hidden">
+                <Card className="col-span-1 overflow-hidden border-0 shadow-none bg-gray-100">
                     <div className="border-b p-3">
-                        <h2 className="flex items-center gap-2 text-lg font-bold">
-                            <DollarSign className="h-5 w-5" />
-                            Total
-                        </h2>
+                        <h2 className="flex items-center gap-2 text-lg font-bold">Rs Total</h2>
                     </div>
 
                     <CardContent className="flex flex-col items-center justify-center p-4">
                         <div className="mb-4 text-center">
-                            <span className="text-3xl font-bold">
-                                {formatCurrency(calculatedTotal)}
-                            </span>
+                            <span className="text-3xl font-bold">Rs {grandTotal}</span>
                         </div>
 
                         <Separator className="mb-3" />
@@ -269,19 +218,18 @@ export default function CalculationSelector({
                         <div className="w-full space-y-2 text-sm">
                             <div className="flex items-center justify-between">
                                 <span className="text-slate-500">Subtotal</span>
-                                <span className="font-medium">{formatCurrency(subTotal)}</span>
+                                <span className="font-medium">Rs {subTotal}</span>
                             </div>
-
                             {discount > 0 && (
                                 <div className="flex items-center justify-between">
                                     <span className="text-rose-500">Discount</span>
                                     <span className="font-medium text-rose-500">
-                                        -{formatCurrency(discount)}
+                                        Rs -{discount}
                                     </span>
                                 </div>
                             )}
 
-                            {additionalCharges.map(
+                            {charges.map(
                                 (charge) =>
                                     charge.amount > 0 && (
                                         <div
@@ -289,9 +237,7 @@ export default function CalculationSelector({
                                             className="flex items-center justify-between"
                                         >
                                             <span className="text-slate-500">{charge.label}</span>
-                                            <span className="font-medium">
-                                                {formatCurrency(charge.amount)}
-                                            </span>
+                                            <span className="font-medium">Rs {charge.amount}</span>
                                         </div>
                                     )
                             )}

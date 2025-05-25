@@ -34,6 +34,10 @@ const formSchema = z.object({
     description: z.string().min(1, "Product description is required"),
     price: z.coerce.number().min(0.01, "Price must be greater than zero"),
     stock: z.coerce.number().min(0, "Stock cannot be negative"),
+    code: z
+        .string()
+        .min(8, "Product code must be at least 8 characters")
+        .regex(/^[a-zA-Z0-9]+$/, "Product code must be alphanumeric"),
 });
 
 interface BasicDetailsFormProps {
@@ -59,6 +63,7 @@ export function BasicDetailsForm({
             description: product.description,
             price: product.price || 0,
             stock: product.stock || 0,
+            code: product.code || "",
         },
     });
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(product.categoryId);
@@ -70,7 +75,8 @@ export function BasicDetailsForm({
             product.name !== form.getValues("name") ||
             product.description !== form.getValues("description") ||
             product.price !== form.getValues("price") ||
-            product.stock !== form.getValues("stock")
+            product.stock !== form.getValues("stock") ||
+            product.categoryId !== selectedCategoryId
         ) {
             form.reset({
                 name: product.name,
@@ -80,6 +86,27 @@ export function BasicDetailsForm({
             });
         }
     }, [product, form]);
+
+    useEffect(() => {
+        let buffer = "";
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Allow only visible characters and Enter
+            if (e.key.length === 1) {
+                buffer += e.key;
+            } else if (e.key === "Enter") {
+                if (buffer.length >= 8) {
+                    form.setValue("code", buffer); // Set barcode in form field
+                }
+                buffer = "";
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [form]);
 
     // Handle form submission
     function onSubmit(values: z.infer<typeof formSchema>) {
@@ -130,6 +157,19 @@ export function BasicDetailsForm({
                             <AddCategory onAddCategory={addCategory} />
                         </div>
                     </div>
+                    <FormField
+                        control={form.control}
+                        name="code"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Product Code</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Enter product code" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
                     <FormField
                         control={form.control}

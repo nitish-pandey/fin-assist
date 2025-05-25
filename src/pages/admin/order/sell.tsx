@@ -2,7 +2,7 @@ import { useOrg } from "@/providers/org-provider";
 import { useState, useEffect } from "react";
 import { Account, Entity, Product } from "@/data/types";
 import { api } from "@/utils/api";
-import SellOrderForm from "@/components/forms/SellOrderForm";
+import BuyProductForm from "@/components/forms/BuyOrderForm";
 export const SellOrderPage = () => {
     const { orgId } = useOrg();
     const [products, setProducts] = useState<Product[]>([]);
@@ -37,24 +37,9 @@ export const SellOrderPage = () => {
         fetchAllData();
     }, [orgId]);
 
-    const onCreateOrder = async (
-        products: { id: string; quantity: number; rate: number }[],
-        payments: { amount: number; accountId: string; details?: object }[],
-        entityId: string,
-        billFiles: File[],
-        discount: number,
-        tax: number,
-        charge: number
-    ) => {
+    const onCreateOrder = async (data: object) => {
         try {
-            const order = await api.post(`/orgs/${orgId}/orders`, {
-                type: "SELL",
-                products,
-                payments,
-                entityId,
-                billFiles,
-                options: { discount, tax, charge },
-            });
+            const order = await api.post(`/orgs/${orgId}/orders`, data);
             console.log("Order created successfully:", order);
         } catch (err) {
             console.error("Error creating order:", err);
@@ -80,12 +65,13 @@ export const SellOrderPage = () => {
 
     return (
         <section className="container ">
-            <SellOrderForm
+            <BuyProductForm
                 products={products}
-                entities={entities}
                 accounts={accounts}
+                entities={entities}
                 onSubmit={onCreateOrder}
                 addEntity={addEntity}
+                type="SELL"
             />
         </section>
     );

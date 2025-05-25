@@ -258,16 +258,16 @@ export function CreateOrderForm({
                                 </div>
                             </RadioGroup>
                             <div className="text-lg font-semibold">
-                                Total: ${totalProductsAmount.toFixed(2)}
+                                Total: Rs {totalProductsAmount.toFixed(2)}
                             </div>
                         </div>
                         <div className="flex justify-between text-sm text-muted-foreground">
                             <span>Total Products:</span>
-                            <span>${totalProductsAmount.toFixed(2)}</span>
+                            <span>Rs {totalProductsAmount.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm text-muted-foreground">
                             <span>Total Payments:</span>
-                            <span>${totalPaymentsAmount.toFixed(2)}</span>
+                            <span>Rs {totalPaymentsAmount.toFixed(2)}</span>
                         </div>
                         {totalProductsAmount !== totalPaymentsAmount && (
                             <div className="text-sm text-red-500 font-medium">

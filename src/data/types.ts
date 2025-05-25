@@ -78,6 +78,8 @@ export interface Entity {
     organizationId: string;
     createdAt: string;
     updatedAt: string;
+
+    orders?: Order[];
 }
 
 export interface Category {
@@ -144,6 +146,7 @@ export interface Order {
     entityId?: string | null;
     createdAt: string;
     updatedAt: string;
+    charges?: { id: string; amount: number; label: string }[];
 
     organization?: Organization | null;
     entity?: Entity | null;

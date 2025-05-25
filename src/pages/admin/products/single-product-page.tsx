@@ -216,7 +216,7 @@ const SingleProductPage = () => {
                                 </div>
                                 <div className="text-right">
                                     <div className="text-lg font-semibold">
-                                        ${product.price.toFixed(2)}
+                                        Rs {product.price.toFixed(2)}
                                     </div>
                                     <Badge
                                         variant={hasLowStock ? "destructive" : "secondary"}
@@ -329,7 +329,8 @@ const SingleProductPage = () => {
                                                                         {variant.sku}
                                                                     </TableCell>
                                                                     <TableCell>
-                                                                        ${variant.price.toFixed(2)}
+                                                                        Rs{" "}
+                                                                        {variant.price.toFixed(2)}
                                                                     </TableCell>
                                                                     <TableCell>
                                                                         <Badge

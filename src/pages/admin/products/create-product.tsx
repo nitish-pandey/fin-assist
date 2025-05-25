@@ -9,7 +9,6 @@ import { VariantsForm } from "./variants-form";
 import { SummaryView } from "./summary-view";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useKeyboardNavigation } from "./keyboard-navigation";
 import { Product } from "./types";
 import { generateVariants } from "./utils";
 import { Category } from "@/data/types";
@@ -87,6 +86,7 @@ export default function ProductForm() {
         description: "",
         price: 0,
         categoryId: "",
+        code: "",
         stock: 0,
         options: [],
         variants: [],
@@ -176,9 +176,8 @@ export default function ProductForm() {
         try {
             // Simulate API call
             // await new Promise((resolve) => setTimeout(resolve, 1000));
-            await api.post(`/orgs/${orgId}/products`, product);
-
             console.log("Product Details:", product);
+            await api.post(`/orgs/${orgId}/products`, product);
 
             // Reset form and show toast
             setProduct(initialProduct);
@@ -198,13 +197,6 @@ export default function ProductForm() {
             setIsSubmitting(false);
         }
     };
-
-    // Add keyboard navigation
-    useKeyboardNavigation({
-        onNext: handleNext,
-        onPrev: handlePrev,
-        enabled: !isSubmitting,
-    });
 
     return (
         <div className="max-w-5xl mx-auto py-6" ref={formRef}>

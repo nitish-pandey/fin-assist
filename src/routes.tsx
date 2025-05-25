@@ -32,6 +32,9 @@ import CASHACCOUNTS from "./pages/admin/accounts/cash";
 import NotFoundPage from "./pages/error/404";
 import CreateProductPage from "./pages/admin/products/create-product";
 import SingleProductPage from "./pages/admin/products/single-product-page";
+import ForgotPassword from "./pages/auth/Forgot-Password";
+import ResetPassword from "./pages/auth/ResetPassword";
+import SingleEntityPage from "./pages/admin/basic/SingleEntityPage";
 
 export const routes: RouteObject[] = [
     {
@@ -52,6 +55,14 @@ export const routes: RouteObject[] = [
                     {
                         path: "logout",
                         element: <Logout />,
+                    },
+                    {
+                        path: "forgot-password",
+                        element: <ForgotPassword />,
+                    },
+                    {
+                        path: "reset-password",
+                        element: <ResetPassword />,
                     },
                 ],
             },
@@ -128,7 +139,17 @@ export const routes: RouteObject[] = [
                     },
                     {
                         path: "entity",
-                        element: <EntityInfo />,
+                        // element: <EntityInfo />,
+                        children: [
+                            {
+                                element: <EntityInfo />,
+                                path: "",
+                            },
+                            {
+                                element: <SingleEntityPage />,
+                                path: ":entityId",
+                            },
+                        ],
                     },
                     {
                         path: "orders",

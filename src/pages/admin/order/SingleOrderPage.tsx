@@ -450,10 +450,22 @@ const OrderSummary = ({ order }: { order: Order }) => {
                             <span className="text-muted-foreground">Discount:</span>
                             <span>-${order.discount.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between">
+                        {/* <div className="flex justify-between">
                             <span className="text-muted-foreground">Tax:</span>
                             <span>${order.tax.toFixed(2)}</span>
-                        </div>
+                        </div> */}
+                        {order.charges && order.charges.length > 0 && (
+                            <>
+                                {order.charges.map((charge) => (
+                                    <div key={charge.id} className="flex justify-between">
+                                        <span className="text-muted-foreground">
+                                            {charge.label}:
+                                        </span>
+                                        <span>${charge.amount.toFixed(2)}</span>
+                                    </div>
+                                ))}
+                            </>
+                        )}
                         <div className="flex justify-between font-medium">
                             <span>Total Amount:</span>
                             <span>${order.totalAmount.toFixed(2)}</span>

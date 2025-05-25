@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Minus, Plus, X, Search, DollarSign, ChevronDown } from "lucide-react";
+import React, { useMemo, useCallback } from "react";
+import { Minus, Plus, X, Search, ChevronDown } from "lucide-react";
 import { Command } from "cmdk";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -12,88 +12,53 @@ import { Product } from "@/data/types";
 
 interface SelectedProduct {
     productId: string;
-    id: string; // variant id
+    variantId: string;
     quantity: number;
     rate: number;
 }
 
 interface ProductDetailsProps {
     products: Product[];
+    addedProducts: SelectedProduct[];
     onUpdateProducts: (products: SelectedProduct[]) => void;
 }
 
-export function ProductDetails({ products, onUpdateProducts }: ProductDetailsProps) {
-    const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([
-        { productId: "", id: "", quantity: 1, rate: 0 },
-    ]);
+export function ProductDetails({ products, addedProducts, onUpdateProducts }: ProductDetailsProps) {
+    const updateProductAtIndex = useCallback(
+        (index: number, updates: Partial<SelectedProduct>) => {
+            const updated = addedProducts.map((item, i) =>
+                i === index ? { ...item, ...updates } : item
+            );
+            onUpdateProducts(updated);
+        },
+        [addedProducts, onUpdateProducts]
+    );
 
     const handleAddEmptySlot = () => {
-        setSelectedProducts((prev) => [...prev, { productId: "", id: "", quantity: 1, rate: 0 }]);
-    };
-
-    const handleProductSelect = (index: number, productId: string) => {
-        setSelectedProducts((prev) => {
-            const updated = [...prev];
-            updated[index] = {
-                ...updated[index],
-                productId,
-                id: "",
-                rate: 0,
-            };
-            return updated;
-        });
-    };
-
-    const handleVariantSelect = (index: number, variantId: string, rate: number) => {
-        setSelectedProducts((prev) => {
-            const updated = [...prev];
-            updated[index] = {
-                ...updated[index],
-                id: variantId,
-                rate,
-            };
-            return updated;
-        });
-    };
-
-    const handleQuantityChange = (index: number, quantity: number) => {
-        setSelectedProducts((prev) => {
-            const updated = [...prev];
-            updated[index] = { ...updated[index], quantity: Math.max(1, quantity) };
-            return updated;
-        });
-    };
-
-    const handleRateChange = (index: number, rate: number) => {
-        setSelectedProducts((prev) => {
-            const updated = [...prev];
-            updated[index] = { ...updated[index], rate };
-            return updated;
-        });
+        onUpdateProducts([
+            ...addedProducts,
+            { productId: "", variantId: "", quantity: 1, rate: 0 },
+        ]);
     };
 
     const handleRemoveProduct = (index: number) => {
-        setSelectedProducts((prev) => {
-            if (prev.length === 1) return [{ productId: "", id: "", quantity: 1, rate: 0 }];
-            return prev.filter((_, i) => i !== index);
-        });
+        if (addedProducts.length === 1) {
+            onUpdateProducts([{ productId: "", variantId: "", quantity: 1, rate: 0 }]);
+        } else {
+            onUpdateProducts(addedProducts.filter((_, i) => i !== index));
+        }
     };
 
     const getProductDetails = (id: string) => products.find((p) => p.id === id);
 
     const totalAmount = useMemo(() => {
-        return selectedProducts.reduce((total, item) => total + item.quantity * item.rate, 0);
-    }, [selectedProducts]);
-
-    React.useEffect(() => {
-        onUpdateProducts(selectedProducts);
-    }, [selectedProducts]);
+        return addedProducts.reduce((total, item) => total + item.quantity * item.rate, 0);
+    }, [addedProducts]);
 
     return (
-        <Card className="w-full border rounded-xl shadow-md">
+        <Card className="w-full border-0 shadow-none bg-gray-100">
             <CardHeader className="bg-gradient-to-r from-slate-100 to-slate-200 rounded-t-xl">
                 <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-emerald-600" />
                     Item Details
                 </CardTitle>
             </CardHeader>
@@ -102,15 +67,15 @@ export function ProductDetails({ products, onUpdateProducts }: ProductDetailsPro
                     <div className="col-span-1">#</div>
                     <div className="col-span-2">Product</div>
                     <div className="col-span-3">Variant</div>
-                    <div className="col-span-2 ">Quantity</div>
-                    <div className="col-span-2">Rate ($)</div>
+                    <div className="col-span-2">Quantity</div>
+                    <div className="col-span-2">Rate (Rs)</div>
                     <div className="col-span-1">Amount</div>
                     <div className="col-span-1" />
                 </div>
 
                 <ScrollArea className="max-h-[400px] pr-4">
                     <div className="space-y-3">
-                        {selectedProducts.map((item, index) => {
+                        {addedProducts.map((item, index) => {
                             const product = getProductDetails(item.productId);
                             const amount = item.quantity * item.rate;
 
@@ -121,7 +86,7 @@ export function ProductDetails({ products, onUpdateProducts }: ProductDetailsPro
                                 >
                                     <div className="col-span-1 font-medium">{index + 1}</div>
 
-                                    {/* Product Dropdown */}
+                                    {/* Product */}
                                     <div className="col-span-2">
                                         <SelectPopover
                                             items={products.map((p) => ({
@@ -129,26 +94,40 @@ export function ProductDetails({ products, onUpdateProducts }: ProductDetailsPro
                                                 label: p.name,
                                             }))}
                                             selectedId={item.productId}
-                                            onSelect={(id) => handleProductSelect(index, id)}
+                                            onSelect={(id) => {
+                                                const selectedProduct = products.find(
+                                                    (p) => p.id === id
+                                                );
+                                                const firstVariant = selectedProduct?.variants?.[0];
+                                                updateProductAtIndex(index, {
+                                                    productId: id,
+                                                    variantId: firstVariant?.id || "",
+                                                    rate: firstVariant?.price || 0,
+                                                });
+                                            }}
                                             placeholder="Select product"
                                         />
                                     </div>
 
-                                    {/* Variant Dropdown */}
+                                    {/* Variant */}
                                     <div className="col-span-3">
                                         {product ? (
                                             <SelectPopover
-                                                items={(product?.variants ?? []).map((v) => ({
+                                                items={(product.variants ?? []).map((v) => ({
                                                     id: v.id,
                                                     label: `${v.name} - $${v.price.toFixed(2)}`,
                                                 }))}
-                                                selectedId={item.id}
-                                                onSelect={(id) => {
-                                                    const v = product.variants?.find(
-                                                        (x) => x.id === id
+                                                selectedId={item.variantId}
+                                                onSelect={(variantId) => {
+                                                    const variant = product.variants?.find(
+                                                        (v) => v.id === variantId
                                                     );
-                                                    if (v)
-                                                        handleVariantSelect(index, v.id, v.price);
+                                                    if (variant) {
+                                                        updateProductAtIndex(index, {
+                                                            variantId: variant.id,
+                                                            rate: variant.price,
+                                                        });
+                                                    }
                                                 }}
                                                 placeholder="Select variant"
                                             />
@@ -166,9 +145,11 @@ export function ProductDetails({ products, onUpdateProducts }: ProductDetailsPro
                                             type="button"
                                             variant="outline"
                                             onClick={() =>
-                                                handleQuantityChange(index, item.quantity - 1)
+                                                updateProductAtIndex(index, {
+                                                    quantity: Math.max(1, item.quantity - 1),
+                                                })
                                             }
-                                            disabled={!item.id}
+                                            disabled={!item.variantId}
                                             className="h-8 w-8"
                                         >
                                             <Minus className="h-3 w-3" />
@@ -177,10 +158,12 @@ export function ProductDetails({ products, onUpdateProducts }: ProductDetailsPro
                                             type="number"
                                             value={item.quantity}
                                             onChange={(e) =>
-                                                handleQuantityChange(
-                                                    index,
-                                                    Number.parseInt(e.target.value) || 1
-                                                )
+                                                updateProductAtIndex(index, {
+                                                    quantity: Math.max(
+                                                        1,
+                                                        parseInt(e.target.value) || 1
+                                                    ),
+                                                })
                                             }
                                             min={1}
                                             className="w-14 h-8 text-center"
@@ -190,9 +173,11 @@ export function ProductDetails({ products, onUpdateProducts }: ProductDetailsPro
                                             type="button"
                                             variant="outline"
                                             onClick={() =>
-                                                handleQuantityChange(index, item.quantity + 1)
+                                                updateProductAtIndex(index, {
+                                                    quantity: item.quantity + 1,
+                                                })
                                             }
-                                            disabled={!item.id}
+                                            disabled={!item.variantId}
                                             className="h-8 w-8"
                                         >
                                             <Plus className="h-3 w-3" />
@@ -205,20 +190,19 @@ export function ProductDetails({ products, onUpdateProducts }: ProductDetailsPro
                                             type="number"
                                             value={item.rate.toFixed(2)}
                                             onChange={(e) =>
-                                                handleRateChange(
-                                                    index,
-                                                    Number.parseFloat(e.target.value) || 0
-                                                )
+                                                updateProductAtIndex(index, {
+                                                    rate: parseFloat(e.target.value) || 0,
+                                                })
                                             }
                                             className="text-right h-9"
-                                            disabled={!item.id}
+                                            disabled={!item.variantId}
                                             step="0.01"
                                         />
                                     </div>
 
                                     {/* Amount */}
-                                    <div className="col-span-1 text-right font-semibold">
-                                        ${amount.toFixed(2)}
+                                    <div className="col-span-1 text-right font-semibold whitespace-nowrap">
+                                        Rs {amount.toFixed(2)}
                                     </div>
 
                                     {/* Remove */}
@@ -249,7 +233,7 @@ export function ProductDetails({ products, onUpdateProducts }: ProductDetailsPro
                         <Plus className="h-4 w-4 mr-2" /> Add Product
                     </Button>
                     <div className="text-lg font-semibold text-slate-700">
-                        Total: ${totalAmount.toFixed(2)}
+                        Total: Rs {totalAmount.toFixed(2)}
                     </div>
                 </div>
             </CardContent>
@@ -270,8 +254,8 @@ const SelectPopover: React.FC<SelectPopoverProps> = ({
     onSelect,
     placeholder,
 }) => {
-    const [open, setOpen] = useState(false);
-    const [search, setSearch] = useState("");
+    const [open, setOpen] = React.useState(false);
+    const [search, setSearch] = React.useState("");
     const selectedItem = items.find((item) => item.id === selectedId);
 
     return (

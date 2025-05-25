@@ -3,6 +3,7 @@ import { TableComponent } from "../modules/Table";
 import { ColumnDef } from "@tanstack/react-table";
 import { RemoveModal } from "../modals/RemoveModal";
 import AddEntity from "../modals/AddEntity";
+import { Link } from "react-router-dom";
 interface EntityListProps {
     entities: Entity[];
     loading: boolean;
@@ -16,6 +17,14 @@ export const EntityList = ({ entities, loading, onDelete, onEdit }: EntityListPr
         {
             accessorKey: "name",
             header: "Name",
+            cell: (props) => (
+                <Link
+                    to={`/org/${props.row.original.organizationId}/entity/${props.row.original.id}`}
+                    className="text-blue-600 hover:underline"
+                >
+                    {props.row.original.name}
+                </Link>
+            ),
         },
         {
             accessorKey: "phone",
