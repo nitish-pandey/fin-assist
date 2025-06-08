@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { api } from "@/utils/api";
 
 interface ForgotPasswordData {
     email: string;
@@ -29,7 +30,9 @@ const ForgotPassword = () => {
         setIsSubmitting(true);
 
         try {
-            await new Promise((res) => setTimeout(res, 2000)); // mock API call
+            await api.post("/users/forgot-password", {
+                email: data.email,
+            });
 
             if (data.email === "unknown@example.com") {
                 throw new Error("No user found with this email.");

@@ -295,7 +295,7 @@ const OrderHeader = ({ order }: { order: Order }) => (
         </CardHeader>
         <CardContent className="pt-4">
             <div className="flex justify-end">
-                <p className="text-xl font-semibold">Total: ${order.totalAmount.toFixed(2)}</p>
+                <p className="text-xl font-semibold">Total: Nrs {order.totalAmount.toFixed(2)}</p>
             </div>
         </CardContent>
     </Card>
@@ -357,10 +357,10 @@ const OrderItems = ({ items }: { items: OrderItem[] }) => {
                                 <TableCell className="font-medium">{item.name}</TableCell>
                                 <TableCell className="text-right">{item.quantity}</TableCell>
                                 <TableCell className="text-right">
-                                    ${item.price.toFixed(2)}
+                                    Nrs {item.price.toFixed(2)}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    ${(item.quantity * item.price).toFixed(2)}
+                                    Nrs {(item.quantity * item.price).toFixed(2)}
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -371,7 +371,7 @@ const OrderItems = ({ items }: { items: OrderItem[] }) => {
                                 Total
                             </TableCell>
                             <TableCell className="text-right font-medium">
-                                ${totalAmount.toFixed(2)}
+                                Nrs {totalAmount.toFixed(2)}
                             </TableCell>
                         </TableRow>
                     </TableFooter>
@@ -408,7 +408,7 @@ const OrderTransactions = ({ transactions }: { transactions: Transaction[] }) =>
                                 <TableCell>{transaction.account?.name || "N/A"}</TableCell>
                                 <TableCell>{transaction.account?.type || "N/A"}</TableCell>
                                 <TableCell className="text-right">
-                                    ${transaction.amount.toFixed(2)}
+                                    Nrs {transaction.amount.toFixed(2)}
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -419,7 +419,7 @@ const OrderTransactions = ({ transactions }: { transactions: Transaction[] }) =>
                                 Total Paid
                             </TableCell>
                             <TableCell className="text-right font-medium">
-                                ${totalAmount.toFixed(2)}
+                                Nrs {totalAmount.toFixed(2)}
                             </TableCell>
                         </TableRow>
                     </TableFooter>
@@ -444,11 +444,11 @@ const OrderSummary = ({ order }: { order: Order }) => {
                     <div className="space-y-2">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Subtotal:</span>
-                            <span>${order.baseAmount.toFixed(2)}</span>
+                            <span>Nrs {order.baseAmount.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Discount:</span>
-                            <span>-${order.discount.toFixed(2)}</span>
+                            <span>-Nrs {order.discount.toFixed(2)}</span>
                         </div>
                         {/* <div className="flex justify-between">
                             <span className="text-muted-foreground">Tax:</span>
@@ -461,20 +461,20 @@ const OrderSummary = ({ order }: { order: Order }) => {
                                         <span className="text-muted-foreground">
                                             {charge.label}:
                                         </span>
-                                        <span>${charge.amount.toFixed(2)}</span>
+                                        <span>Nrs {charge.amount.toFixed(2)}</span>
                                     </div>
                                 ))}
                             </>
                         )}
                         <div className="flex justify-between font-medium">
                             <span>Total Amount:</span>
-                            <span>${order.totalAmount.toFixed(2)}</span>
+                            <span>Nrs {order.totalAmount.toFixed(2)}</span>
                         </div>
                     </div>
                     <div className="space-y-2 border-l pl-4">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Total Paid:</span>
-                            <span>${totalPaid.toFixed(2)}</span>
+                            <span>Nrs {totalPaid.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between font-medium">
                             <span>Remaining to Pay:</span>
@@ -483,7 +483,7 @@ const OrderSummary = ({ order }: { order: Order }) => {
                                     remainingToPay > 0 ? "text-destructive" : "text-green-600"
                                 }
                             >
-                                ${remainingToPay.toFixed(2)}
+                                Nrs {remainingToPay.toFixed(2)}
                             </span>
                         </div>
                         {order.paymentStatus === "PAID" && (

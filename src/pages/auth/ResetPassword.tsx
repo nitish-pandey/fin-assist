@@ -2,6 +2,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
+import { api } from "@/utils/api";
 
 interface ResetPasswordData {
     password: string;
@@ -34,13 +35,17 @@ const ResetPassword = () => {
         setIsSubmitting(true);
         console.log("Resetting password with token:", data, token);
         try {
-            await new Promise((res) => setTimeout(res, 2000)); // mock API call
-
-            if (token === "expiredtoken") {
-                throw new Error("Token is expired or invalid.");
-            }
+            await api.post("/users/reset-password", {
+                newPassword: data.password,
+                token: token,
+            });
 
             setSuccess(true);
+            toast({
+                title: "Password reset successful",
+                description: "Your password has been reset successfully. You can now log in.",
+            });
+
         } catch (error: any) {
             toast({
                 title: "Reset failed",

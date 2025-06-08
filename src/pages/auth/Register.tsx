@@ -42,12 +42,16 @@ const Register = () => {
         <div>
             <h2 className="text-3xl font-semibold mb-2">Create an account</h2>
             <p className="text-gray-600 text-sm font-medium mb-6">
-                Please fill in the details below to register for your personalized dashboard.
+                Please fill in the details below to register for your
+                personalized dashboard.
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                    <label htmlFor="name" className="block text-sm text-gray-600 mb-1">
+                    <label
+                        htmlFor="name"
+                        className="block text-sm text-gray-600 mb-1"
+                    >
                         Full Name
                     </label>
                     <input
@@ -66,7 +70,10 @@ const Register = () => {
                 </div>
 
                 <div>
-                    <label htmlFor="email" className="block text-sm text-gray-600 mb-1">
+                    <label
+                        htmlFor="email"
+                        className="block text-sm text-gray-600 mb-1"
+                    >
                         Email Address
                     </label>
                     <input
@@ -88,7 +95,10 @@ const Register = () => {
                 </div>
 
                 <div>
-                    <label htmlFor="password" className="block text-sm text-gray-600 mb-1">
+                    <label
+                        htmlFor="password"
+                        className="block text-sm text-gray-600 mb-1"
+                    >
                         Password
                     </label>
                     <input
@@ -99,7 +109,8 @@ const Register = () => {
                             required: "Password is required",
                             minLength: {
                                 value: 6,
-                                message: "Password should be atleast 6 characters",
+                                message:
+                                    "Password should be atleast 6 characters",
                             },
                         })}
                     />
@@ -119,7 +130,10 @@ const Register = () => {
 
                 <p className="text-center font-medium text-sm text-gray-600">
                     Already have an account?{" "}
-                    <Link to="/auth/login" className="text-blue-800 hover:underline">
+                    <Link
+                        to="/auth/login"
+                        className="text-blue-800 hover:underline"
+                    >
                         Log in
                     </Link>
                 </p>

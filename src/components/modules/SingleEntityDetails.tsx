@@ -9,7 +9,6 @@ import {
     Mail,
     FileText,
     ShoppingCart,
-    DollarSign,
     CreditCard,
     Calendar,
     TrendingUp,
@@ -19,6 +18,7 @@ import {
 
 import { Entity, Order, PaymentStatus } from "@/data/types";
 import { Link } from "react-router-dom";
+import { FaMoneyBill } from "react-icons/fa";
 
 interface EntityPageProps {
     entity: Entity;
@@ -118,10 +118,7 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
     };
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-        }).format(amount);
+        return `Nrs ${amount.toFixed(2)}`; // Assuming Nrs is the currency, adjust as needed
     };
 
     const formatDate = (dateString: string) => {
@@ -199,7 +196,7 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
                                     {formatCurrency(stats.totalAmount)}
                                 </p>
                             </div>
-                            <DollarSign className="h-8 w-8 text-green-500" />
+                            <FaMoneyBill className="h-8 w-8 text-yellow-500" />
                         </div>
                     </CardContent>
                 </Card>

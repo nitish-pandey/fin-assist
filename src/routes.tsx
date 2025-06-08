@@ -35,6 +35,8 @@ import SingleProductPage from "./pages/admin/products/single-product-page";
 import ForgotPassword from "./pages/auth/Forgot-Password";
 import ResetPassword from "./pages/auth/ResetPassword";
 import SingleEntityPage from "./pages/admin/basic/SingleEntityPage";
+import NotVerifiedPage from "./pages/auth/NotVerified";
+import VerificationPage from "./pages/auth/VerifyEmail";
 
 export const routes: RouteObject[] = [
     {
@@ -64,11 +66,19 @@ export const routes: RouteObject[] = [
                         path: "reset-password",
                         element: <ResetPassword />,
                     },
+                    {
+                        path: "verify-email",
+                        element: <VerificationPage />,
+                    },
                 ],
             },
             {
                 path: "/logout",
                 element: <Logout />,
+            },
+            {
+                path: "/unverified",
+                element: <NotVerifiedPage />,
             },
             {
                 path: "org/:orgId",

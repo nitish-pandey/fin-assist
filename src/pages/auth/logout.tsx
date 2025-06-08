@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
+import { api } from "@/utils/api";
 
 export default function LogoutPage() {
     const router = useNavigate();
@@ -34,10 +35,7 @@ export default function LogoutPage() {
             sessionStorage.clear();
 
             // Call logout API
-            await fetch("/api/logout", {
-                method: "POST",
-                credentials: "include",
-            });
+            await api.post("/users/logout", {}, { withCredentials: true });
 
             setLogoutComplete(true);
 

@@ -1,5 +1,11 @@
 import { Organization, User, RoleAccess } from "@/data/types";
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    useCallback,
+} from "react";
 import { api } from "@/utils/api";
 import { useNavigate } from "react-router-dom";
 
@@ -19,6 +25,8 @@ interface AuthProviderProps {
     children: React.ReactNode;
 }
 
+const NonAuthRoutes = ["/unverified"];
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [orgs, setOrgs] = useState<Organization[] | null>(null);
@@ -29,11 +37,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const initializeAuth = async () => {
         setLoading(true);
         try {
-            const res = (await api.get("/users/me", { withCredentials: true })).data as User;
+            const res = (await api.get("/users/me", { withCredentials: true }))
+                .data as User;
 
             setUser(res);
             setOrgs(res.organizations || []);
             setPermissions(res.permissions || []);
+            // if user is in an auth route, redirect to home
+            if (
+                window.location.pathname.startsWith("/auth") ||
+                NonAuthRoutes.includes(window.location.pathname)
+            ) {
+                router("/profile");
+            }
         } catch (error: any) {
             console.error("Failed to fetch user details:", error);
             if (error.response?.status === 401) {
@@ -41,6 +57,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 setUser(null);
                 setOrgs(null);
                 setPermissions(null);
+                // if already in some /auth route, stay there
+                if (window.location.pathname.startsWith("/auth")) return;
+                if (NonAuthRoutes.includes(window.location.pathname)) return;
                 router("/auth/login");
             } else {
                 logout();
@@ -51,22 +70,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     const login = async (email: string, password: string) => {
-        try {
-            const res = (
-                await api.post("/users/login", { email, password }, { withCredentials: true })
-            ).data as {
-                user: User;
-                organizations: Organization[];
-                permissions: RoleAccess[];
-            };
+        const res = (
+            await api.post(
+                "/users/login",
+                { email, password },
+                { withCredentials: true }
+            )
+        ).data as {
+            user: User;
+            organizations: Organization[];
+            permissions: RoleAccess[];
+        };
 
-            setUser(res.user);
-            setOrgs(res.organizations);
-            setPermissions(res.permissions);
-        } catch (error) {
-            console.error("Login failed:", error);
-            throw new Error("Invalid credentials or server error.");
-        }
+        setUser(res.user);
+        setOrgs(res.organizations);
+        setPermissions(res.permissions);
     };
 
     const logout = useCallback(async () => {
@@ -86,7 +104,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     return (
         <AuthContext.Provider
-            value={{ user, orgs, permissions, login, logout, loading, refetch: initializeAuth }}
+            value={{
+                user,
+                orgs,
+                permissions,
+                login,
+                logout,
+                loading,
+                refetch: initializeAuth,
+            }}
         >
             {children}
         </AuthContext.Provider>
