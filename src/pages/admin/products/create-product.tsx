@@ -10,7 +10,7 @@ import { SummaryView } from "./summary-view";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Product } from "./types";
-import { generateVariants } from "./utils";
+import { generateVariants, generateDefaultSKU } from "./utils";
 import { Category } from "@/data/types";
 import { useOrg } from "@/providers/org-provider";
 import { api } from "@/utils/api";
@@ -49,14 +49,20 @@ function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
             <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden">
                 <div
                     className="absolute top-0 left-0 h-full bg-primary transition-all duration-300"
-                    style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+                    style={{
+                        width: `${
+                            ((currentStep - 1) / (steps.length - 1)) * 100
+                        }%`,
+                    }}
                 />
                 <div className="absolute top-0 left-0 w-full h-full flex justify-between items-center px-[1px]">
                     {steps.map((step) => (
                         <div
                             key={step.id}
                             className={`h-4 w-4 rounded-full border-2 border-background transition-all duration-200 ${
-                                step.id <= currentStep ? "bg-primary" : "bg-muted-foreground/30"
+                                step.id <= currentStep
+                                    ? "bg-primary"
+                                    : "bg-muted-foreground/30"
                             }`}
                         />
                     ))}
@@ -88,6 +94,7 @@ export default function ProductForm() {
         categoryId: "",
         code: "",
         stock: 0,
+        sku: generateDefaultSKU(),
         options: [],
         variants: [],
     };
@@ -95,7 +102,9 @@ export default function ProductForm() {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const data = await (await api.get<Category[]>(`/orgs/${orgId}/category`)).data;
+                const data = await (
+                    await api.get<Category[]>(`/orgs/${orgId}/category`)
+                ).data;
                 setCategories(data);
             } catch (error) {
                 console.error("Failed to fetch categories:", error);
@@ -110,23 +119,45 @@ export default function ProductForm() {
     }, [orgId]);
 
     const addCategory = async (name: string, description: string) => {
-        const newCategory = await api.post(`/orgs/${orgId}/category`, { name, description });
-        setCategories((prev) => [...prev, newCategory.data]);
-    };
+        const newCategory = await api.post(`/orgs/${orgId}/category`, {
+            name,
+            description,
+        });
+        // set product.categoryId to the new category ID
 
+        setCategories((prev) => [...prev, newCategory.data]);
+        setProduct((prev) => ({
+            ...prev,
+            categoryId: newCategory.data.id,
+        }));
+    };
     const [product, setProduct] = useState<Product>(initialProduct);
+    const [isSkuManuallyEdited, setIsSkuManuallyEdited] = useState(false);
+
+    // Auto-generate SKU when product name or category changes
+    useEffect(() => {
+        if (product.name && !isSkuManuallyEdited) {
+            const generatedSKU = generateDefaultSKU();
+            setProduct((prev) => ({
+                ...prev,
+                sku: generatedSKU,
+            }));
+        }
+    }, [product.name, product.categoryId, categories, isSkuManuallyEdited]);
 
     // Generate variants whenever options change, with debounce
     useEffect(() => {
         if (product.options && product.options.length > 0) {
             const hasValidOptions = product.options.some(
-                (option) => option.name && option.values && option.values.length > 0
+                (option) =>
+                    option.name && option.values && option.values.length > 0
             );
 
             if (hasValidOptions) {
                 setIsGeneratingVariants(true);
                 const timer = setTimeout(() => {
                     const generatedVariants = generateVariants(
+                        product.sku,
                         product.name,
                         product.options || [],
                         product.price,
@@ -142,9 +173,19 @@ export default function ProductForm() {
                 return () => clearTimeout(timer);
             }
         }
-    }, [product.options, product.price, product.stock, product.name]);
-
+    }, [
+        product.options,
+        product.price,
+        product.stock,
+        product.name,
+        product.sku,
+    ]);
     const updateProduct = useCallback((data: Partial<Product>) => {
+        // Check if SKU was manually edited
+        if (data.sku !== undefined) {
+            setIsSkuManuallyEdited(true);
+        }
+
         setProduct((prev) => ({
             ...prev,
             ...data,
@@ -177,20 +218,21 @@ export default function ProductForm() {
             // Simulate API call
             // await new Promise((resolve) => setTimeout(resolve, 1000));
             console.log("Product Details:", product);
-            await api.post(`/orgs/${orgId}/products`, product);
-
-            // Reset form and show toast
+            await api.post(`/orgs/${orgId}/products`, product); // Reset form and show toast
             setProduct(initialProduct);
+            setIsSkuManuallyEdited(false);
             setStep(1);
 
             toast({
                 title: "Product Created Successfully",
-                description: "Your product has been created and is now available.",
+                description:
+                    "Your product has been created and is now available.",
             });
         } catch (error) {
             toast({
                 title: "Error",
-                description: "There was an error creating your product. Please try again.",
+                description:
+                    "There was an error creating your product. Please try again.",
                 variant: "destructive",
             });
         } finally {
@@ -219,14 +261,18 @@ export default function ProductForm() {
                         {step === 2 && (
                             <OptionsForm
                                 options={product.options || []}
-                                updateOptions={(options) => updateProduct({ options })}
+                                updateOptions={(options) =>
+                                    updateProduct({ options })
+                                }
                             />
                         )}
 
                         {step === 3 && (
                             <VariantsForm
                                 variants={product.variants || []}
-                                updateVariants={(variants) => updateProduct({ variants })}
+                                updateVariants={(variants) =>
+                                    updateProduct({ variants })
+                                }
                                 isLoading={isGeneratingVariants}
                             />
                         )}
@@ -259,7 +305,9 @@ export default function ProductForm() {
                                 ) : (
                                     <>
                                         {step === 4 ? "Create Product" : "Next"}
-                                        {step !== 4 && <ChevronRight className="ml-2 h-4 w-4" />}
+                                        {step !== 4 && (
+                                            <ChevronRight className="ml-2 h-4 w-4" />
+                                        )}
                                     </>
                                 )}
                             </Button>

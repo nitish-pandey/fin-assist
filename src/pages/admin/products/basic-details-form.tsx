@@ -38,6 +38,10 @@ const formSchema = z.object({
         .string()
         .min(8, "Product code must be at least 8 characters")
         .regex(/^[a-zA-Z0-9]+$/, "Product code must be alphanumeric"),
+    sku: z
+        .string()
+        .min(1, "SKU is required")
+        .max(20, "SKU must be 20 characters or less"),
 });
 
 interface BasicDetailsFormProps {
@@ -64,11 +68,12 @@ export function BasicDetailsForm({
             price: product.price || 0,
             stock: product.stock || 0,
             code: product.code || "",
+            sku: product.sku || "",
         },
     });
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(product.categoryId);
-
-    // Update form values when product changes
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+        product.categoryId
+    ); // Update form values when product changes
     useEffect(() => {
         // Only reset the form if the values are different to avoid infinite loops
         if (
@@ -76,6 +81,7 @@ export function BasicDetailsForm({
             product.description !== form.getValues("description") ||
             product.price !== form.getValues("price") ||
             product.stock !== form.getValues("stock") ||
+            product.sku !== form.getValues("sku") ||
             product.categoryId !== selectedCategoryId
         ) {
             form.reset({
@@ -83,6 +89,8 @@ export function BasicDetailsForm({
                 description: product.description,
                 price: product.price,
                 stock: product.stock,
+                code: product.code,
+                sku: product.sku,
             });
         }
     }, [product, form]);
@@ -119,28 +127,36 @@ export function BasicDetailsForm({
             <h2 className="text-2xl font-semibold">Basic Details</h2>
 
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-6"
+                >
                     <FormField
                         control={form.control}
                         name="name"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>
-                                    Product Name <span className="text-destructive">*</span>
+                                    Product Name{" "}
+                                    <span className="text-destructive">*</span>
                                 </FormLabel>
                                 <FormControl>
-                                    <Input placeholder="Enter product name" {...field} />
+                                    <Input
+                                        placeholder="Enter product name"
+                                        {...field}
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-
                     <div>
                         <Label htmlFor="categoryId">Category</Label>
                         <div className="flex items-center justify-between">
                             <Select
-                                onValueChange={(value) => setSelectedCategoryId(value)}
+                                onValueChange={(value) =>
+                                    setSelectedCategoryId(value)
+                                }
                                 value={selectedCategoryId || undefined}
                             >
                                 <SelectTrigger>
@@ -148,7 +164,10 @@ export function BasicDetailsForm({
                                 </SelectTrigger>
                                 <SelectContent>
                                     {categories.map((category) => (
-                                        <SelectItem key={category.id} value={category.id}>
+                                        <SelectItem
+                                            key={category.id}
+                                            value={category.id}
+                                        >
                                             {category.name}
                                         </SelectItem>
                                     ))}
@@ -156,7 +175,7 @@ export function BasicDetailsForm({
                             </Select>
                             <AddCategory onAddCategory={addCategory} />
                         </div>
-                    </div>
+                    </div>{" "}
                     <FormField
                         control={form.control}
                         name="code"
@@ -164,20 +183,46 @@ export function BasicDetailsForm({
                             <FormItem>
                                 <FormLabel>Product Code</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="Enter product code" {...field} />
+                                    <Input
+                                        placeholder="Enter product code"
+                                        {...field}
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-
+                    <FormField
+                        control={form.control}
+                        name="sku"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>
+                                    SKU{" "}
+                                    <span className="text-destructive">*</span>
+                                </FormLabel>
+                                <FormControl>
+                                    <Input
+                                        placeholder="Auto-generated SKU"
+                                        {...field}
+                                        className="uppercase"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                                <p className="text-sm text-muted-foreground">
+                                    SKU is auto-generated but can be edited
+                                </p>
+                            </FormItem>
+                        )}
+                    />
                     <FormField
                         control={form.control}
                         name="description"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>
-                                    Description <span className="text-destructive">*</span>
+                                    Description{" "}
+                                    <span className="text-destructive">*</span>
                                 </FormLabel>
                                 <FormControl>
                                     <Textarea
@@ -190,7 +235,6 @@ export function BasicDetailsForm({
                             </FormItem>
                         )}
                     />
-
                     <div className="grid grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
@@ -198,7 +242,10 @@ export function BasicDetailsForm({
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Base Price <span className="text-destructive">*</span>
+                                        Base Price{" "}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
                                     </FormLabel>
                                     <FormControl>
                                         <Input
@@ -220,7 +267,10 @@ export function BasicDetailsForm({
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Stock <span className="text-destructive">*</span>
+                                        Stock{" "}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
                                     </FormLabel>
                                     <FormControl>
                                         <Input
@@ -236,7 +286,6 @@ export function BasicDetailsForm({
                             )}
                         />
                     </div>
-
                     <Button type="submit" className="w-full">
                         Next
                         <ChevronRight className="ml-2 h-4 w-4" />

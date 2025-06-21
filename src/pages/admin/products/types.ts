@@ -24,6 +24,7 @@ export interface Product {
     stock: number;
     categoryId: string;
     code: string;
+    sku: string;
 
     options?: ProductOptions[];
     variants?: ProductVariant[];

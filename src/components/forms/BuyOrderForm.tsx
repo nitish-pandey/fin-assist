@@ -13,7 +13,12 @@ import { X } from "lucide-react";
 
 interface BuyProductData {
     entity?: Entity | null;
-    products: { productId: string; variantId: string; rate: number; quantity: number }[];
+    products: {
+        productId: string;
+        variantId: string;
+        rate: number;
+        quantity: number;
+    }[];
     discount: number;
     charges: { id: string; amount: number; label: string }[];
     payments: { amount: number; accountId: string; details: object }[];
@@ -24,7 +29,7 @@ interface BuyProductFormProps {
     entities: Entity[];
     products: Product[];
     accounts: Account[];
-    addEntity: (entity: Partial<Entity>) => Promise<void>;
+    addEntity: (entity: Partial<Entity>) => Promise<Entity | null>;
     onSubmit: (data: object) => Promise<void> | void;
 }
 
@@ -50,12 +55,17 @@ BuyProductFormProps) {
     const { toast } = useToast();
 
     const subTotal = useMemo(() => {
-        return buyState.products.reduce((sum, p) => sum + p.rate * p.quantity, 0);
+        return buyState.products.reduce(
+            (sum, p) => sum + p.rate * p.quantity,
+            0
+        );
     }, [buyState.products]);
 
     const grandTotal = useMemo(() => {
         const total =
-            subTotal - buyState.discount + buyState.charges.reduce((sum, c) => sum + c.amount, 0);
+            subTotal -
+            buyState.discount +
+            buyState.charges.reduce((sum, c) => sum + c.amount, 0);
         return Math.max(total, 0);
     }, [subTotal, buyState.discount, buyState.charges]);
 
@@ -67,7 +77,14 @@ BuyProductFormProps) {
     }, []);
 
     const handleUpdateProducts = useCallback(
-        (products: { productId: string; variantId: string; rate: number; quantity: number }[]) => {
+        (
+            products: {
+                productId: string;
+                variantId: string;
+                rate: number;
+                quantity: number;
+            }[]
+        ) => {
             setBuyState((prev) => ({
                 ...prev,
                 products,
@@ -94,7 +111,9 @@ BuyProductFormProps) {
     );
 
     const handleUpdatePayments = useCallback(
-        (payments: { amount: number; accountId: string; details: object }[]) => {
+        (
+            payments: { amount: number; accountId: string; details: object }[]
+        ) => {
             setBuyState((prev) => ({
                 ...prev,
                 payments,
@@ -103,10 +122,35 @@ BuyProductFormProps) {
         []
     );
 
+    const handleAddEntity = async (entity: Partial<Entity>) => {
+        try {
+            const newEntity = await addEntity(entity);
+            if (newEntity) {
+                setBuyState((prev) => ({
+                    ...prev,
+                    entity: newEntity,
+                }));
+            }
+            handleSelectEntity(newEntity);
+        } catch (error) {
+            console.error("Error adding entity:", error);
+            toast({
+                title: "Error adding entity",
+                description: "There was an error adding the entity.",
+                variant: "destructive",
+            });
+        }
+    };
+    const totalPaid = useMemo(() => {
+        return buyState.payments.reduce((sum, item) => sum + item.amount, 0);
+    }, [buyState.payments]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const { entity, products, discount, charges, payments } = buyState;
-        const parsedProducts = products.filter((p) => p.productId !== "" && p.variantId !== "");
+        const parsedProducts = products.filter(
+            (p) => p.productId !== "" && p.variantId !== ""
+        );
         const data = {
             entity,
             products: parsedProducts,
@@ -119,6 +163,14 @@ BuyProductFormProps) {
             setError("Please add at least one product.");
             return;
         }
+        // if (type == "BUY" && !entity) {
+        //     setError("Cant Buy Product without selecting entity");
+        //     return;
+        // }
+        if (!entity && totalPaid !== grandTotal) {
+            setError("Select Entity for unpaid order.");
+            return;
+        }
         setLoading(true);
         try {
             console.log(data);
@@ -126,7 +178,9 @@ BuyProductFormProps) {
 
             setBuyState({
                 entity: null,
-                products: [{ productId: "", variantId: "", rate: 0, quantity: 1 }],
+                products: [
+                    { productId: "", variantId: "", rate: 0, quantity: 1 },
+                ],
                 discount: 0,
                 charges: [],
                 payments: [],
@@ -158,7 +212,7 @@ BuyProductFormProps) {
             <form className="space-y-4" onSubmit={handleSubmit}>
                 <EntitySelector
                     entities={entities}
-                    onAddEntity={addEntity}
+                    onAddEntity={handleAddEntity}
                     selectedEntity={buyState.entity || null}
                     onSelectEntity={handleSelectEntity}
                 />
@@ -216,7 +270,14 @@ BuyProductFormProps) {
                         variant="outline"
                         onClick={() => {
                             setBuyState({
-                                products: [{ productId: "", variantId: "", rate: 0, quantity: 1 }],
+                                products: [
+                                    {
+                                        productId: "",
+                                        variantId: "",
+                                        rate: 0,
+                                        quantity: 1,
+                                    },
+                                ],
                                 discount: 0,
                                 charges: [],
                                 payments: [],
@@ -228,7 +289,11 @@ BuyProductFormProps) {
                         Clear
                     </Button>
 
-                    <Button type="submit" className="py-6 text-lg" disabled={loading}>
+                    <Button
+                        type="submit"
+                        className="py-6 text-lg"
+                        disabled={loading}
+                    >
                         {loading ? "Processing..." : `Create ${type} Order`}
                     </Button>
                 </div>

@@ -1,6 +1,5 @@
 import type React from "react";
 import { useState } from "react";
-import { useForm, type SubmitHandler } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,32 +17,49 @@ interface AddCategoryProps {
     onAddCategory: (name: string, description: string) => Promise<void>;
 }
 
-interface FormInputs {
-    name: string;
-    description: string;
-}
-
 const AddCategory: React.FC<AddCategoryProps> = ({ onAddCategory }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [errors, setErrors] = useState({ name: "", description: "" });
     const { toast } = useToast();
-    const {
-        register,
-        handleSubmit,
-        reset,
-        formState: { errors },
-    } = useForm<FormInputs>();
 
-    const onSubmit: SubmitHandler<FormInputs> = async (data) => {
+    const validateForm = () => {
+        const newErrors = { name: "", description: "" };
+        let isValid = true;
+
+        if (!name.trim()) {
+            newErrors.name = "Name is required";
+            isValid = false;
+        }
+
+        setErrors(newErrors);
+        return isValid;
+    };
+
+    const resetForm = () => {
+        setName("");
+        setDescription("");
+        setErrors({ name: "", description: "" });
+    };
+
+    const onSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
+
         setIsSubmitting(true);
         try {
-            await onAddCategory(data.name, data.description);
+            await onAddCategory(name, description);
             toast({
                 title: "Category Created",
                 description: "Category has been created successfully",
             });
             setIsOpen(false);
-            reset();
+            resetForm();
         } catch (err) {
             toast({
                 title: "Failed to create category",
@@ -63,26 +79,40 @@ const AddCategory: React.FC<AddCategoryProps> = ({ onAddCategory }) => {
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Add Category</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                </DialogHeader>{" "}
+                <form className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="name">Name</Label>
-                        <Input id="name" {...register("name", { required: "Name is required" })} />
+                        <Input
+                            id="name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                        />
                         {errors.name && (
-                            <p className="text-sm text-red-500">{errors.name.message}</p>
+                            <p className="text-sm text-red-500">
+                                {errors.name}
+                            </p>
                         )}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="description">Description</Label>
                         <Textarea
                             id="description"
-                            {...register("description", { required: "Description is required" })}
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
                         />
                         {errors.description && (
-                            <p className="text-sm text-red-500">{errors.description.message}</p>
+                            <p className="text-sm text-red-500">
+                                {errors.description}
+                            </p>
                         )}
                     </div>
-                    <Button type="submit" disabled={isSubmitting} className="w-full">
+                    <Button
+                        type="button"
+                        disabled={isSubmitting}
+                        className="w-full"
+                        onClick={onSubmit}
+                    >
                         {isSubmitting ? "Creating..." : "Create Category"}
                     </Button>
                 </form>

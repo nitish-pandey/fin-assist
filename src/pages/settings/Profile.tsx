@@ -24,7 +24,9 @@ export default function ProfilePage() {
         <div className="p-6 space-y-6 w-full">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-                <p className="text-muted-foreground">View and manage your user profile</p>
+                <p className="text-muted-foreground">
+                    View and manage your user profile
+                </p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2">
@@ -43,10 +45,14 @@ export default function ProfilePage() {
                                         src="/placeholder.svg?height=64&width=64"
                                         alt={user.name}
                                     />
-                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                    <AvatarFallback>
+                                        {user.name.charAt(0)}
+                                    </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <h3 className="text-xl font-medium">{user.name}</h3>
+                                    <h3 className="text-xl font-medium">
+                                        {user.name}
+                                    </h3>
                                     <p className="text-sm text-muted-foreground">
                                         User ID: {user.id}
                                     </p>
@@ -64,7 +70,10 @@ export default function ProfilePage() {
                                 <div className="flex items-center gap-2">
                                     <CalendarDays className="h-4 w-4 text-muted-foreground" />
                                     <span>
-                                        Joined {new Date(user.createdAt).toLocaleDateString()}
+                                        Joined{" "}
+                                        {new Date(
+                                            user.createdAt
+                                        ).toLocaleDateString()}
                                     </span>
                                 </div>
                             </div>
@@ -78,7 +87,9 @@ export default function ProfilePage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Account Summary</CardTitle>
-                        <CardDescription>Overview of your account activity</CardDescription>
+                        <CardDescription>
+                            Overview of your account activity
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
@@ -100,23 +111,14 @@ export default function ProfilePage() {
                             </div>
                             <div className="rounded-lg border p-3">
                                 <div className="text-sm font-medium text-muted-foreground">
-                                    Last Login
-                                </div>
-                                <div className="text-sm font-medium">Today, 2:30 PM</div>
-                            </div>
-                            <div className="rounded-lg border p-3">
-                                <div className="text-sm font-medium text-muted-foreground">
                                     Account Status
                                 </div>
-                                <div className="text-sm font-medium text-green-500">Active</div>
+                                <div className="text-sm font-medium text-green-500">
+                                    Active
+                                </div>
                             </div>
                         </div>
                     </CardContent>
-                    <CardFooter>
-                        <Button variant="outline" className="w-full">
-                            View Activity Log
-                        </Button>
-                    </CardFooter>
                 </Card>
             </div>
         </div>

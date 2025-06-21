@@ -75,8 +75,16 @@ export default function Sidebar() {
             path: "/products",
             icon: ProductIcon,
             subItems: [
-                { name: "All", path: getPathname("products"), icon: ProductIcon },
-                { name: "Create", path: getPathname("products/create"), icon: ProductIcon },
+                {
+                    name: "All",
+                    path: getPathname("products"),
+                    icon: ProductIcon,
+                },
+                {
+                    name: "Create",
+                    path: getPathname("products/create"),
+                    icon: ProductIcon,
+                },
                 {
                     name: "Categories",
                     path: getPathname("categories"),
@@ -93,7 +101,11 @@ export default function Sidebar() {
             name: "Transactions",
             icon: TransactionIcon,
             subItems: [
-                { name: "All", path: getPathname("transactions/all"), icon: TransactionIcon },
+                {
+                    name: "All",
+                    path: getPathname("transactions/all"),
+                    icon: TransactionIcon,
+                },
                 {
                     name: "Buy",
                     path: getPathname("transactions/buy"),
@@ -110,11 +122,31 @@ export default function Sidebar() {
             name: "Accounts",
             icon: AccountIcon,
             subItems: [
-                { name: "All", path: getPathname("accounts/view"), icon: AllAccountIcon },
-                { name: "Bank", path: getPathname("accounts/bank"), icon: BankAccountIcon },
-                { name: "Bank-OD", path: getPathname("accounts/bank-od"), icon: BankAccountIcon },
-                { name: "Cheque", path: getPathname("accounts/cheques"), icon: ChequeAccountIcon },
-                { name: "Cash", path: getPathname("accounts/cash"), icon: CashIcon },
+                {
+                    name: "All",
+                    path: getPathname("accounts/view"),
+                    icon: AllAccountIcon,
+                },
+                {
+                    name: "Bank",
+                    path: getPathname("accounts/bank"),
+                    icon: BankAccountIcon,
+                },
+                {
+                    name: "Bank-OD",
+                    path: getPathname("accounts/bank-od"),
+                    icon: BankAccountIcon,
+                },
+                {
+                    name: "Cheque",
+                    path: getPathname("accounts/cheques"),
+                    icon: ChequeAccountIcon,
+                },
+                {
+                    name: "Cash",
+                    path: getPathname("accounts/cash"),
+                    icon: CashIcon,
+                },
             ],
         },
         {
@@ -172,7 +204,11 @@ export default function Sidebar() {
                     )}
                 >
                     <div className="flex items-center gap-4">
-                        <img src={item.icon} alt={item.name} className="w-5 h-5" />
+                        <img
+                            src={item.icon}
+                            alt={item.name}
+                            className="w-5 h-5"
+                        />
                         <span className="text-sm">{item.name}</span>
                     </div>
                     {!item.subItems && (
@@ -182,7 +218,11 @@ export default function Sidebar() {
                         />
                     )}
                     {item.subItems &&
-                        (isActive ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
+                        (isActive ? (
+                            <ChevronDown size={16} />
+                        ) : (
+                            <ChevronRight size={16} />
+                        ))}
                 </div>
                 {item.subItems && isActive && (
                     <div className="pl-8 flex flex-col gap-2 mt-3">
@@ -197,7 +237,11 @@ export default function Sidebar() {
                                 )}
                             >
                                 <div className="flex items-center gap-3 px-2 py-2">
-                                    <img src={sub.icon} alt={sub.name} className="w-4 h-4" />
+                                    <img
+                                        src={sub.icon}
+                                        alt={sub.name}
+                                        className="w-4 h-4"
+                                    />
                                     {sub.name}
                                 </div>
                             </NavLink>
@@ -223,7 +267,13 @@ export default function Sidebar() {
                         to={item.path}
                         className="flex items-center gap-4 px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
                     >
-                        {item.icon && <img src={item.icon} alt={item.name} className="w-5 h-5" />}
+                        {item.icon && (
+                            <img
+                                src={item.icon}
+                                alt={item.name}
+                                className="w-5 h-5"
+                            />
+                        )}
                         {item.name}
                     </NavLink>
                 ))}

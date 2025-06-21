@@ -25,14 +25,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-// import {
-//     DropdownMenu,
-//     DropdownMenuContent,
-//     DropdownMenuItem,
-//     DropdownMenuLabel,
-//     DropdownMenuSeparator,
-//     DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu";
 import {
     Table,
     TableBody,
@@ -48,7 +40,9 @@ import { api } from "@/utils/api";
 import { Product } from "@/data/types";
 
 const SingleProductPage = () => {
-    const { productId } = useParams<{ productId: string }>() as { productId: string };
+    const { productId } = useParams<{ productId: string }>() as {
+        productId: string;
+    };
 
     const orgId = useOrg().orgId;
 
@@ -60,7 +54,9 @@ const SingleProductPage = () => {
         const fetchProduct = async () => {
             try {
                 setLoading(true);
-                const response = await api.get(`orgs/${orgId}/products/${productId}`);
+                const response = await api.get(
+                    `orgs/${orgId}/products/${productId}`
+                );
                 setProduct(response.data);
             } catch (error) {
                 console.error("Error fetching product:", error);
@@ -106,7 +102,10 @@ const SingleProductPage = () => {
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
                 <div className="mt-4">
-                    <Button variant="outline" onClick={() => window.location.reload()}>
+                    <Button
+                        variant="outline"
+                        onClick={() => window.location.reload()}
+                    >
                         Try Again
                     </Button>
                 </div>
@@ -168,36 +167,7 @@ const SingleProductPage = () => {
                     <h1 className="text-2xl font-bold">Product Details</h1>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                    {/* <Button variant="outline" size="sm">
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                    </Button>
-                    <Button variant="outline" size="sm">
-                        <Copy className="mr-2 h-4 w-4" />
-                        Duplicate
-                    </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">More options</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                                <Archive className="mr-2 h-4 w-4" />
-                                Archive Product
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Product
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu> */}
-                </div>
+                <div className="flex items-center space-x-2"></div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -207,9 +177,14 @@ const SingleProductPage = () => {
                         <div className="p-6">
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <h2 className="text-2xl font-bold">{product.name}</h2>
+                                    <h2 className="text-2xl font-bold">
+                                        {product.name}
+                                    </h2>
                                     {product.category && (
-                                        <Badge variant="outline" className="mt-1">
+                                        <Badge
+                                            variant="outline"
+                                            className="mt-1"
+                                        >
                                             {product.category.name}
                                         </Badge>
                                     )}
@@ -219,7 +194,11 @@ const SingleProductPage = () => {
                                         Rs {product.price.toFixed(2)}
                                     </div>
                                     <Badge
-                                        variant={hasLowStock ? "destructive" : "secondary"}
+                                        variant={
+                                            hasLowStock
+                                                ? "destructive"
+                                                : "secondary"
+                                        }
                                         className="mt-1"
                                     >
                                         {hasLowStock ? "Low Stock" : "In Stock"}
@@ -249,7 +228,9 @@ const SingleProductPage = () => {
 
                             {product.description && (
                                 <div className="mb-6">
-                                    <h3 className="text-sm font-medium mb-2">Description</h3>
+                                    <h3 className="text-sm font-medium mb-2">
+                                        Description
+                                    </h3>
                                     <p className="text-sm text-muted-foreground">
                                         {product.description}
                                     </p>
@@ -264,7 +245,9 @@ const SingleProductPage = () => {
                             <TabsTrigger value="variants">
                                 Variants ({product.variants?.length || 0})
                             </TabsTrigger>
-                            <TabsTrigger value="inventory">Inventory</TabsTrigger>
+                            <TabsTrigger value="inventory">
+                                Inventory
+                            </TabsTrigger>
                             <TabsTrigger value="history">History</TabsTrigger>
                         </TabsList>
 
@@ -272,7 +255,8 @@ const SingleProductPage = () => {
                         <TabsContent value="variants" className="mt-4">
                             <Card>
                                 <div className="p-6">
-                                    {product.variants && product.variants.length > 0 ? (
+                                    {product.variants &&
+                                    product.variants.length > 0 ? (
                                         <div className="space-y-4">
                                             <div className="flex justify-between items-center">
                                                 <h3 className="text-lg font-medium">
@@ -290,61 +274,82 @@ const SingleProductPage = () => {
                                                     <TableHeader>
                                                         <TableRow>
                                                             <TableHead className="w-[50px]"></TableHead>
-                                                            <TableHead>Name</TableHead>
-                                                            <TableHead>SKU</TableHead>
-                                                            <TableHead>Price</TableHead>
-                                                            <TableHead>Stock</TableHead>
+                                                            <TableHead>
+                                                                Name
+                                                            </TableHead>
+                                                            <TableHead>
+                                                                SKU
+                                                            </TableHead>
+                                                            <TableHead>
+                                                                Price
+                                                            </TableHead>
+                                                            <TableHead>
+                                                                Stock
+                                                            </TableHead>
                                                             {/* <TableHead className="text-right">
                                                                 Actions
                                                             </TableHead> */}
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
-                                                        {product.variants.map((variant) => (
-                                                            <React.Fragment key={variant.id}>
-                                                                <TableRow>
-                                                                    <TableCell>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            className="h-8 w-8 p-0"
-                                                                            onClick={() =>
-                                                                                toggleVariantExpand(
-                                                                                    variant.id
-                                                                                )
+                                                        {product.variants.map(
+                                                            (variant) => (
+                                                                <React.Fragment
+                                                                    key={
+                                                                        variant.id
+                                                                    }
+                                                                >
+                                                                    <TableRow>
+                                                                        <TableCell>
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="sm"
+                                                                                className="h-8 w-8 p-0"
+                                                                                onClick={() =>
+                                                                                    toggleVariantExpand(
+                                                                                        variant.id
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                {expandedVariant ===
+                                                                                variant.id ? (
+                                                                                    <ChevronUp className="h-4 w-4" />
+                                                                                ) : (
+                                                                                    <ChevronDown className="h-4 w-4" />
+                                                                                )}
+                                                                            </Button>
+                                                                        </TableCell>
+                                                                        <TableCell className="font-medium">
+                                                                            {
+                                                                                variant.name
                                                                             }
-                                                                        >
-                                                                            {expandedVariant ===
-                                                                            variant.id ? (
-                                                                                <ChevronUp className="h-4 w-4" />
-                                                                            ) : (
-                                                                                <ChevronDown className="h-4 w-4" />
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            {
+                                                                                variant.sku
+                                                                            }
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            Rs{" "}
+                                                                            {variant.price.toFixed(
+                                                                                2
                                                                             )}
-                                                                        </Button>
-                                                                    </TableCell>
-                                                                    <TableCell className="font-medium">
-                                                                        {variant.name}
-                                                                    </TableCell>
-                                                                    <TableCell>
-                                                                        {variant.sku}
-                                                                    </TableCell>
-                                                                    <TableCell>
-                                                                        Rs{" "}
-                                                                        {variant.price.toFixed(2)}
-                                                                    </TableCell>
-                                                                    <TableCell>
-                                                                        <Badge
-                                                                            variant={
-                                                                                variant.stock <=
-                                                                                lowStockThreshold
-                                                                                    ? "destructive"
-                                                                                    : "secondary"
-                                                                            }
-                                                                        >
-                                                                            {variant.stock}
-                                                                        </Badge>
-                                                                    </TableCell>
-                                                                    {/* <TableCell className="text-right">
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            <Badge
+                                                                                variant={
+                                                                                    variant.stock <=
+                                                                                    lowStockThreshold
+                                                                                        ? "destructive"
+                                                                                        : "secondary"
+                                                                                }
+                                                                            >
+                                                                                {
+                                                                                    variant.stock
+                                                                                }
+                                                                            </Badge>
+                                                                        </TableCell>
+                                                                        {/* <TableCell className="text-right">
                                                                         <Button
                                                                             variant="ghost"
                                                                             size="sm"
@@ -356,96 +361,102 @@ const SingleProductPage = () => {
                                                                             </span>
                                                                         </Button>
                                                                     </TableCell> */}
-                                                                </TableRow>
+                                                                    </TableRow>
 
-                                                                {/* Expanded variant details */}
-                                                                {expandedVariant === variant.id && (
-                                                                    <TableRow>
-                                                                        <TableCell
-                                                                            colSpan={6}
-                                                                            className="bg-muted/50"
-                                                                        >
-                                                                            <div className="p-4">
-                                                                                <h4 className="font-medium mb-2">
-                                                                                    Variant Details
-                                                                                </h4>
-                                                                                <div className="grid grid-cols-2 gap-y-2 text-sm">
-                                                                                    <div className="font-medium">
-                                                                                        Code
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        {
-                                                                                            variant.code
-                                                                                        }
-                                                                                    </div>
+                                                                    {/* Expanded variant details */}
+                                                                    {expandedVariant ===
+                                                                        variant.id && (
+                                                                        <TableRow>
+                                                                            <TableCell
+                                                                                colSpan={
+                                                                                    6
+                                                                                }
+                                                                                className="bg-muted/50"
+                                                                            >
+                                                                                <div className="p-4">
+                                                                                    <h4 className="font-medium mb-2">
+                                                                                        Variant
+                                                                                        Details
+                                                                                    </h4>
+                                                                                    <div className="grid grid-cols-2 gap-y-2 text-sm">
+                                                                                        <div className="font-medium">
+                                                                                            Code
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            {
+                                                                                                variant.code
+                                                                                            }
+                                                                                        </div>
 
-                                                                                    {variant.description && (
-                                                                                        <>
-                                                                                            <div className="font-medium">
-                                                                                                Description
-                                                                                            </div>
-                                                                                            <div>
-                                                                                                {
-                                                                                                    variant.description
-                                                                                                }
-                                                                                            </div>
-                                                                                        </>
-                                                                                    )}
-
-                                                                                    {variant.values &&
-                                                                                        Object.entries(
-                                                                                            variant.values
-                                                                                        ).map(
-                                                                                            (
-                                                                                                [
-                                                                                                    key,
-                                                                                                    value,
-                                                                                                ],
-                                                                                                index
-                                                                                            ) => (
-                                                                                                <React.Fragment
-                                                                                                    key={
-                                                                                                        index
+                                                                                        {variant.description && (
+                                                                                            <>
+                                                                                                <div className="font-medium">
+                                                                                                    Description
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    {
+                                                                                                        variant.description
                                                                                                     }
-                                                                                                >
-                                                                                                    <div className="font-medium">
-                                                                                                        {
-                                                                                                            key
+                                                                                                </div>
+                                                                                            </>
+                                                                                        )}
+
+                                                                                        {variant.values &&
+                                                                                            Object.entries(
+                                                                                                variant.values
+                                                                                            ).map(
+                                                                                                (
+                                                                                                    [
+                                                                                                        key,
+                                                                                                        value,
+                                                                                                    ],
+                                                                                                    index
+                                                                                                ) => (
+                                                                                                    <React.Fragment
+                                                                                                        key={
+                                                                                                            index
                                                                                                         }
-                                                                                                    </div>
-                                                                                                    <div>
-                                                                                                        {String(
-                                                                                                            value
-                                                                                                        )}
-                                                                                                    </div>
-                                                                                                </React.Fragment>
-                                                                                            )
-                                                                                        )}
+                                                                                                    >
+                                                                                                        <div className="font-medium">
+                                                                                                            {
+                                                                                                                key
+                                                                                                            }
+                                                                                                        </div>
+                                                                                                        <div>
+                                                                                                            {String(
+                                                                                                                value
+                                                                                                            )}
+                                                                                                        </div>
+                                                                                                    </React.Fragment>
+                                                                                                )
+                                                                                            )}
 
-                                                                                    <div className="font-medium">
-                                                                                        Created
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        {formatDate(
-                                                                                            variant.createdAt
-                                                                                        )}
-                                                                                    </div>
+                                                                                        <div className="font-medium">
+                                                                                            Created
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            {formatDate(
+                                                                                                variant.createdAt
+                                                                                            )}
+                                                                                        </div>
 
-                                                                                    <div className="font-medium">
-                                                                                        Last Updated
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        {formatDate(
-                                                                                            variant.updatedAt
-                                                                                        )}
+                                                                                        <div className="font-medium">
+                                                                                            Last
+                                                                                            Updated
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            {formatDate(
+                                                                                                variant.updatedAt
+                                                                                            )}
+                                                                                        </div>
                                                                                     </div>
                                                                                 </div>
-                                                                            </div>
-                                                                        </TableCell>
-                                                                    </TableRow>
-                                                                )}
-                                                            </React.Fragment>
-                                                        ))}
+                                                                            </TableCell>
+                                                                        </TableRow>
+                                                                    )}
+                                                                </React.Fragment>
+                                                            )
+                                                        )}
                                                     </TableBody>
                                                 </Table>
                                             </div>
@@ -457,7 +468,8 @@ const SingleProductPage = () => {
                                                 No Variants
                                             </h3>
                                             <p className="mt-2 text-sm text-muted-foreground">
-                                                This product doesn't have any variants.
+                                                This product doesn't have any
+                                                variants.
                                             </p>
                                         </div>
                                     )}
@@ -530,14 +542,18 @@ const SingleProductPage = () => {
                                         </Card> */}
                                     </div>
 
-                                    <h4 className="font-medium mb-4">Stock History</h4>
+                                    <h4 className="font-medium mb-4">
+                                        Stock History
+                                    </h4>
                                     <div className="border rounded-md">
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
                                                     <TableHead>Date</TableHead>
                                                     <TableHead>Type</TableHead>
-                                                    <TableHead>Quantity</TableHead>
+                                                    <TableHead>
+                                                        Quantity
+                                                    </TableHead>
                                                     <TableHead>User</TableHead>
                                                     <TableHead>Notes</TableHead>
                                                 </TableRow>
@@ -588,8 +604,12 @@ const SingleProductPage = () => {
                                                     </TableCell>
                                                 </TableRow> */}
                                                 <TableRow>
-                                                    <TableCell colSpan={5} className="text-center">
-                                                        No stock history available.
+                                                    <TableCell
+                                                        colSpan={5}
+                                                        className="text-center"
+                                                    >
+                                                        No stock history
+                                                        available.
                                                     </TableCell>
                                                 </TableRow>
                                             </TableBody>
@@ -603,60 +623,16 @@ const SingleProductPage = () => {
                         <TabsContent value="history" className="mt-4">
                             <Card>
                                 <div className="p-6">
-                                    <h3 className="text-lg font-medium mb-6">Product History</h3>
+                                    <h3 className="text-lg font-medium mb-6">
+                                        Product History
+                                    </h3>
 
                                     <div className="relative pl-6 border-l border-border">
-                                        {/* {[
-                                            {
-                                                date: "Apr 20, 2023",
-                                                time: "14:45",
-                                                user: "John Doe",
-                                                action: "Updated product price",
-                                                details: "Changed price from $289.99 to $299.99",
-                                            },
-                                            {
-                                                date: "Mar 15, 2023",
-                                                time: "10:30",
-                                                user: "Jane Smith",
-                                                action: "Added new variant",
-                                                details: "Added White variant",
-                                            },
-                                            {
-                                                date: "Feb 28, 2023",
-                                                time: "09:15",
-                                                user: "John Doe",
-                                                action: "Updated product description",
-                                                details: "Modified product description text",
-                                            },
-                                            {
-                                                date: "Jan 15, 2023",
-                                                time: "09:30",
-                                                user: "Admin",
-                                                action: "Created product",
-                                                details: "Initial product creation",
-                                            },
-                                        ].map((item, index) => (
-                                            <div key={index} className="mb-6 relative">
-                                                <div className="absolute -left-[27px] mt-1 h-4 w-4 rounded-full bg-primary"></div>
-                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1">
-                                                    <div className="flex items-center">
-                                                        <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                                                        <span className="text-sm text-muted-foreground">
-                                                            {item.date} at {item.time}
-                                                        </span>
-                                                    </div>
-                                                    <span className="text-sm text-muted-foreground">
-                                                        By {item.user}
-                                                    </span>
-                                                </div>
-                                                <h4 className="font-medium">{item.action}</h4>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {item.details}
-                                                </p>
-                                            </div>
-                                        ))} */}
                                         <p className="text-center text-muted-foreground">
-                                            No history available for this product.
+                                            Created on{" "}
+                                            {formatDate(product.createdAt)} with{" "}
+                                            {product?.variants?.length || 0}{" "}
+                                            variant(s).
                                         </p>
                                     </div>
                                 </div>

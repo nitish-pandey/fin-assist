@@ -15,8 +15,13 @@ export function generateSlug(text: string): string {
         .trim();
 }
 
+export function generateDefaultSKU(): string {
+    return Math.random().toString(36).substring(2, 16);
+}
+
 export function generateVariants(
     productName: string,
+    productSKU: string,
     options: ProductOptions[],
     basePrice: number,
     baseStock: number
@@ -27,7 +32,9 @@ export function generateVariants(
     }
 
     // Get all valid options (with name and at least one value)
-    const validOptions = options.filter((option) => option.name && option.values.length > 0);
+    const validOptions = options.filter(
+        (option) => option.name && option.values.length > 0
+    );
 
     if (validOptions.length === 0) {
         return [];
@@ -35,6 +42,7 @@ export function generateVariants(
 
     // Generate all combinations of option values
     const generateCombinations = (
+        productSKU: string,
         optionIndex: number,
         currentCombination: { [key: string]: string },
         optionSlugs: { [key: string]: string }
@@ -56,7 +64,7 @@ export function generateVariants(
             });
 
             const variantName = nameParts.join(", ");
-            const sku = skuParts.join("-");
+            const sku = productSKU + "-" + skuParts.join("-");
 
             return [
                 {
@@ -84,6 +92,7 @@ export function generateVariants(
 
             // Recursively generate combinations with the next option
             const newVariants = generateCombinations(
+                productSKU,
                 optionIndex + 1,
                 newCombination,
                 newOptionSlugs
@@ -95,7 +104,7 @@ export function generateVariants(
         return variants;
     };
 
-    return generateCombinations(0, {}, {});
+    return generateCombinations(productSKU, 0, {}, {});
 }
 
 // Add this function to format currency values

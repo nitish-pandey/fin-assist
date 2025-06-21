@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,7 +59,11 @@ export function AddOrganizationForm() {
 
     return (
         <>
-            <Button onClick={() => setOpen(true)} className="w-full max-w-60" variant="outline">
+            <Button
+                onClick={() => setOpen(true)}
+                className="w-full max-w-60"
+                variant="outline"
+            >
                 <Plus className="mr-2 h-4 w-4" />
                 Add Organization
             </Button>
@@ -63,32 +72,43 @@ export function AddOrganizationForm() {
                     <DialogHeader>
                         <DialogTitle>Add New Organization</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <form
+                        onSubmit={handleSubmit(onSubmit)}
+                        className="space-y-4"
+                    >
                         <div className="space-y-2">
                             <Label htmlFor="name">Organization Name</Label>
                             <Input
                                 id="name"
                                 placeholder="Enter organization name"
-                                {...register("name", { required: "Name is required" })}
+                                {...register("name", {
+                                    required: "Name is required",
+                                })}
                             />
                             {errors.name && (
-                                <span className="text-red-500">{errors.name.message}</span>
+                                <span className="text-red-500">
+                                    {errors.name.message}
+                                </span>
                             )}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="description">Description</Label>
                             <Textarea
                                 id="description"
-                                {...register("description", {
-                                    required: "Description is required",
-                                })}
+                                {...register("description")}
                                 placeholder="Enter organization description"
                             />
                             {errors.description && (
-                                <span className="text-red-500">{errors.description.message}</span>
+                                <span className="text-red-500">
+                                    {errors.description.message}
+                                </span>
                             )}
                         </div>
-                        <Button type="submit" className="w-full" disabled={loading}>
+                        <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={loading}
+                        >
                             {loading ? "Creating..." : "Create Organization"}
                         </Button>
                     </form>

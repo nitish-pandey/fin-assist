@@ -11,9 +11,6 @@ import {
     CreditCard,
     Edit,
     Clock,
-    Share2,
-    Download,
-    Printer,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -68,28 +65,24 @@ export default function OrgInfoPage() {
                                 </div>
                                 <div className="flex items-center gap-2 mt-1 text-slate-500">
                                     <Globe className="h-4 w-4" />
-                                    <span>{organization.domain || "No domain"}</span>
+                                    <span>
+                                        {organization.domain || "No domain"}
+                                    </span>
                                 </div>
                                 <div className="flex items-center gap-2 mt-1 text-slate-500">
                                     <Clock className="h-4 w-4" />
-                                    <span>Created {formatTimeAgo(organization.createdAt)}</span>
+                                    <span>
+                                        Created{" "}
+                                        {formatTimeAgo(organization.createdAt)}
+                                    </span>
                                 </div>
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-3">
-                            <EditOrgModal orgData={organization} onSubmit={onEditSubmit} />
-                            <Button variant="outline" className="gap-2">
-                                <Share2 className="h-4 w-4" />
-                                Share
-                            </Button>
-                            <Button variant="outline" className="gap-2">
-                                <Download className="h-4 w-4" />
-                                Export
-                            </Button>
-                            <Button variant="default" className="gap-2">
-                                <Printer className="h-4 w-4" />
-                                Print
-                            </Button>
+                            <EditOrgModal
+                                orgData={organization}
+                                onSubmit={onEditSubmit}
+                            />
                         </div>
                     </div>
                 </div>
@@ -211,7 +204,10 @@ export default function OrgInfoPage() {
                                             Organization Details
                                         </h3>
                                         <div className="space-y-4">
-                                            <DetailItem label="Name" value={organization.name} />
+                                            <DetailItem
+                                                label="Name"
+                                                value={organization.name}
+                                            />
                                             <DetailItem
                                                 label="Contact"
                                                 value={organization.contact}
@@ -231,8 +227,14 @@ export default function OrgInfoPage() {
                                             Tax Information
                                         </h3>
                                         <div className="space-y-4">
-                                            <DetailItem label="PAN" value={organization.pan} />
-                                            <DetailItem label="VAT" value={organization.vat} />
+                                            <DetailItem
+                                                label="PAN"
+                                                value={organization.pan}
+                                            />
+                                            <DetailItem
+                                                label="VAT"
+                                                value={organization.vat}
+                                            />
                                         </div>
 
                                         <h3 className="text-lg font-medium mt-8 mb-4 text-slate-800">
@@ -241,11 +243,15 @@ export default function OrgInfoPage() {
                                         <div className="space-y-4">
                                             <DetailItem
                                                 label="Created At"
-                                                value={formatDate(organization.createdAt)}
+                                                value={formatDate(
+                                                    organization.createdAt
+                                                )}
                                             />
                                             <DetailItem
                                                 label="Updated At"
-                                                value={formatDate(organization.updatedAt)}
+                                                value={formatDate(
+                                                    organization.updatedAt
+                                                )}
                                             />
                                         </div>
                                     </div>
@@ -302,15 +308,25 @@ const InfoCard = ({
         </div>
         <div>
             <p className="text-sm font-medium text-slate-500">{label}</p>
-            <p className="text-base font-semibold text-slate-900 mt-1">{value || "N/A"}</p>
+            <p className="text-base font-semibold text-slate-900 mt-1">
+                {value || "N/A"}
+            </p>
         </div>
     </div>
 );
 
-const DetailItem = ({ label, value }: { label: string; value?: string | null }) => (
+const DetailItem = ({
+    label,
+    value,
+}: {
+    label: string;
+    value?: string | null;
+}) => (
     <div>
         <p className="text-sm font-medium text-slate-500">{label}</p>
-        <p className="text-base font-semibold text-slate-900 mt-1">{value || "N/A"}</p>
+        <p className="text-base font-semibold text-slate-900 mt-1">
+            {value || "N/A"}
+        </p>
         <Separator className="mt-3" />
     </div>
 );
@@ -370,7 +386,9 @@ const ErrorState = () => (
                 <div className="bg-red-100 p-3 rounded-full mb-4">
                     <Building className="h-8 w-8 text-red-500" />
                 </div>
-                <h2 className="text-xl font-bold text-red-700 mb-2">Organization Not Found</h2>
+                <h2 className="text-xl font-bold text-red-700 mb-2">
+                    Organization Not Found
+                </h2>
                 <p className="text-center text-red-600">
                     We couldn't retrieve the organization details at this time.
                 </p>
@@ -406,10 +424,14 @@ const formatTimeAgo = (dateString?: string) => {
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
     if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-    if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} months ago`;
+    if (diffInSeconds < 3600)
+        return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400)
+        return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 2592000)
+        return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    if (diffInSeconds < 31536000)
+        return `${Math.floor(diffInSeconds / 2592000)} months ago`;
 
     return `${Math.floor(diffInSeconds / 31536000)} years ago`;
 };

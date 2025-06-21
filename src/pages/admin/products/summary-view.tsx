@@ -20,12 +20,17 @@ export function SummaryView({ product }: SummaryViewProps) {
     // Get all unique option names for table headers
     const optionNames =
         product.variants && product.variants.length > 0
-            ? Object.keys(product.variants[0].options).filter((key) => key !== "undefined")
+            ? Object.keys(product.variants[0].options).filter(
+                  (key) => key !== "undefined"
+              )
             : [];
 
     // Calculate total inventory value
     const totalInventoryValue = product.variants
-        ? product.variants.reduce((total, variant) => total + variant.price * variant.stock, 0)
+        ? product.variants.reduce(
+              (total, variant) => total + variant.price * variant.stock,
+              0
+          )
         : product.price * product.stock;
 
     return (
@@ -46,13 +51,17 @@ export function SummaryView({ product }: SummaryViewProps) {
                                 <dt className="text-sm font-medium text-muted-foreground">
                                     Product Name
                                 </dt>
-                                <dd className="mt-1 text-lg font-medium">{product.name}</dd>
+                                <dd className="mt-1 text-lg font-medium">
+                                    {product.name}
+                                </dd>
                             </div>
                             <div>
                                 <dt className="text-sm font-medium text-muted-foreground">
                                     Description
                                 </dt>
-                                <dd className="mt-1 text-sm">{product.description}</dd>
+                                <dd className="mt-1 text-sm">
+                                    {product.description}
+                                </dd>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -65,9 +74,11 @@ export function SummaryView({ product }: SummaryViewProps) {
                                 </div>
                                 <div>
                                     <dt className="text-sm font-medium text-muted-foreground">
-                                        Base Stock
+                                        Base SKU
                                     </dt>
-                                    <dd className="mt-1 text-lg font-medium">{product.stock}</dd>
+                                    <dd className="mt-1 text-lg font-medium">
+                                        {product.sku.toUpperCase()}
+                                    </dd>
                                 </div>
                             </div>
                         </dl>
@@ -115,17 +126,24 @@ export function SummaryView({ product }: SummaryViewProps) {
                     <CardContent>
                         <div className="space-y-4">
                             {product.options.map((option, index) => (
-                                <div key={index} className="border-b pb-3 last:border-0 last:pb-0">
-                                    <h4 className="font-medium">{option.name}</h4>
+                                <div
+                                    key={index}
+                                    className="border-b pb-3 last:border-0 last:pb-0"
+                                >
+                                    <h4 className="font-medium">
+                                        {option.name}
+                                    </h4>
                                     <div className="flex flex-wrap gap-2 mt-2">
-                                        {option.values.map((value, valueIndex) => (
-                                            <span
-                                                key={valueIndex}
-                                                className="px-2 py-1 bg-muted rounded text-sm"
-                                            >
-                                                {value.value}
-                                            </span>
-                                        ))}
+                                        {option.values.map(
+                                            (value, valueIndex) => (
+                                                <span
+                                                    key={valueIndex}
+                                                    className="px-2 py-1 bg-muted rounded text-sm"
+                                                >
+                                                    {value.value}
+                                                </span>
+                                            )
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -149,7 +167,9 @@ export function SummaryView({ product }: SummaryViewProps) {
                                     <TableHeader className="sticky top-0 bg-background z-10">
                                         <TableRow>
                                             {optionNames.map((option) => (
-                                                <TableHead key={option}>{option}</TableHead>
+                                                <TableHead key={option}>
+                                                    {option}
+                                                </TableHead>
                                             ))}
                                             <TableHead>SKU</TableHead>
                                             <TableHead>Price</TableHead>
@@ -157,22 +177,38 @@ export function SummaryView({ product }: SummaryViewProps) {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {product.variants.map((variant, index) => (
-                                            <TableRow key={index}>
-                                                {optionNames.map((option) => (
-                                                    <TableCell key={option} className="font-medium">
-                                                        {variant.options[option]}
+                                        {product.variants.map(
+                                            (variant, index) => (
+                                                <TableRow key={index}>
+                                                    {optionNames.map(
+                                                        (option) => (
+                                                            <TableCell
+                                                                key={option}
+                                                                className="font-medium"
+                                                            >
+                                                                {
+                                                                    variant
+                                                                        .options[
+                                                                        option
+                                                                    ]
+                                                                }
+                                                            </TableCell>
+                                                        )
+                                                    )}
+                                                    <TableCell className="font-mono text-xs">
+                                                        {variant.sku}
                                                     </TableCell>
-                                                ))}
-                                                <TableCell className="font-mono text-xs">
-                                                    {variant.sku}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {formatCurrency(variant.price)}
-                                                </TableCell>
-                                                <TableCell>{variant.stock}</TableCell>
-                                            </TableRow>
-                                        ))}
+                                                    <TableCell>
+                                                        {formatCurrency(
+                                                            variant.price
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {variant.stock}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        )}
                                     </TableBody>
                                 </Table>
                             </div>

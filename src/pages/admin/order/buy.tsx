@@ -22,7 +22,9 @@ export const BuyOrderPage = () => {
                     api.get(`/orgs/${orgId}/products`),
                     api.get(`/orgs/${orgId}/accounts`),
                     api.get(`/orgs/${orgId}/entities`),
-                ]).then((responses) => responses.map((response) => response.data));
+                ]).then((responses) =>
+                    responses.map((response) => response.data)
+                );
                 setProducts(products);
                 setAccounts(accounts);
                 setEntities(entities);
@@ -58,6 +60,7 @@ export const BuyOrderPage = () => {
         try {
             const res = await api.post(`/orgs/${orgId}/entities`, entity);
             setEntities((prev) => [...prev, res.data]);
+            return res.data;
         } catch (error) {
             console.error("Error adding entity:", error);
             throw error;

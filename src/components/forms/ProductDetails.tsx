@@ -3,7 +3,11 @@
 import React, { useMemo, useCallback } from "react";
 import { Minus, Plus, X, Search, ChevronDown } from "lucide-react";
 import { Command } from "cmdk";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -23,7 +27,11 @@ interface ProductDetailsProps {
     onUpdateProducts: (products: SelectedProduct[]) => void;
 }
 
-export function ProductDetails({ products, addedProducts, onUpdateProducts }: ProductDetailsProps) {
+export function ProductDetails({
+    products,
+    addedProducts,
+    onUpdateProducts,
+}: ProductDetailsProps) {
     const updateProductAtIndex = useCallback(
         (index: number, updates: Partial<SelectedProduct>) => {
             const updated = addedProducts.map((item, i) =>
@@ -43,7 +51,9 @@ export function ProductDetails({ products, addedProducts, onUpdateProducts }: Pr
 
     const handleRemoveProduct = (index: number) => {
         if (addedProducts.length === 1) {
-            onUpdateProducts([{ productId: "", variantId: "", quantity: 1, rate: 0 }]);
+            onUpdateProducts([
+                { productId: "", variantId: "", quantity: 1, rate: 0 },
+            ]);
         } else {
             onUpdateProducts(addedProducts.filter((_, i) => i !== index));
         }
@@ -52,7 +62,10 @@ export function ProductDetails({ products, addedProducts, onUpdateProducts }: Pr
     const getProductDetails = (id: string) => products.find((p) => p.id === id);
 
     const totalAmount = useMemo(() => {
-        return addedProducts.reduce((total, item) => total + item.quantity * item.rate, 0);
+        return addedProducts.reduce(
+            (total, item) => total + item.quantity * item.rate,
+            0
+        );
     }, [addedProducts]);
 
     return (
@@ -84,7 +97,9 @@ export function ProductDetails({ products, addedProducts, onUpdateProducts }: Pr
                                     key={index}
                                     className="grid grid-cols-12 gap-4 items-center bg-white p-3 rounded-lg border"
                                 >
-                                    <div className="col-span-1 font-medium">{index + 1}</div>
+                                    <div className="col-span-1 font-medium">
+                                        {index + 1}
+                                    </div>
 
                                     {/* Product */}
                                     <div className="col-span-2">
@@ -95,14 +110,20 @@ export function ProductDetails({ products, addedProducts, onUpdateProducts }: Pr
                                             }))}
                                             selectedId={item.productId}
                                             onSelect={(id) => {
-                                                const selectedProduct = products.find(
-                                                    (p) => p.id === id
-                                                );
-                                                const firstVariant = selectedProduct?.variants?.[0];
+                                                const selectedProduct =
+                                                    products.find(
+                                                        (p) => p.id === id
+                                                    );
+                                                const firstVariant =
+                                                    selectedProduct
+                                                        ?.variants?.[0];
                                                 updateProductAtIndex(index, {
                                                     productId: id,
-                                                    variantId: firstVariant?.id || "",
-                                                    rate: firstVariant?.price || 0,
+                                                    variantId:
+                                                        firstVariant?.id || "",
+                                                    rate:
+                                                        firstVariant?.price ||
+                                                        0,
                                                 });
                                             }}
                                             placeholder="Select product"
@@ -113,20 +134,31 @@ export function ProductDetails({ products, addedProducts, onUpdateProducts }: Pr
                                     <div className="col-span-3">
                                         {product ? (
                                             <SelectPopover
-                                                items={(product.variants ?? []).map((v) => ({
+                                                items={(
+                                                    product.variants ?? []
+                                                ).map((v) => ({
                                                     id: v.id,
-                                                    label: `${v.name} - $${v.price.toFixed(2)}`,
+                                                    label: `${
+                                                        v.name
+                                                    } - $${v.price.toFixed(2)}`,
                                                 }))}
                                                 selectedId={item.variantId}
                                                 onSelect={(variantId) => {
-                                                    const variant = product.variants?.find(
-                                                        (v) => v.id === variantId
-                                                    );
+                                                    const variant =
+                                                        product.variants?.find(
+                                                            (v) =>
+                                                                v.id ===
+                                                                variantId
+                                                        );
                                                     if (variant) {
-                                                        updateProductAtIndex(index, {
-                                                            variantId: variant.id,
-                                                            rate: variant.price,
-                                                        });
+                                                        updateProductAtIndex(
+                                                            index,
+                                                            {
+                                                                variantId:
+                                                                    variant.id,
+                                                                rate: variant.price,
+                                                            }
+                                                        );
                                                     }
                                                 }}
                                                 placeholder="Select variant"
@@ -146,7 +178,10 @@ export function ProductDetails({ products, addedProducts, onUpdateProducts }: Pr
                                             variant="outline"
                                             onClick={() =>
                                                 updateProductAtIndex(index, {
-                                                    quantity: Math.max(1, item.quantity - 1),
+                                                    quantity: Math.max(
+                                                        1,
+                                                        item.quantity - 1
+                                                    ),
                                                 })
                                             }
                                             disabled={!item.variantId}
@@ -161,7 +196,9 @@ export function ProductDetails({ products, addedProducts, onUpdateProducts }: Pr
                                                 updateProductAtIndex(index, {
                                                     quantity: Math.max(
                                                         1,
-                                                        parseInt(e.target.value) || 1
+                                                        parseInt(
+                                                            e.target.value
+                                                        ) || 1
                                                     ),
                                                 })
                                             }
@@ -191,7 +228,10 @@ export function ProductDetails({ products, addedProducts, onUpdateProducts }: Pr
                                             value={item.rate.toFixed(2)}
                                             onChange={(e) =>
                                                 updateProductAtIndex(index, {
-                                                    rate: parseFloat(e.target.value) || 0,
+                                                    rate:
+                                                        parseFloat(
+                                                            e.target.value
+                                                        ) || 0,
                                                 })
                                             }
                                             className="text-right h-9"
@@ -211,7 +251,9 @@ export function ProductDetails({ products, addedProducts, onUpdateProducts }: Pr
                                             size="icon"
                                             type="button"
                                             variant="ghost"
-                                            onClick={() => handleRemoveProduct(index)}
+                                            onClick={() =>
+                                                handleRemoveProduct(index)
+                                            }
                                             className="h-8 w-8 text-slate-500 hover:text-red-500"
                                         >
                                             <X className="h-4 w-4" />
@@ -230,7 +272,7 @@ export function ProductDetails({ products, addedProducts, onUpdateProducts }: Pr
                         className="bg-emerald-600 text-white hover:bg-emerald-700"
                         size="sm"
                     >
-                        <Plus className="h-4 w-4 mr-2" /> Add Product
+                        <Plus className="h-4 w-4 mr-2" /> Add New Purchases
                     </Button>
                     <div className="text-lg font-semibold text-slate-700">
                         Total: Rs {totalAmount.toFixed(2)}
@@ -266,9 +308,11 @@ const SelectPopover: React.FC<SelectPopoverProps> = ({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between"
+                    className="w-full justify-between truncate"
                 >
-                    {selectedItem ? selectedItem.label : placeholder || "Select..."}
+                    {selectedItem
+                        ? selectedItem.label
+                        : placeholder || "Select..."}
                     <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
             </PopoverTrigger>
@@ -289,7 +333,9 @@ const SelectPopover: React.FC<SelectPopoverProps> = ({
                         </Command.Empty>
                         {items
                             .filter((item) =>
-                                item.label.toLowerCase().includes(search.toLowerCase())
+                                item.label
+                                    .toLowerCase()
+                                    .includes(search.toLowerCase())
                             )
                             .map((item) => (
                                 <Command.Item

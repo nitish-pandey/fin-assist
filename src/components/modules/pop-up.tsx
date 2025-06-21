@@ -11,7 +11,10 @@ const PopUp = () => {
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (popUpRef.current && !popUpRef.current.contains(e.target as Node)) {
+            if (
+                popUpRef.current &&
+                !popUpRef.current.contains(e.target as Node)
+            ) {
                 setIsOpen(false);
             }
         };
@@ -37,20 +40,24 @@ const PopUp = () => {
             <div className="relative">
                 <button
                     onClick={() => setIsOpen((prev) => !prev)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-all"
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all"
                 >
-                    {isOpen ? <ImCross className="w-5 h-5" /> : <FaListUl className="w-5 h-5" />}
+                    {isOpen ? (
+                        <ImCross className="w-6 h-6" />
+                    ) : (
+                        <FaListUl className="w-6 h-6" />
+                    )}
                 </button>
 
                 {isOpen && (
-                    <div className="absolute bottom-14 right-0 bg-white shadow-lg border border-gray-200 rounded-lg py-2 w-48 transition-all">
+                    <div className="absolute bottom-14 right-0 bg-blue-200 text-white shadow-lg border border-blue-300 rounded-lg py-2 w-48 transition-all">
                         <ul className="flex flex-col space-y-1">
                             {links.map((link) => (
                                 <li key={link.path}>
                                     <Link
                                         to={link.path}
                                         onClick={() => setIsOpen(false)}
-                                        className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition"
+                                        className="block px-4 py-2 text-black text-lg hover:bg-blue-300 transition"
                                     >
                                         {link.name}
                                     </Link>
