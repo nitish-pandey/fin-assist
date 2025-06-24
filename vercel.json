@@ -2,7 +2,7 @@
     "rewrites": [
         {
             "source": "/api/(.*)",
-            "destination": "https://fin-assist-backend.agrimkafle.com.np/api/$1"
+            "destination": "https://fin-assist-node-production.up.railway.app/api/$1"
         },
         {
             "source": "/(.*)",
