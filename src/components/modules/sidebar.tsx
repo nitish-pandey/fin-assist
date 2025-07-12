@@ -107,6 +107,11 @@ export default function Sidebar() {
                     icon: TransactionIcon,
                 },
                 {
+                    name: "VAT",
+                    path: getPathname("transactions/vat"),
+                    icon: TransactionIcon,
+                },
+                {
                     name: "Buy",
                     path: getPathname("transactions/buy"),
                     icon: TransactionIcon,

@@ -37,6 +37,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import SingleEntityPage from "./pages/admin/basic/SingleEntityPage";
 import NotVerifiedPage from "./pages/auth/NotVerified";
 import VerificationPage from "./pages/auth/VerifyEmail";
+import VATPage from "./pages/admin/transactions/VAT";
 
 export const routes: RouteObject[] = [
     {
@@ -192,6 +193,10 @@ export const routes: RouteObject[] = [
                             {
                                 element: <AllTransactionPage />,
                                 path: "all",
+                            },
+                            {
+                                element: <VATPage />,
+                                path: "vat",
                             },
                             {
                                 element: <BuyTransactionPage />,

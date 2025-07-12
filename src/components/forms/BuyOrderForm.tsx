@@ -20,7 +20,13 @@ interface BuyProductData {
         quantity: number;
     }[];
     discount: number;
-    charges: { id: string; amount: number; label: string }[];
+    charges: {
+        id: string;
+        amount: number;
+        label: string;
+        type: "fixed" | "percentage";
+        percentage: number;
+    }[];
     payments: { amount: number; accountId: string; details: object }[];
 }
 
@@ -101,7 +107,15 @@ BuyProductFormProps) {
     }, []);
 
     const handleUpdateCharges = useCallback(
-        (charges: { id: string; amount: number; label: string }[]) => {
+        (
+            charges: {
+                id: string;
+                amount: number;
+                label: string;
+                type: "fixed" | "percentage";
+                percentage: number;
+            }[]
+        ) => {
             setBuyState((prev) => ({
                 ...prev,
                 charges,
