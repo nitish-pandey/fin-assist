@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/utils/api";
 import { useOrg } from "@/providers/org-provider";
 import { OrderList } from "@/components/lists/Orders";
+import { TableSkeleton } from "@/components/modules/TableSkeleton";
 
 export default function AllTransactionPage() {
     const { orgId } = useOrg();
@@ -19,7 +20,12 @@ export default function AllTransactionPage() {
     return (
         <section className="container mx-auto px-6 py-8 max-w-7xl">
             <h1 className="text-lg font-semibold text-gray-700 mb-8">Orders</h1>
-            {loading ? <p>Loading...</p> : <OrderList orders={orders} />}
+
+            {loading ? (
+                <TableSkeleton rows={5} columns={4} />
+            ) : (
+                <OrderList orders={orders} />
+            )}
         </section>
     );
 }

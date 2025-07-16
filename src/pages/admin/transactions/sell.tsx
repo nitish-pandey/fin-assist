@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/utils/api";
 import { useOrg } from "@/providers/org-provider";
 import { OrderList } from "@/components/lists/Orders";
+import { TableSkeleton } from "@/components/modules/TableSkeleton";
 
 export default function SellTransactionPage() {
     const { orgId } = useOrg();
@@ -11,7 +12,9 @@ export default function SellTransactionPage() {
 
     useEffect(() => {
         api.get(`orgs/${orgId}/orders`).then((data) => {
-            const buyOrders = data.data.filter((order: Order) => order.type === "SELL");
+            const buyOrders = data.data.filter(
+                (order: Order) => order.type === "SELL"
+            );
             setOrders(buyOrders);
             setLoading(false);
         });
@@ -19,8 +22,14 @@ export default function SellTransactionPage() {
 
     return (
         <section className="container mx-auto px-6 py-8 max-w-7xl">
-            <h1 className="text-lg font-semibold text-gray-700 mb-8">Sell Orders</h1>
-            {loading ? <p>Loading...</p> : <OrderList orders={orders} />}
+            <h1 className="text-lg font-semibold text-gray-700 mb-8">
+                Sell Orders
+            </h1>
+            {loading ? (
+                <TableSkeleton rows={5} columns={4} />
+            ) : (
+                <OrderList orders={orders} />
+            )}
         </section>
     );
 }

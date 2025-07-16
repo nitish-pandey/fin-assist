@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import type {
     Order,
     OrderItem,
@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Printer, RefreshCw, ArrowLeft } from "lucide-react";
+import { Printer, RefreshCw, ArrowLeft, Edit } from "lucide-react";
 import AddPaymentDialog from "@/components/modals/AddPaymentDialog";
 import { useToast } from "@/hooks/use-toast";
 
@@ -203,6 +203,14 @@ const SingleOrderPage = () => {
                     </BreadcrumbList>
                 </Breadcrumb>
                 <div className="flex gap-4">
+                    {order.paymentStatus !== "PAID" && (
+                        <Link to={`/org/${orgId}/orders/${orderId}/edit`}>
+                            <Button variant="outline">
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Order
+                            </Button>
+                        </Link>
+                    )}
                     <Button
                         variant="outline"
                         onClick={handleRefresh}

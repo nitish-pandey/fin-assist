@@ -38,6 +38,7 @@ import SingleEntityPage from "./pages/admin/basic/SingleEntityPage";
 import NotVerifiedPage from "./pages/auth/NotVerified";
 import VerificationPage from "./pages/auth/VerifyEmail";
 import VATPage from "./pages/admin/transactions/VAT";
+import EditOrderPage from "./pages/admin/order/edit-order";
 
 export const routes: RouteObject[] = [
     {
@@ -176,6 +177,10 @@ export const routes: RouteObject[] = [
                             {
                                 element: <SingleOrderPage />,
                                 path: ":orderId",
+                            },
+                            {
+                                element: <EditOrderPage />,
+                                path: ":orderId/edit",
                             },
                             {
                                 element: <BuyOrderPage />,

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { api } from "@/utils/api";
 import { useState } from "react";
 import { ProductList } from "@/components/lists/ProductList";
+import { TableSkeleton } from "@/components/modules/TableSkeleton";
 // import CreateProduct from "@/components/forms/CreateProduct";
 
 const OrgProducts = () => {
@@ -12,13 +13,16 @@ const OrgProducts = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        setLoading(true);
         const fetchProducts = async () => {
-            const { data } = await api.get(`orgs/${orgId}/products`);
-            setProducts(data);
+            setLoading(true);
+            try {
+                const { data } = await api.get(`orgs/${orgId}/products`);
+                setProducts(data);
+            } finally {
+                setLoading(false);
+            }
         };
         fetchProducts();
-        setLoading(false);
     }, [orgId]);
 
     // const handleProductCreated = (newProduct: Product) => {
@@ -40,7 +44,11 @@ const OrgProducts = () => {
                 </Link>
                 {/* <CreateProduct orgId={orgId} afterCreate={handleProductCreated} /> */}
             </div>
-            <ProductList products={products} isLoading={loading} error="" />
+            {loading ? (
+                <TableSkeleton rows={5} columns={4} />
+            ) : (
+                <ProductList products={products} isLoading={loading} error="" />
+            )}
         </div>
     );
 };

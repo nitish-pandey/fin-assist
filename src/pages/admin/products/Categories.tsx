@@ -1,5 +1,6 @@
 import CategoryList from "@/components/lists/CategoryList";
 import AddCategory from "@/components/modals/AddCategory";
+import { TableSkeleton } from "@/components/modules/TableSkeleton";
 import { Category } from "@/data/types";
 import { api } from "@/utils/api";
 import { useEffect, useState } from "react";
@@ -12,9 +13,9 @@ const OrgCategories = () => {
     const [, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        setLoading(true);
         const fetchCategories = async () => {
             try {
+                setLoading(true);
                 const { data } = await api.get(`/orgs/${orgId}/category`);
                 setCategories(data);
                 setError(null);
@@ -29,7 +30,10 @@ const OrgCategories = () => {
     }, [orgId]);
 
     const addCategory = async (name: string, description: string) => {
-        const newCategory = await api.post(`/orgs/${orgId}/category`, { name, description });
+        const newCategory = await api.post(`/orgs/${orgId}/category`, {
+            name,
+            description,
+        });
         setCategories((prev) => [...prev, newCategory.data]);
         setError(null);
     };
@@ -38,12 +42,24 @@ const OrgCategories = () => {
         <div className="">
             <div className="flex justify-between items-center mb-6">
                 <div className="">
-                    <h2 className="text-2xl font-bold text-gray-800">Categories</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">
+                        Categories
+                    </h2>
                     <p className="text-gray-600">Manage your categories here</p>
                 </div>
                 <AddCategory onAddCategory={addCategory} />
             </div>
-            <CategoryList categories={categories} loading={loading} onRetry={() => {}} />
+            {loading ? (
+                <TableSkeleton rows={5} columns={4} />
+            ) : (
+                <div className="mb-4">
+                    <CategoryList
+                        categories={categories}
+                        loading={loading}
+                        onRetry={() => {}}
+                    />
+                </div>
+            )}
         </div>
     );
 };

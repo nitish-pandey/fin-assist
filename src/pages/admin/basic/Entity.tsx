@@ -4,21 +4,33 @@ import { Entity } from "@/data/types";
 import { useParams } from "react-router-dom";
 import { EntityList } from "@/components/lists/EntityList";
 import AddEntity from "@/components/modals/AddEntity";
+import { TableSkeleton } from "@/components/modules/TableSkeleton";
 
 const EntityInfo = () => {
     const { orgId } = useParams<{ orgId: string }>() as { orgId: string };
     const [entities, setEntities] = useState<Entity[]>([]);
+    const [loading, setLoading] = useState(false);
 
     const fetchEntities = async () => {
+        setLoading(true);
         const res = await api.get(`/orgs/${orgId}/entities`);
         setEntities(res.data);
+        setLoading(false);
     };
 
     useEffect(() => {
         if (orgId) {
-            api.get(`/orgs/${orgId}/entities`).then((res) => {
-                setEntities(res.data);
-            });
+            setLoading(true);
+            api.get(`/orgs/${orgId}/entities`)
+                .then((res) => {
+                    setEntities(res.data);
+                })
+                .catch((error) => {
+                    console.error("Failed to fetch entities:", error);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
         }
     }, [orgId]);
 
@@ -45,13 +57,17 @@ const EntityInfo = () => {
             </div>
 
             <div className=" mt-8">
-                <EntityList
-                    entities={entities}
-                    loading={false}
-                    error={null}
-                    onDelete={handleDelete}
-                    onEdit={updateEntity}
-                />
+                {loading ? (
+                    <TableSkeleton rows={5} columns={4} />
+                ) : (
+                    <EntityList
+                        entities={entities}
+                        loading={false}
+                        error={null}
+                        onDelete={handleDelete}
+                        onEdit={updateEntity}
+                    />
+                )}
             </div>
         </div>
     );

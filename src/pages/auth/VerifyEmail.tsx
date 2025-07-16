@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import {
     Mail,
@@ -33,6 +33,7 @@ interface ApiError {
 const VerificationPage = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const verificationInProgress = useRef(false);
 
     // Consolidated state management
     const [state, setState] = useState<VerificationState>({
@@ -44,7 +45,14 @@ const VerificationPage = () => {
     const token = useMemo(() => searchParams.get("token"), [searchParams]); // Optimized API call with proper error handling
     const verifyToken = useCallback(
         async (verificationToken: string): Promise<void> => {
+            // Prevent concurrent verification attempts
+            if (verificationInProgress.current) {
+                console.log("Verification already in progress, skipping...");
+                return;
+            }
+
             try {
+                verificationInProgress.current = true;
                 console.log(
                     "Starting verification for token:",
                     verificationToken.substring(0, 10) + "..."
@@ -120,8 +128,7 @@ const VerificationPage = () => {
                     errorMessage,
                 }));
             } finally {
-                // reload window
-                window.location.reload();
+                verificationInProgress.current = false;
             }
         },
         []
@@ -154,7 +161,10 @@ const VerificationPage = () => {
                 errorMessage: "",
                 retryCount: prev.retryCount + 1,
             }));
-            verifyToken(token);
+            // Use setTimeout to avoid immediate re-execution
+            setTimeout(() => {
+                verifyToken(token);
+            }, 100);
         }
     }, [token, state.retryCount, verifyToken]);
 
@@ -162,8 +172,8 @@ const VerificationPage = () => {
     const isRetrying = state.status === "loading" && state.retryCount > 0; // Main verification effect
     useEffect(() => {
         const handleVerification = async () => {
-            // Only run if we haven't processed this token yet
-            if (state.status !== "idle") {
+            // Only run if we haven't processed this token yet and we have a token
+            if (state.status !== "idle" || !token) {
                 return;
             }
 
@@ -185,14 +195,11 @@ const VerificationPage = () => {
             }
 
             // Verify the token (this will handle setting loading state internally)
-            await verifyToken(token!);
+            await verifyToken(token);
         };
 
-        if (token !== null) {
-            // Only run when token is available (including empty string)
-            handleVerification();
-        }
-    }, [token, validateToken, verifyToken, state.status]); // Auto-redirect after successful verification
+        handleVerification();
+    }, [token, validateToken, verifyToken]); // Removed state.status from dependencies to prevent re-runs// Auto-redirect after successful verification
     useEffect(() => {
         if (state.status === "success") {
             const timer = setTimeout(() => {

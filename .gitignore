@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 
 .vercel
+backup.py
+restore.py

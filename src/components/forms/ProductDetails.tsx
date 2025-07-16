@@ -108,7 +108,7 @@ export function ProductDetails({
                                                 id: p.id,
                                                 label: p.name,
                                             }))}
-                                            selectedId={item.productId}
+                                            selectedId={item.productId || ""}
                                             onSelect={(id) => {
                                                 const selectedProduct =
                                                     products.find(
@@ -142,7 +142,9 @@ export function ProductDetails({
                                                         v.name
                                                     } - $${v.price.toFixed(2)}`,
                                                 }))}
-                                                selectedId={item.variantId}
+                                                selectedId={
+                                                    item.variantId || ""
+                                                }
                                                 onSelect={(variantId) => {
                                                     const variant =
                                                         product.variants?.find(
@@ -310,7 +312,7 @@ const SelectPopover: React.FC<SelectPopoverProps> = ({
                     aria-expanded={open}
                     className="w-full justify-between truncate"
                 >
-                    {selectedItem
+                    {selectedItem && selectedId
                         ? selectedItem.label
                         : placeholder || "Select..."}
                     <ChevronDown className="ml-2 h-4 w-4" />
@@ -346,7 +348,11 @@ const SelectPopover: React.FC<SelectPopoverProps> = ({
                                         setOpen(false);
                                         setSearch("");
                                     }}
-                                    className="px-4 py-2 cursor-pointer hover:bg-slate-100"
+                                    className={`px-4 py-2 cursor-pointer hover:bg-slate-100 ${
+                                        item.id === selectedId
+                                            ? "bg-slate-200"
+                                            : ""
+                                    }`}
                                 >
                                     {item.label}
                                 </Command.Item>

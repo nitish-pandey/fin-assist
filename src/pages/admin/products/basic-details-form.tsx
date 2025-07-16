@@ -31,7 +31,7 @@ import AddCategory from "@/components/modals/AddCategory";
 // Define the validation schema
 const formSchema = z.object({
     name: z.string().min(1, "Product name is required"),
-    description: z.string().min(1, "Product description is required"),
+    description: z.string().optional(),
     price: z.coerce.number().min(0.01, "Price must be greater than zero"),
     stock: z.coerce.number().min(0, "Stock cannot be negative"),
     code: z
@@ -220,10 +220,7 @@ export function BasicDetailsForm({
                         name="description"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>
-                                    Description{" "}
-                                    <span className="text-destructive">*</span>
-                                </FormLabel>
+                                <FormLabel>Description </FormLabel>
                                 <FormControl>
                                     <Textarea
                                         placeholder="Enter product description"
