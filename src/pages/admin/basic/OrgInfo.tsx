@@ -235,6 +235,13 @@ export default function OrgInfoPage() {
                                                 label="VAT"
                                                 value={organization.vat}
                                             />
+                                            <DetailItem
+                                                label="VAT Status"
+                                                value={
+                                                    organization.vatStatus ||
+                                                    "N/A"
+                                                }
+                                            />
                                         </div>
 
                                         <h3 className="text-lg font-medium mt-8 mb-4 text-slate-800">

@@ -18,6 +18,7 @@ import { Plus } from "lucide-react";
 interface AddOrganizationFormData {
     name: string;
     description: string;
+    vatStatus: "always" | "conditional" | "never";
 }
 
 export function AddOrganizationForm() {
@@ -30,7 +31,13 @@ export function AddOrganizationForm() {
         handleSubmit,
         formState: { errors },
         reset,
-    } = useForm<AddOrganizationFormData>();
+    } = useForm<AddOrganizationFormData>({
+        defaultValues: {
+            name: "",
+            description: "",
+            vatStatus: "conditional",
+        },
+    });
 
     const onSubmit = async (data: AddOrganizationFormData) => {
         setLoading(true);
@@ -77,7 +84,7 @@ export function AddOrganizationForm() {
                         className="space-y-4"
                     >
                         <div className="space-y-2">
-                            <Label htmlFor="name">Organization Name</Label>
+                            <Label htmlFor="name">Organization Name *</Label>
                             <Input
                                 id="name"
                                 placeholder="Enter organization name"
@@ -101,6 +108,25 @@ export function AddOrganizationForm() {
                             {errors.description && (
                                 <span className="text-red-500">
                                     {errors.description.message}
+                                </span>
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="vatStatus">VAT Status</Label>
+                            <select
+                                id="vatStatus"
+                                {...register("vatStatus", {
+                                    required: "VAT status is required",
+                                })}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value="always">Always</option>
+                                <option value="conditional">Conditional</option>
+                                <option value="never">Never</option>
+                            </select>
+                            {errors.vatStatus && (
+                                <span className="text-red-500">
+                                    {errors.vatStatus.message}
                                 </span>
                             )}
                         </div>

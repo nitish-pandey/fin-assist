@@ -26,6 +26,7 @@ interface EditOrderFormData {
         amount: number;
         label: string;
         type: "fixed" | "percentage";
+        isVat?: boolean;
         percentage: number;
     }[];
     payments: { amount: number; accountId: string; details: object }[];

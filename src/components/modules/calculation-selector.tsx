@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import {
     Calculator,
     CreditCard,
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { useOrg } from "@/providers/org-provider";
 
 interface AdditionalCharge {
     id: string;
@@ -22,6 +23,7 @@ interface AdditionalCharge {
     amount: number;
     type: "fixed" | "percentage";
     percentage: number;
+    isVat?: boolean; // Optional property to indicate if it's a VAT charge
 }
 
 interface CalculationSelectorProps {
@@ -33,6 +35,7 @@ interface CalculationSelectorProps {
         label: string;
         type: "fixed" | "percentage";
         percentage: number;
+        isVat?: boolean; // Optional property to indicate if it's a VAT charge
     }[];
     setDiscount: (value: number) => void;
     setCharge: (
@@ -42,6 +45,7 @@ interface CalculationSelectorProps {
             label: string;
             type: "fixed" | "percentage";
             percentage: number;
+            isVat?: boolean;
         }[]
     ) => void;
 }
@@ -57,13 +61,102 @@ export default function CalculationSelector({
         "fixed"
     );
     const [discountPercentage, setDiscountPercentage] = useState(0);
+    const { organization } = useOrg();
+    const vatStatus = organization?.vatStatus || "conditional";
+    const prevSubTotalRef = useRef(subTotal);
 
     const actualDiscount = useMemo(() => {
-        if (discountType === "percentage") {
-            return (subTotal * discountPercentage) / 100;
+        return discount; // Always use the discount amount since it's kept in sync
+    }, [discount]);
+
+    // Handle discount amount change
+    const handleDiscountAmountChange = (value: number) => {
+        setDiscount(value);
+        // If we're in fixed mode, update percentage to reflect the new amount
+        if (discountType === "fixed" && subTotal > 0) {
+            setDiscountPercentage((value / subTotal) * 100);
         }
-        return discount;
-    }, [discountType, discountPercentage, discount, subTotal]);
+    };
+
+    // Handle discount percentage change
+    const handleDiscountPercentageChange = (value: number) => {
+        setDiscountPercentage(value);
+        // If we're in percentage mode, update the discount amount
+        if (discountType === "percentage") {
+            setDiscount((subTotal * value) / 100);
+        }
+    };
+
+    // Sync values when subtotal changes
+    useEffect(() => {
+        // Only update if subtotal actually changed
+        if (prevSubTotalRef.current !== subTotal && subTotal > 0) {
+            if (discountType === "fixed" && discount > 0) {
+                // When in fixed mode and subtotal changes, update percentage
+                setDiscountPercentage((discount / subTotal) * 100);
+            } else if (
+                discountType === "percentage" &&
+                discountPercentage > 0
+            ) {
+                // When in percentage mode and subtotal changes, update amount
+                setDiscount((subTotal * discountPercentage) / 100);
+            }
+            // Update the ref with current subtotal
+            prevSubTotalRef.current = subTotal;
+        }
+    }, [subTotal, discount, discountPercentage, discountType, setDiscount]);
+
+    // Sync charge amounts when subtotal changes
+    useEffect(() => {
+        if (
+            prevSubTotalRef.current !== subTotal &&
+            subTotal > 0 &&
+            charges.length > 0
+        ) {
+            const updatedCharges = charges.map((charge) => {
+                if (charge.type === "percentage" && charge.percentage > 0) {
+                    // Recalculate amount for percentage-based charges
+                    return {
+                        ...charge,
+                        amount: (subTotal * charge.percentage) / 100,
+                    };
+                } else if (charge.type === "fixed" && charge.amount > 0) {
+                    // Update percentage for fixed charges for display purposes
+                    return {
+                        ...charge,
+                        percentage: (charge.amount / subTotal) * 100,
+                    };
+                }
+                return charge;
+            });
+
+            // Only update if there are actual changes
+            const hasChanges = updatedCharges.some(
+                (charge, index) =>
+                    charge.amount !== charges[index].amount ||
+                    charge.percentage !== charges[index].percentage
+            );
+
+            if (hasChanges) {
+                setCharge(updatedCharges);
+            }
+        }
+    }, [subTotal, charges, setCharge]);
+
+    // Auto-add VAT when vatStatus is "always" and no VAT charge exists
+    useEffect(() => {
+        if (vatStatus === "always" && !charges.some((c) => c.isVat)) {
+            const vatCharge: AdditionalCharge = {
+                id: Date.now().toString(),
+                label: "VAT",
+                percentage: 13, // Default 13% VAT
+                type: "percentage",
+                amount: (subTotal * 13) / 100, // Calculate VAT based on subtotal
+                isVat: true,
+            };
+            setCharge([...charges, vatCharge]);
+        }
+    }, [vatStatus, charges, subTotal, setCharge]);
 
     const grandTotal = useMemo(() => {
         const chargesTotal = charges.reduce((sum, c) => {
@@ -75,9 +168,6 @@ export default function CalculationSelector({
         const total = subTotal - actualDiscount + chargesTotal;
         return Math.max(total, 0);
     }, [subTotal, actualDiscount, charges]);
-
-    const discountDisplayPercentage =
-        subTotal > 0 ? (actualDiscount / subTotal) * 100 : 0;
 
     const handleAddNewCharge = () => {
         const newCharge: AdditionalCharge = {
@@ -97,6 +187,7 @@ export default function CalculationSelector({
             percentage: 13, // Default 13% VAT
             type: "percentage",
             amount: (subTotal * 13) / 100, // Calculate VAT based on subtotal
+            isVat: true,
         };
         setCharge([...charges, vatCharge]);
     };
@@ -104,16 +195,6 @@ export default function CalculationSelector({
     const handleChargeLabelChange = (id: string, label: string) => {
         const updatedCharges = charges.map((charge) =>
             charge.id === id ? { ...charge, label } : charge
-        );
-        setCharge(updatedCharges);
-    };
-
-    const handleChargeAmountChange = (id: string, amount: string) => {
-        const parsedAmount = parseFloat(amount);
-        const updatedCharges = charges.map((charge) =>
-            charge.id === id
-                ? { ...charge, amount: isNaN(parsedAmount) ? 0 : parsedAmount }
-                : charge
         );
         setCharge(updatedCharges);
     };
@@ -137,13 +218,56 @@ export default function CalculationSelector({
         setCharge(updatedCharges);
     };
 
+    const handleChargeAmountChange = (id: string, amount: string) => {
+        const parsedAmount = parseFloat(amount);
+        const updatedCharges = charges.map((charge) => {
+            if (charge.id === id) {
+                const newAmount = isNaN(parsedAmount) ? 0 : parsedAmount;
+                // If it's a fixed charge, also update the percentage for display
+                const newPercentage =
+                    charge.type === "fixed" && subTotal > 0
+                        ? (newAmount / subTotal) * 100
+                        : charge.percentage;
+                return {
+                    ...charge,
+                    amount: newAmount,
+                    percentage: newPercentage,
+                };
+            }
+            return charge;
+        });
+        setCharge(updatedCharges);
+    };
+
     const handleChargeTypeChange = (
         id: string,
         type: "fixed" | "percentage"
     ) => {
-        const updatedCharges = charges.map((charge) =>
-            charge.id === id ? { ...charge, type } : charge
-        );
+        const updatedCharges = charges.map((charge) => {
+            if (charge.id === id) {
+                if (type === "percentage") {
+                    // Switching to percentage: calculate percentage from current amount
+                    const newPercentage =
+                        subTotal > 0 ? (charge.amount / subTotal) * 100 : 0;
+                    return {
+                        ...charge,
+                        type,
+                        percentage: newPercentage,
+                        amount: (subTotal * newPercentage) / 100, // Recalculate amount
+                    };
+                } else {
+                    // Switching to fixed: keep current amount, update percentage for display
+                    const newPercentage =
+                        subTotal > 0 ? (charge.amount / subTotal) * 100 : 0;
+                    return {
+                        ...charge,
+                        type,
+                        percentage: newPercentage,
+                    };
+                }
+            }
+            return charge;
+        });
         setCharge(updatedCharges);
     };
 
@@ -166,16 +290,6 @@ export default function CalculationSelector({
 
                     <CardContent className="p-4">
                         <div className="space-y-4">
-                            {/* Subtotal */}
-                            <div className="flex items-center justify-between">
-                                <Label className="text-sm font-medium text-slate-500">
-                                    Subtotal
-                                </Label>
-                                <span className="font-semibold">
-                                    {subTotal}
-                                </span>
-                            </div>
-
                             {/* Discount */}
                             <div>
                                 <div className="mb-2 flex items-center justify-between">
@@ -183,17 +297,7 @@ export default function CalculationSelector({
                                         <Tag className="h-3.5 w-3.5 text-rose-500" />
                                         Discount
                                     </Label>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-medium text-rose-500">
-                                            {actualDiscount.toFixed(2)}
-                                        </span>
-                                        <span className="rounded-full bg-rose-100 px-1.5 py-0.5 text-xs font-medium text-rose-600">
-                                            {discountDisplayPercentage.toFixed(
-                                                1
-                                            )}
-                                            %
-                                        </span>
-                                    </div>
+                                    <div className="flex items-center gap-2"></div>
                                 </div>
 
                                 <div className="space-y-2 rounded-lg border p-3 bg-white">
@@ -212,9 +316,17 @@ export default function CalculationSelector({
                                                 }
                                                 size="sm"
                                                 className="h-6 px-2 text-xs"
-                                                onClick={() =>
-                                                    setDiscountType("fixed")
-                                                }
+                                                onClick={() => {
+                                                    setDiscountType("fixed");
+                                                    // When switching to fixed, sync percentage with current amount
+                                                    if (subTotal > 0) {
+                                                        setDiscountPercentage(
+                                                            (discount /
+                                                                subTotal) *
+                                                                100
+                                                        );
+                                                    }
+                                                }}
                                             >
                                                 Fixed (Rs)
                                             </Button>
@@ -228,11 +340,17 @@ export default function CalculationSelector({
                                                 }
                                                 size="sm"
                                                 className="h-6 px-2 text-xs"
-                                                onClick={() =>
+                                                onClick={() => {
                                                     setDiscountType(
                                                         "percentage"
-                                                    )
-                                                }
+                                                    );
+                                                    // When switching to percentage, sync amount with current percentage
+                                                    setDiscount(
+                                                        (subTotal *
+                                                            discountPercentage) /
+                                                            100
+                                                    );
+                                                }}
                                             >
                                                 <Percent className="h-2.5 w-2.5 mr-1" />
                                                 Percentage
@@ -260,7 +378,7 @@ export default function CalculationSelector({
                                                             parseFloat(
                                                                 e.target.value
                                                             );
-                                                        setDiscountPercentage(
+                                                        handleDiscountPercentageChange(
                                                             isNaN(value)
                                                                 ? 0
                                                                 : value
@@ -292,7 +410,7 @@ export default function CalculationSelector({
                                                             parseFloat(
                                                                 e.target.value
                                                             );
-                                                        setDiscount(
+                                                        handleDiscountAmountChange(
                                                             isNaN(value)
                                                                 ? 0
                                                                 : value
@@ -319,9 +437,7 @@ export default function CalculationSelector({
                                         <CreditCard className="h-3.5 w-3.5 text-blue-500" />
                                         Additional Charges
                                     </Label>
-                                    <span className="font-medium">
-                                        {grandTotal.toFixed(2)}
-                                    </span>
+                                    <span className="font-medium"></span>
                                 </div>
 
                                 <div className="space-y-3">
@@ -344,139 +460,147 @@ export default function CalculationSelector({
                                                             e.target.value
                                                         )
                                                     }
+                                                    disabled={charge.isVat}
                                                     placeholder="Enter charge name"
                                                     className="h-8 text-sm"
                                                 />
                                             </div>
 
                                             {/* Type Toggle */}
-                                            <div className="flex items-center gap-2">
-                                                <Label className="text-xs text-slate-600">
-                                                    Type:
-                                                </Label>
-                                                <div className="flex gap-1">
-                                                    <Button
-                                                        type="button"
-                                                        variant={
-                                                            charge.type ===
-                                                            "fixed"
-                                                                ? "default"
-                                                                : "outline"
-                                                        }
-                                                        size="sm"
-                                                        className="h-6 px-2 text-xs"
-                                                        onClick={() =>
-                                                            handleChargeTypeChange(
-                                                                charge.id,
+                                            {!charge.isVat && (
+                                                <div className="flex items-center gap-2">
+                                                    <Label className="text-xs text-slate-600">
+                                                        Type:
+                                                    </Label>
+                                                    <div className="flex gap-1">
+                                                        <Button
+                                                            type="button"
+                                                            variant={
+                                                                charge.type ===
                                                                 "fixed"
-                                                            )
-                                                        }
-                                                    >
-                                                        Fixed (Rs)
-                                                    </Button>
-                                                    <Button
-                                                        type="button"
-                                                        variant={
-                                                            charge.type ===
-                                                            "percentage"
-                                                                ? "default"
-                                                                : "outline"
-                                                        }
-                                                        size="sm"
-                                                        className="h-6 px-2 text-xs"
-                                                        onClick={() =>
-                                                            handleChargeTypeChange(
-                                                                charge.id,
+                                                                    ? "default"
+                                                                    : "outline"
+                                                            }
+                                                            size="sm"
+                                                            className="h-6 px-2 text-xs"
+                                                            onClick={() =>
+                                                                handleChargeTypeChange(
+                                                                    charge.id,
+                                                                    "fixed"
+                                                                )
+                                                            }
+                                                        >
+                                                            Fixed (Rs)
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant={
+                                                                charge.type ===
                                                                 "percentage"
-                                                            )
-                                                        }
-                                                    >
-                                                        <Percent className="h-2.5 w-2.5 mr-1" />
-                                                        Percentage
-                                                    </Button>
+                                                                    ? "default"
+                                                                    : "outline"
+                                                            }
+                                                            size="sm"
+                                                            className="h-6 px-2 text-xs"
+                                                            onClick={() =>
+                                                                handleChargeTypeChange(
+                                                                    charge.id,
+                                                                    "percentage"
+                                                                )
+                                                            }
+                                                        >
+                                                            <Percent className="h-2.5 w-2.5 mr-1" />
+                                                            Percentage
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )}
 
                                             {/* Amount and Percentage Inputs */}
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="flex gap-3">
                                                 {/* Percentage Input */}
-                                                <div>
-                                                    <Label className="text-xs text-slate-600 mb-1 block">
-                                                        Percentage (%)
-                                                    </Label>
-                                                    <div className="relative">
-                                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">
-                                                            %
-                                                        </span>
-                                                        <Input
-                                                            type="number"
-                                                            className="h-8 pr-6 text-sm"
-                                                            value={
-                                                                charge.percentage
-                                                            }
-                                                            onChange={(e) =>
-                                                                handleChargePercentageChange(
-                                                                    charge.id,
-                                                                    e.target
-                                                                        .value
-                                                                )
-                                                            }
-                                                            placeholder="0"
-                                                            disabled={
-                                                                charge.type ===
-                                                                "fixed"
-                                                            }
-                                                        />
+                                                {charge.type ===
+                                                "fixed" ? null : (
+                                                    <div className="w-full">
+                                                        <Label className="text-xs text-slate-600 mb-1 block">
+                                                            Percentage (%)
+                                                        </Label>
+                                                        <div className="relative">
+                                                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">
+                                                                %
+                                                            </span>
+                                                            <Input
+                                                                type="number"
+                                                                className="h-8 pr-6 text-sm"
+                                                                value={
+                                                                    charge.percentage
+                                                                }
+                                                                onChange={(e) =>
+                                                                    handleChargePercentageChange(
+                                                                        charge.id,
+                                                                        e.target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                                placeholder="0"
+                                                                disabled={
+                                                                    charge.isVat
+                                                                }
+                                                            />
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                )}
 
-                                                {/* Amount Input */}
-                                                <div>
-                                                    <Label className="text-xs text-slate-600 mb-1 block">
-                                                        Amount (Rs)
-                                                    </Label>
-                                                    <div className="relative">
-                                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">
-                                                            Rs
-                                                        </span>
-                                                        <Input
-                                                            type="number"
-                                                            className="h-8 pl-6 text-sm"
-                                                            value={
-                                                                charge.amount
-                                                            }
-                                                            onChange={(e) =>
-                                                                handleChargeAmountChange(
-                                                                    charge.id,
-                                                                    e.target
-                                                                        .value
-                                                                )
-                                                            }
-                                                            placeholder="0.00"
-                                                            disabled={
-                                                                charge.type ===
-                                                                "percentage"
-                                                            }
-                                                        />
+                                                {charge.type ===
+                                                "percentage" ? null : (
+                                                    <div className="w-full">
+                                                        <Label className="text-xs text-slate-600 mb-1 block">
+                                                            Amount (Rs)
+                                                        </Label>
+                                                        <div className="relative">
+                                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">
+                                                                Rs
+                                                            </span>
+                                                            <Input
+                                                                type="number"
+                                                                className="h-8 pl-6 text-sm"
+                                                                value={
+                                                                    charge.amount
+                                                                }
+                                                                onChange={(e) =>
+                                                                    handleChargeAmountChange(
+                                                                        charge.id,
+                                                                        e.target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                                placeholder="0.00"
+                                                            />
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                )}
                                             </div>
 
                                             {/* Remove Button */}
-                                            <div className="flex justify-end">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="h-7 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
-                                                    onClick={() =>
-                                                        removeCharge(charge.id)
-                                                    }
-                                                >
-                                                    <Trash2 className="h-3 w-3 mr-1" />
-                                                    Remove
-                                                </Button>
-                                            </div>
+                                            {vatStatus === "always" &&
+                                            charge.isVat ? null : (
+                                                <div className="flex justify-end">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="h-7 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
+                                                        onClick={() =>
+                                                            removeCharge(
+                                                                charge.id
+                                                            )
+                                                        }
+                                                    >
+                                                        <Trash2 className="h-3 w-3 mr-1" />
+                                                        Remove
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -492,16 +616,19 @@ export default function CalculationSelector({
                                         <Plus className="h-4 w-4 mr-2" />
                                         Add Custom Charge
                                     </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        type="button"
-                                        className="h-8 text-sm flex-1 border-green-200 text-green-600 hover:bg-green-50"
-                                        onClick={handleAddVAT}
-                                    >
-                                        <Receipt className="h-4 w-4 mr-2" />
-                                        Add VAT (13%)
-                                    </Button>
+                                    {charges.some((c) => c.isVat) ||
+                                    vatStatus === "never" ? null : (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            type="button"
+                                            className="h-8 text-sm flex-1 border-green-200 text-green-600 hover:bg-green-50"
+                                            onClick={handleAddVAT}
+                                        >
+                                            <Receipt className="h-4 w-4 mr-2" />
+                                            Add VAT (13%)
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         </div>

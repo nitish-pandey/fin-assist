@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/form";
 import type { Product } from "./types";
 import { Category } from "@/data/types";
-import { Label } from "@radix-ui/react-label";
 import {
     Select,
     SelectContent,
@@ -42,6 +41,7 @@ const formSchema = z.object({
         .string()
         .min(1, "SKU is required")
         .max(20, "SKU must be 20 characters or less"),
+    categoryId: z.string().min(1, "Category selection is required"),
 });
 
 interface BasicDetailsFormProps {
@@ -69,6 +69,7 @@ export function BasicDetailsForm({
             stock: product.stock || 0,
             code: product.code || "",
             sku: product.sku || "",
+            categoryId: product.categoryId || "",
         },
     });
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
@@ -91,6 +92,7 @@ export function BasicDetailsForm({
                 stock: product.stock,
                 code: product.code,
                 sku: product.sku,
+                categoryId: product.categoryId || "",
             });
         }
     }, [product, form]);
@@ -118,7 +120,7 @@ export function BasicDetailsForm({
 
     // Handle form submission
     function onSubmit(values: z.infer<typeof formSchema>) {
-        updateProduct({ ...values, categoryId: selectedCategoryId || "" });
+        updateProduct({ ...values });
         onNext();
     }
 
@@ -150,32 +152,47 @@ export function BasicDetailsForm({
                             </FormItem>
                         )}
                     />
-                    <div>
-                        <Label htmlFor="categoryId">Category</Label>
-                        <div className="flex items-center justify-between">
-                            <Select
-                                onValueChange={(value) =>
-                                    setSelectedCategoryId(value)
-                                }
-                                value={selectedCategoryId || undefined}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {categories.map((category) => (
-                                        <SelectItem
-                                            key={category.id}
-                                            value={category.id}
+
+                    <FormField
+                        control={form.control}
+                        name="categoryId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>
+                                    Category{" "}
+                                    <span className="text-destructive">*</span>
+                                </FormLabel>
+                                <div className="flex items-center justify-between">
+                                    <FormControl>
+                                        <Select
+                                            onValueChange={(value) => {
+                                                setSelectedCategoryId(value);
+                                                field.onChange(value);
+                                            }}
+                                            value={field.value || undefined}
                                         >
-                                            {category.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <AddCategory onAddCategory={addCategory} />
-                        </div>
-                    </div>{" "}
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select category" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {categories.map((category) => (
+                                                    <SelectItem
+                                                        key={category.id}
+                                                        value={category.id}
+                                                    >
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </FormControl>
+                                    <AddCategory onAddCategory={addCategory} />
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
                     <FormField
                         control={form.control}
                         name="code"

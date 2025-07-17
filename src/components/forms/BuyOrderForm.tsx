@@ -24,6 +24,7 @@ interface BuyProductData {
         id: string;
         amount: number;
         label: string;
+        isVat?: boolean;
         type: "fixed" | "percentage";
         percentage: number;
     }[];
