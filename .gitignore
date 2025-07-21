@@ -25,4 +25,4 @@ dist-ssr
 
 .vercel
 backup.py
-restore.py
+backup.sql
