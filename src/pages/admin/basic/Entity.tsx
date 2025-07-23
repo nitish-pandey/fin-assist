@@ -5,24 +5,19 @@ import { useParams } from "react-router-dom";
 import { EntityList } from "@/components/lists/EntityList";
 import AddEntity from "@/components/modals/AddEntity";
 import { TableSkeleton } from "@/components/modules/TableSkeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const EntityInfo = () => {
     const { orgId } = useParams<{ orgId: string }>() as { orgId: string };
     const [entities, setEntities] = useState<Entity[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const fetchEntities = async () => {
-        setLoading(true);
-        const res = await api.get(`/orgs/${orgId}/entities`);
-        setEntities(res.data);
-        setLoading(false);
-    };
-
     useEffect(() => {
         if (orgId) {
             setLoading(true);
             api.get(`/orgs/${orgId}/entities`)
                 .then((res) => {
+                    console.log("Fetched entities:", res.data);
                     setEntities(res.data);
                 })
                 .catch((error) => {
@@ -36,17 +31,19 @@ const EntityInfo = () => {
 
     const handleDelete = async (id: string) => {
         await api.delete(`/orgs/${orgId}/entities/${id}`);
-        fetchEntities();
+        setEntities(entities.filter((entity) => entity.id !== id));
     };
 
     const addEntity = async (entity: Partial<Entity>) => {
-        await api.post(`/orgs/${orgId}/entities`, entity);
-        fetchEntities();
+        const createdEntity = await api.post(`/orgs/${orgId}/entities`, entity);
+        setEntities([...entities, createdEntity.data]);
     };
 
     const updateEntity = async (id: string, entity: Partial<Entity>) => {
         await api.put(`/orgs/${orgId}/entities/${id}`, entity);
-        fetchEntities();
+        setEntities(
+            entities.map((e) => (e.id === id ? { ...e, ...entity } : e))
+        );
     };
 
     return (
@@ -60,13 +57,51 @@ const EntityInfo = () => {
                 {loading ? (
                     <TableSkeleton rows={5} columns={4} />
                 ) : (
-                    <EntityList
-                        entities={entities}
-                        loading={false}
-                        error={null}
-                        onDelete={handleDelete}
-                        onEdit={updateEntity}
-                    />
+                    <Tabs defaultValue="all" className="w-full">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="all">All Entities</TabsTrigger>
+                            <TabsTrigger value="merchant">
+                                Merchant Entities
+                            </TabsTrigger>
+                            <TabsTrigger value="vendor">
+                                Vendor Entities
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="all" className="mt-6">
+                            <EntityList
+                                entities={entities}
+                                loading={false}
+                                error={null}
+                                onDelete={handleDelete}
+                                onEdit={updateEntity}
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="merchant" className="mt-6">
+                            <EntityList
+                                entities={entities.filter(
+                                    (entity) => entity.isMerchant
+                                )}
+                                loading={false}
+                                error={null}
+                                onDelete={handleDelete}
+                                onEdit={updateEntity}
+                            />
+                        </TabsContent>
+
+                        <TabsContent value="vendor" className="mt-6">
+                            <EntityList
+                                entities={entities.filter(
+                                    (entity) => entity.isVendor
+                                )}
+                                loading={false}
+                                error={null}
+                                onDelete={handleDelete}
+                                onEdit={updateEntity}
+                            />
+                        </TabsContent>
+                    </Tabs>
                 )}
             </div>
         </div>

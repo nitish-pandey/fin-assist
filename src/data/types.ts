@@ -81,6 +81,8 @@ export interface Entity {
     phone: string;
     email: string | null;
     description: string | null;
+    isMerchant: boolean | null;
+    isVendor: boolean | null;
     organizationId: string;
     createdAt: string;
     updatedAt: string;

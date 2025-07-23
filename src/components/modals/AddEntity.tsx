@@ -27,6 +27,8 @@ const AddEntity: React.FC<AddEntityProps> = ({ addEntity, text, entity }) => {
         phone: entity?.phone || "",
         email: entity?.email || "",
         description: entity?.description || "",
+        isMerchant: entity?.isMerchant,
+        isVendor: entity?.isVendor,
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -97,7 +99,14 @@ const AddEntity: React.FC<AddEntityProps> = ({ addEntity, text, entity }) => {
             toast({
                 description: "Entity added successfully",
             });
-            setFormData({ name: "", phone: "", email: "", description: "" });
+            setFormData({
+                name: "",
+                phone: "",
+                email: "",
+                description: "",
+                isMerchant: false,
+                isVendor: false,
+            });
             setValidationErrors({});
             setIsOpen(false);
         } catch (error) {
@@ -213,6 +222,43 @@ const AddEntity: React.FC<AddEntityProps> = ({ addEntity, text, entity }) => {
                             {error && (
                                 <p className="text-red-500 text-sm">{error}</p>
                             )}
+                        </div>
+                        <div className="flex items-center mt-4">
+                            <Label className="mr-4">Entity Type:</Label>
+                            <div className="flex items-center mr-6">
+                                <Input
+                                    type="checkbox"
+                                    id="isMerchant"
+                                    name="isMerchant"
+                                    checked={formData.isMerchant || false}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            isMerchant: e.target.checked,
+                                        }))
+                                    }
+                                />
+                                <Label htmlFor="isMerchant" className="ml-2">
+                                    Merchant
+                                </Label>
+                            </div>
+                            <div className="flex items-center">
+                                <Input
+                                    type="checkbox"
+                                    id="isVendor"
+                                    name="isVendor"
+                                    checked={formData.isVendor || false}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            isVendor: e.target.checked,
+                                        }))
+                                    }
+                                />
+                                <Label htmlFor="isVendor" className="ml-2">
+                                    Vendor
+                                </Label>
+                            </div>
                         </div>
                         <DialogFooter className="mt-4">
                             <Button type="submit" disabled={loading}>
