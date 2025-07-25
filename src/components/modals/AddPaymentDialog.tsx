@@ -2,7 +2,12 @@
 
 import { useState, useMemo } from "react";
 import type { Account, TransactionDetails } from "@/data/types";
-import { Dialog, DialogHeader, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogHeader,
+    DialogContent,
+    DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -63,7 +68,10 @@ export default function AddPaymentDialog({
         resetState();
     };
 
-    const handleChequeDetailChange = (key: keyof TransactionDetails, value: string) => {
+    const handleChequeDetailChange = (
+        key: keyof TransactionDetails,
+        value: string
+    ) => {
         setDetails({ ...details, [key]: value });
     };
 
@@ -75,12 +83,16 @@ export default function AddPaymentDialog({
 
             <Dialog open={isOpen} onOpenChange={resetState}>
                 <DialogContent className="sm:max-w-md p-6 space-y-6">
-                    <DialogHeader className="text-lg font-semibold">Add Payment</DialogHeader>
+                    <DialogHeader className="text-lg font-semibold">
+                        Add Payment
+                    </DialogHeader>
 
                     {remainingAmount !== undefined && (
                         <p className="text-sm text-muted-foreground font-medium">
                             Remaining:{" "}
-                            <span className="text-primary">Rs {remainingAmount.toFixed(2)}</span>
+                            <span className="text-primary">
+                                Rs {remainingAmount.toFixed(2)}
+                            </span>
                         </p>
                     )}
 
@@ -117,7 +129,8 @@ export default function AddPaymentDialog({
                                 <SelectContent>
                                     {accounts.map((acc) => (
                                         <SelectItem key={acc.id} value={acc.id}>
-                                            {acc.name} (Rs {acc.balance.toFixed(2)})
+                                            {acc.name} (Rs{" "}
+                                            {acc.balance.toFixed(2)})
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -128,17 +141,24 @@ export default function AddPaymentDialog({
                         {isChequeAccount && (
                             <div className="space-y-4 pt-2 border-t">
                                 <div className="space-y-1">
-                                    <Label htmlFor="chequeIssuer">Cheque Issuer</Label>
+                                    <Label htmlFor="chequeIssuer">
+                                        Cheque Issuer
+                                    </Label>
                                     <Input
                                         id="chequeIssuer"
                                         value={details.chequeIssuer || ""}
                                         onChange={(e) =>
-                                            handleChequeDetailChange("chequeIssuer", e.target.value)
+                                            handleChequeDetailChange(
+                                                "chequeIssuer",
+                                                e.target.value
+                                            )
                                         }
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="chequeIssuerBank">Cheque Issuer Bank</Label>
+                                    <Label htmlFor="chequeIssuerBank">
+                                        Cheque Issuer Bank
+                                    </Label>
                                     <Input
                                         id="chequeIssuerBank"
                                         value={details.chequeIssuerBank || ""}
@@ -151,23 +171,33 @@ export default function AddPaymentDialog({
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="chequeNumber">Cheque Number</Label>
+                                    <Label htmlFor="chequeNumber">
+                                        Cheque Number
+                                    </Label>
                                     <Input
                                         id="chequeNumber"
                                         value={details.chequeNumber || ""}
                                         onChange={(e) =>
-                                            handleChequeDetailChange("chequeNumber", e.target.value)
+                                            handleChequeDetailChange(
+                                                "chequeNumber",
+                                                e.target.value
+                                            )
                                         }
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="chequeDate">Cheque Date</Label>
+                                    <Label htmlFor="chequeDate">
+                                        Cheque Date
+                                    </Label>
                                     <Input
                                         id="chequeDate"
                                         type="date"
                                         value={details.chequeDate || ""}
                                         onChange={(e) =>
-                                            handleChequeDetailChange("chequeDate", e.target.value)
+                                            handleChequeDetailChange(
+                                                "chequeDate",
+                                                e.target.value
+                                            )
                                         }
                                     />
                                 </div>
@@ -175,11 +205,19 @@ export default function AddPaymentDialog({
                         )}
 
                         {/* Error Message */}
-                        {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
+                        {error && (
+                            <p className="text-sm text-red-500 font-medium">
+                                {error}
+                            </p>
+                        )}
                     </div>
 
                     <DialogFooter className="pt-4 flex justify-end">
-                        <Button variant="outline" onClick={resetState} type="button">
+                        <Button
+                            variant="outline"
+                            onClick={resetState}
+                            type="button"
+                        >
                             Cancel
                         </Button>
                         <Button onClick={validateAndSubmit} type="button">

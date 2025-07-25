@@ -15,10 +15,16 @@ import {
 interface RemoveModalProps {
     title: string;
     description: string;
+    text?: string; // Optional text prop for additional information
     onRemove: () => Promise<void> | void; // Support async actions
 }
 
-export const RemoveModal: React.FC<RemoveModalProps> = ({ title, description, onRemove }) => {
+export const RemoveModal: React.FC<RemoveModalProps> = ({
+    title,
+    description,
+    onRemove,
+    text,
+}) => {
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
     const handleRemove = async () => {
@@ -29,6 +35,7 @@ export const RemoveModal: React.FC<RemoveModalProps> = ({ title, description, on
                 title: "Success",
                 description: "Item removed successfully.",
             });
+            // close the dialog after successful removal
         } catch (error) {
             toast({
                 title: "Error",
@@ -43,7 +50,13 @@ export const RemoveModal: React.FC<RemoveModalProps> = ({ title, description, on
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <RiDeleteBin6Line size={16} className="cursor-pointer text-red-500" />
+                <div className="flex gap-2 items-center cursor-pointer text-red-500 hover:text-red-700">
+                    <RiDeleteBin6Line
+                        size={16}
+                        className="cursor-pointer text-red-500"
+                    />
+                    <span className="">{text}</span>
+                </div>
             </DialogTrigger>
             <DialogContent>
                 <DialogTitle>{title}</DialogTitle>
@@ -54,7 +67,11 @@ export const RemoveModal: React.FC<RemoveModalProps> = ({ title, description, on
                             Cancel
                         </Button>
                     </DialogClose>
-                    <Button onClick={handleRemove} variant="destructive" disabled={loading}>
+                    <Button
+                        onClick={handleRemove}
+                        variant="destructive"
+                        disabled={loading}
+                    >
                         {loading ? (
                             "Removing..."
                         ) : (

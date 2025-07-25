@@ -241,7 +241,7 @@ export default function ProductForm() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto py-6" ref={formRef}>
+        <div className="max-w-5xl mx-auto py-6 w-full" ref={formRef}>
             <h1 className="text-3xl font-bold mb-4">Create Product</h1>
             <StepIndicator steps={steps} currentStep={step} />
 

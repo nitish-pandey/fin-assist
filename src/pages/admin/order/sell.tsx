@@ -71,7 +71,7 @@ export const SellOrderPage = () => {
             <BuyProductForm
                 products={products}
                 accounts={accounts}
-                entities={entities}
+                entities={entities.filter((e) => e.isVendor)}
                 onSubmit={onCreateOrder}
                 addEntity={addEntity}
                 type="SELL"

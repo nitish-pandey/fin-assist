@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     ArrowLeft,
     // Edit,
@@ -38,6 +38,7 @@ import { useOrg } from "@/providers/org-provider";
 import { useParams } from "react-router-dom";
 import { api } from "@/utils/api";
 import { Product } from "@/data/types";
+import { RemoveModal } from "@/components/modals/RemoveModal";
 
 const SingleProductPage = () => {
     const { productId } = useParams<{ productId: string }>() as {
@@ -69,6 +70,21 @@ const SingleProductPage = () => {
         fetchProduct();
     }, [productId, orgId]);
     const [expandedVariant, setExpandedVariant] = useState<string | null>(null);
+    const navigate = useNavigate();
+
+    const handleDeleteProduct = async () => {
+        if (!product) return;
+        try {
+            await api.delete(`orgs/${orgId}/products/${product.id}`);
+            // Redirect or show success message
+            console.log("Product deleted successfully");
+            navigate(`/org/${orgId}/products`);
+        } catch (error) {
+            console.error("Error deleting product:", error);
+            setError("Failed to delete product. Please try again.");
+            throw new Error("Failed to delete product");
+        }
+    };
 
     if (loading) {
         return (
@@ -167,7 +183,14 @@ const SingleProductPage = () => {
                     <h1 className="text-2xl font-bold">Product Details</h1>
                 </div>
 
-                <div className="flex items-center space-x-2"></div>
+                <div className="flex items-center space-x-2">
+                    <RemoveModal
+                        title="Delete Product"
+                        text="Delete Product"
+                        description="Are you sure you want to delete this product? This action cannot be undone."
+                        onRemove={handleDeleteProduct}
+                    />
+                </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">

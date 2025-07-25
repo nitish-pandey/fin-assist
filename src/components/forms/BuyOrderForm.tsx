@@ -230,6 +230,7 @@ BuyProductFormProps) {
                     onAddEntity={handleAddEntity}
                     selectedEntity={buyState.entity || null}
                     onSelectEntity={handleSelectEntity}
+                    type={type === "BUY" ? "merchant" : "vendor"}
                 />
 
                 <ProductDetails

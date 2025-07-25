@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Printer, RefreshCw, ArrowLeft, Edit } from "lucide-react";
 import AddPaymentDialog from "@/components/modals/AddPaymentDialog";
 import { useToast } from "@/hooks/use-toast";
+import { RemoveModal } from "@/components/modals/RemoveModal";
 
 const SingleOrderPage = () => {
     const { orgId } = useOrg();
@@ -184,6 +185,16 @@ const SingleOrderPage = () => {
         );
     }
 
+    const handleDeleteOrder = async () => {
+        if (!orgId || !orderId) return;
+        await api.delete(`/orgs/${orgId}/orders/${orderId}`);
+        toast({
+            title: "Success",
+            description: "Order deleted successfully",
+        });
+        navigate(`/org/${orgId}/transactions/all`);
+    };
+
     return (
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center print:hidden">
@@ -203,6 +214,12 @@ const SingleOrderPage = () => {
                     </BreadcrumbList>
                 </Breadcrumb>
                 <div className="flex gap-4">
+                    <RemoveModal
+                        title="Delete Order"
+                        text="Delete"
+                        description="Are you sure you want to delete this order?"
+                        onRemove={handleDeleteOrder}
+                    />
                     {order.paymentStatus !== "PAID" && (
                         <Link to={`/org/${orgId}/orders/${orderId}/edit`}>
                             <Button variant="outline">

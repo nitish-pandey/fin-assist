@@ -447,12 +447,12 @@ export default function VATPage() {
 
             {/* Professional Ledger Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <Card className="border-2 border-red-100">
+                <Card className="border-2 border-green-100">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-red-700">
+                        <CardTitle className="text-sm font-medium text-green-700">
                             Total Debits (Dr.)
                         </CardTitle>
-                        <div className="text-red-600">
+                        <div className="text-green-600">
                             <svg
                                 className="w-4 h-4"
                                 fill="currentColor"
@@ -467,7 +467,7 @@ export default function VATPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-red-600">
+                        <div className="text-2xl font-bold text-green-600">
                             ₹{stats.totalDebits.toFixed(2)}
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -476,12 +476,12 @@ export default function VATPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="border-2 border-green-100">
+                <Card className="border-2 border-red-100">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-green-700">
+                        <CardTitle className="text-sm font-medium text-red-700">
                             Total Credits (Cr.)
                         </CardTitle>
-                        <div className="text-green-600">
+                        <div className="text-red-600">
                             <svg
                                 className="w-4 h-4"
                                 fill="currentColor"
@@ -496,7 +496,7 @@ export default function VATPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-green-600">
+                        <div className="text-2xl font-bold text-red-600">
                             ₹{stats.totalCredits.toFixed(2)}
                         </div>
                         <p className="text-xs text-muted-foreground">

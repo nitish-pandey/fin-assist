@@ -18,17 +18,24 @@ interface AddEntityProps {
     text?: string;
     entity?: Entity;
     addEntity: (entity: Partial<Entity>) => Promise<void>;
+    type?: "merchant" | "vendor" | "both";
 }
 
-const AddEntity: React.FC<AddEntityProps> = ({ addEntity, text, entity }) => {
+const AddEntity: React.FC<AddEntityProps> = ({
+    addEntity,
+    text,
+    entity,
+    type,
+}) => {
     const [isOpen, setIsOpen] = useState(false);
     const [formData, setFormData] = useState({
         name: entity?.name || "",
         phone: entity?.phone || "",
         email: entity?.email || "",
         description: entity?.description || "",
-        isMerchant: entity?.isMerchant,
-        isVendor: entity?.isVendor,
+        isMerchant:
+            entity?.isMerchant || type === "merchant" || type === "both",
+        isVendor: entity?.isVendor || type === "vendor" || type === "both",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

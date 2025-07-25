@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Product } from "@/data/types";
+import CreateProductModal from "@/pages/admin/products/Create_product_modal";
 
 interface SelectedProduct {
     productId: string;
@@ -268,14 +269,17 @@ export function ProductDetails({
                 </ScrollArea>
 
                 <div className="flex justify-between items-center">
-                    <Button
-                        type="button"
-                        onClick={handleAddEmptySlot}
-                        className="bg-emerald-600 text-white hover:bg-emerald-700"
-                        size="sm"
-                    >
-                        <Plus className="h-4 w-4 mr-2" /> Add New Purchases
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            type="button"
+                            onClick={handleAddEmptySlot}
+                            className="bg-emerald-600 text-white hover:bg-emerald-700"
+                            size="sm"
+                        >
+                            <Plus className="h-4 w-4 mr-2" /> Add New Purchases
+                        </Button>
+                        <CreateProductModal />
+                    </div>
                     <div className="text-lg font-semibold text-slate-700">
                         Total: Rs {totalAmount.toFixed(2)}
                     </div>

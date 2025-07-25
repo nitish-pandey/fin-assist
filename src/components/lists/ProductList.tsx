@@ -9,7 +9,11 @@ interface ProductListProps {
     error: string;
 }
 
-export const ProductList = ({ products, isLoading, error }: ProductListProps) => {
+export const ProductList = ({
+    products,
+    isLoading,
+    error,
+}: ProductListProps) => {
     if (error) {
         return <div>{error}</div>;
     }
@@ -53,7 +57,7 @@ export const ProductList = ({ products, isLoading, error }: ProductListProps) =>
                 allowSearch={true}
                 allowPagination={true}
                 isLoading={isLoading}
-                allowSelection={true}
+                allowSelection={false}
             />
         </div>
     );

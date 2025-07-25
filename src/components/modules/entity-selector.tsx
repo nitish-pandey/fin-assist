@@ -23,6 +23,7 @@ interface EntitySelectorProps {
     onSelectEntity: (entity: Entity) => void;
     onAddEntity: (entity: Partial<Entity>) => Promise<void>;
     error?: string | null;
+    type?: "merchant" | "vendor" | "both";
 }
 
 const EntitySelector: React.FC<EntitySelectorProps> = ({
@@ -31,6 +32,7 @@ const EntitySelector: React.FC<EntitySelectorProps> = ({
     onSelectEntity,
     onAddEntity,
     error,
+    type = "both",
 }) => {
     const { orgId } = useOrg();
     const { toast } = useToast();
@@ -58,12 +60,17 @@ const EntitySelector: React.FC<EntitySelectorProps> = ({
                 <CardTitle className="text-xl font-semibold text-gray-800">
                     Basic Information
                 </CardTitle>
-                <p className="text-sm text-gray-500">Add information of client</p>
+                <p className="text-sm text-gray-500">
+                    Add information of client
+                </p>
             </CardHeader>
             <CardContent className="p-6">
                 <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <Label htmlFor="entity" className="text-sm font-medium text-gray-700">
+                        <Label
+                            htmlFor="entity"
+                            className="text-sm font-medium text-gray-700"
+                        >
                             Search Entity
                         </Label>
                         <div className="flex items-center gap-2">
@@ -71,7 +78,9 @@ const EntitySelector: React.FC<EntitySelectorProps> = ({
                                 <Select
                                     value={selectedEntity?.id || ""}
                                     onValueChange={(value) => {
-                                        const entity = entities.find((e) => e.id === value);
+                                        const entity = entities.find(
+                                            (e) => e.id === value
+                                        );
                                         if (entity) {
                                             onSelectEntity(entity);
                                         }
@@ -84,9 +93,14 @@ const EntitySelector: React.FC<EntitySelectorProps> = ({
                                         <SelectValue placeholder="Select entity..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="select">Select an entity</SelectItem>
+                                        <SelectItem value="select">
+                                            Select an entity
+                                        </SelectItem>
                                         {entities.map((entity) => (
-                                            <SelectItem key={entity.id} value={entity.id}>
+                                            <SelectItem
+                                                key={entity.id}
+                                                value={entity.id}
+                                            >
                                                 {entity.name}
                                             </SelectItem>
                                         ))}
@@ -94,11 +108,18 @@ const EntitySelector: React.FC<EntitySelectorProps> = ({
                                 </Select>
                             </div>
 
-                            <AddEntity addEntity={addEntity} text="Add New" />
+                            <AddEntity
+                                addEntity={addEntity}
+                                text="Add New"
+                                type={type}
+                            />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="address" className="text-sm font-medium text-gray-700">
+                        <Label
+                            htmlFor="address"
+                            className="text-sm font-medium text-gray-700"
+                        >
                             Email
                         </Label>
                         <Input
@@ -110,7 +131,10 @@ const EntitySelector: React.FC<EntitySelectorProps> = ({
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                        <Label
+                            htmlFor="phone"
+                            className="text-sm font-medium text-gray-700"
+                        >
                             Phone Number
                         </Label>
                         <Input
@@ -122,7 +146,10 @@ const EntitySelector: React.FC<EntitySelectorProps> = ({
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="fieldName" className="text-sm font-medium text-gray-700">
+                        <Label
+                            htmlFor="fieldName"
+                            className="text-sm font-medium text-gray-700"
+                        >
                             Description
                         </Label>
                         <Input

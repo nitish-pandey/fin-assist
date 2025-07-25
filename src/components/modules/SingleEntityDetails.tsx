@@ -16,15 +16,19 @@ import {
     AlertCircle,
 } from "lucide-react";
 
-import { Entity, Order, PaymentStatus } from "@/data/types";
+import { Account, Entity, Order, PaymentStatus } from "@/data/types";
 import { Link } from "react-router-dom";
 import { FaMoneyBill } from "react-icons/fa";
+import AddEntity from "../modals/AddEntity";
+import { api } from "@/utils/api";
+import AddPaymentDialog from "../modals/AddPaymentDialog";
 
 interface EntityPageProps {
     entity: Entity;
+    accounts?: Account[];
 }
 
-const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
+const EntityPage: React.FC<EntityPageProps> = ({ entity, accounts = [] }) => {
     // Calculate paid amount for a specific order by summing all transaction amounts
     const calculateOrderPaidAmount = (order: Order): number => {
         if (!order.transactions || order.transactions.length === 0) {
@@ -129,6 +133,55 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
         });
     };
 
+    const handleAddPayment = async (amount: number, accountId: string) => {
+        if (amount <= 0) {
+            return;
+        }
+        let remainingAmount = amount;
+        // list the orders, in FIFO order, that are not fully paid
+        const toPayOrders: {
+            orderId: string;
+            accountId: string;
+            amount: number;
+        }[] = [];
+        for (const order of entity.orders
+            ? entity.orders.sort((a, b) =>
+                  a.createdAt.localeCompare(b.createdAt)
+              )
+            : []) {
+            if (remainingAmount <= 0) {
+                break;
+            }
+            const toPay = calculateOrderRemaining(order);
+            if (toPay <= 0) continue; // Skip fully paid orders
+            const remaining = Math.min(remainingAmount, toPay);
+            remainingAmount -= remaining;
+            if (remaining > 0) {
+                toPayOrders.push({
+                    orderId: order.id,
+                    accountId: accountId,
+                    amount: remaining,
+                });
+            }
+        }
+
+        await Promise.all(
+            toPayOrders.map(async (order) => {
+                await api.post(
+                    `/orgs/${entity.organizationId}/orders/${order.orderId}/transactions`,
+                    {
+                        amount: order.amount,
+                        accountId: order.accountId,
+                        details: {
+                            type: "PAYMENT",
+                            description: `Payment for Order ${order.orderId}`,
+                        },
+                    }
+                );
+            })
+        );
+        window.location.reload();
+    };
     return (
         <div className="container mx-auto p-6 space-y-6">
             {/* Entity Header */}
@@ -138,9 +191,39 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
                         <div className="bg-blue-100 p-3 rounded-full">
                             <User className="h-8 w-8 text-blue-600" />
                         </div>
-                        <div className="flex-1">
-                            <CardTitle className="text-2xl font-bold">{entity.name}</CardTitle>
-                            <p className="text-gray-600">Entity ID: {entity.id}</p>
+                        <div className="flex-1 flex justify-between">
+                            <div>
+                                <CardTitle className="text-2xl font-bold">
+                                    {entity.name}
+                                </CardTitle>
+                                <p className="text-gray-600">
+                                    Entity ID: {entity.id}
+                                </p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <AddPaymentDialog
+                                    accounts={accounts}
+                                    type="MISC"
+                                    remainingAmount={stats.totalRemaining}
+                                    onAddPayment={handleAddPayment}
+                                />
+                                <AddEntity
+                                    entity={entity}
+                                    addEntity={async (updates) => {
+                                        const newEntity = {
+                                            ...entity,
+                                            ...updates,
+                                        };
+                                        // Call API to update entity
+                                        await api.put(
+                                            `/orgs/${entity.organizationId}/entities/${entity.id}`,
+                                            newEntity
+                                        );
+                                        window.location.reload();
+                                    }}
+                                    text="Edit Entity"
+                                />
+                            </div>
                         </div>
                     </div>
                 </CardHeader>
@@ -158,16 +241,22 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
                         )}
                         <div className="flex items-center space-x-2">
                             <Calendar className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm">Created: {formatDate(entity.createdAt)}</span>
+                            <span className="text-sm">
+                                Created: {formatDate(entity.createdAt)}
+                            </span>
                         </div>
                         <div className="flex items-center space-x-2">
                             <Calendar className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm">Updated: {formatDate(entity.updatedAt)}</span>
+                            <span className="text-sm">
+                                Updated: {formatDate(entity.updatedAt)}
+                            </span>
                         </div>
                     </div>
                     {entity.description && (
                         <div className="mt-4">
-                            <p className="text-gray-700">{entity.description}</p>
+                            <p className="text-gray-700">
+                                {entity.description}
+                            </p>
                         </div>
                     )}
                 </CardContent>
@@ -179,8 +268,12 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                                <p className="text-2xl font-bold">{stats.totalOrders}</p>
+                                <p className="text-sm font-medium text-gray-600">
+                                    Total Orders
+                                </p>
+                                <p className="text-2xl font-bold">
+                                    {stats.totalOrders}
+                                </p>
                             </div>
                             <ShoppingCart className="h-8 w-8 text-blue-500" />
                         </div>
@@ -191,7 +284,9 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600">Total Amount</p>
+                                <p className="text-sm font-medium text-gray-600">
+                                    Total Amount
+                                </p>
                                 <p className="text-2xl font-bold">
                                     {formatCurrency(stats.totalAmount)}
                                 </p>
@@ -205,7 +300,9 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600">Total Paid</p>
+                                <p className="text-sm font-medium text-gray-600">
+                                    Total Paid
+                                </p>
                                 <p className="text-2xl font-bold text-green-600">
                                     {formatCurrency(stats.totalPaid)}
                                 </p>
@@ -219,7 +316,9 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600">Total Remaining</p>
+                                <p className="text-sm font-medium text-gray-600">
+                                    Total Remaining
+                                </p>
                                 <p className="text-2xl font-bold text-red-600">
                                     {formatCurrency(stats.totalRemaining)}
                                 </p>
@@ -242,7 +341,11 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
                                 <span>Payment Progress</span>
                                 <span>
                                     {stats.totalAmount > 0
-                                        ? ((stats.totalPaid / stats.totalAmount) * 100).toFixed(1)
+                                        ? (
+                                              (stats.totalPaid /
+                                                  stats.totalAmount) *
+                                              100
+                                          ).toFixed(1)
                                         : 0}
                                     %
                                 </span>
@@ -250,7 +353,9 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
                             <Progress
                                 value={
                                     stats.totalAmount > 0
-                                        ? (stats.totalPaid / stats.totalAmount) * 100
+                                        ? (stats.totalPaid /
+                                              stats.totalAmount) *
+                                          100
                                         : 0
                                 }
                                 className="h-2"
@@ -259,19 +364,25 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
 
                         <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
-                                <p className="text-sm text-gray-600">Paid Orders</p>
+                                <p className="text-sm text-gray-600">
+                                    Paid Orders
+                                </p>
                                 <p className="text-lg font-semibold text-green-600">
                                     {stats.paidOrders}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-600">Pending Orders</p>
+                                <p className="text-sm text-gray-600">
+                                    Pending Orders
+                                </p>
                                 <p className="text-lg font-semibold text-yellow-600">
                                     {stats.pendingOrders}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-600">Overdue Orders</p>
+                                <p className="text-sm text-gray-600">
+                                    Overdue Orders
+                                </p>
                                 <p className="text-lg font-semibold text-red-600">
                                     {stats.overdueOrders}
                                 </p>
@@ -290,112 +401,160 @@ const EntityPage: React.FC<EntityPageProps> = ({ entity }) => {
                     {!entity.orders || entity.orders.length === 0 ? (
                         <div className="text-center py-8">
                             <ShoppingCart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500">No orders found for this entity.</p>
+                            <p className="text-gray-500">
+                                No orders found for this entity.
+                            </p>
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {entity.orders.map((order) => {
-                                const paidAmount = calculateOrderPaidAmount(order);
-                                const remaining = calculateOrderRemaining(order);
+                            {entity.orders
+                                .sort((a, b) =>
+                                    a.createdAt.localeCompare(b.createdAt)
+                                )
+                                .map((order) => {
+                                    const paidAmount =
+                                        calculateOrderPaidAmount(order);
+                                    const remaining =
+                                        calculateOrderRemaining(order);
 
-                                return (
-                                    <Card key={order.id} className="border-l-4 border-l-blue-500">
-                                        <CardContent className="p-4">
-                                            <div className="flex items-start justify-between mb-3">
-                                                <div className="flex items-center space-x-3">
-                                                    {getOrderTypeIcon(order.type)}
-                                                    <Link
-                                                        to={`/org/${entity.organizationId}/orders/${order.id}`}
-                                                        className="text-blue-600 hover:underline flex flex-col"
-                                                    >
-                                                        <h3 className="font-semibold">
-                                                            {order.orderNumber}
-                                                        </h3>
-                                                        <p className="text-sm text-gray-600">
-                                                            {order.description || "No description"}
-                                                        </p>
-                                                    </Link>
-                                                </div>
-                                                <div className="text-right">
-                                                    {getPaymentStatusBadge(order.paymentStatus)}
-                                                    <p className="text-sm text-gray-600 mt-1">
-                                                        {formatDate(order.createdAt)}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <Separator className="my-3" />
-
-                                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                                <div>
-                                                    <p className="text-gray-600">Base Amount</p>
-                                                    <p className="font-semibold">
-                                                        {formatCurrency(order.baseAmount)}
-                                                    </p>
-                                                </div>
-
-                                                <div>
-                                                    <p className="text-gray-600">Total Amount</p>
-                                                    <p className="font-semibold text-lg">
-                                                        {formatCurrency(order.totalAmount)}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <Separator className="my-3" />
-
-                                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                                <div>
-                                                    <p className="text-gray-600">Paid Amount</p>
-                                                    <p className="font-semibold text-green-600">
-                                                        {formatCurrency(paidAmount)}
-                                                    </p>
-                                                    {order.transactions &&
-                                                        order.transactions.length > 0 && (
-                                                            <p className="text-xs text-gray-500 mt-1">
-                                                                ({order.transactions.length}{" "}
-                                                                transaction
-                                                                {order.transactions.length !== 1
-                                                                    ? "s"
-                                                                    : ""}
-                                                                )
-                                                            </p>
+                                    return (
+                                        <Card
+                                            key={order.id}
+                                            className="border-l-4 border-l-blue-500"
+                                        >
+                                            <CardContent className="p-4">
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <div className="flex items-center space-x-3">
+                                                        {getOrderTypeIcon(
+                                                            order.type
                                                         )}
-                                                </div>
-                                                <div>
-                                                    <p className="text-gray-600">
-                                                        Remaining Amount
-                                                    </p>
-                                                    <p className="font-semibold text-red-600">
-                                                        {formatCurrency(remaining)}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {order.totalAmount > 0 && (
-                                                <div className="mt-3">
-                                                    <div className="flex justify-between text-sm mb-1">
-                                                        <span>Payment Progress</span>
-                                                        <span>
-                                                            {(
-                                                                (paidAmount / order.totalAmount) *
-                                                                100
-                                                            ).toFixed(1)}
-                                                            %
-                                                        </span>
+                                                        <Link
+                                                            to={`/org/${entity.organizationId}/orders/${order.id}`}
+                                                            className="text-blue-600 hover:underline flex flex-col"
+                                                        >
+                                                            <h3 className="font-semibold">
+                                                                {
+                                                                    order.orderNumber
+                                                                }
+                                                            </h3>
+                                                            <p className="text-sm text-gray-600">
+                                                                {order.description ||
+                                                                    "No description"}
+                                                            </p>
+                                                        </Link>
                                                     </div>
-                                                    <Progress
-                                                        value={
-                                                            (paidAmount / order.totalAmount) * 100
-                                                        }
-                                                        className="h-1"
-                                                    />
+                                                    <div className="text-right">
+                                                        {getPaymentStatusBadge(
+                                                            order.paymentStatus
+                                                        )}
+                                                        <p className="text-sm text-gray-600 mt-1">
+                                                            {formatDate(
+                                                                order.createdAt
+                                                            )}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                );
-                            })}
+
+                                                <Separator className="my-3" />
+
+                                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                                    <div>
+                                                        <p className="text-gray-600">
+                                                            Base Amount
+                                                        </p>
+                                                        <p className="font-semibold">
+                                                            {formatCurrency(
+                                                                order.baseAmount
+                                                            )}
+                                                        </p>
+                                                    </div>
+
+                                                    <div>
+                                                        <p className="text-gray-600">
+                                                            Total Amount
+                                                        </p>
+                                                        <p className="font-semibold text-lg">
+                                                            {formatCurrency(
+                                                                order.totalAmount
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <Separator className="my-3" />
+
+                                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                                    <div>
+                                                        <p className="text-gray-600">
+                                                            Paid Amount
+                                                        </p>
+                                                        <p className="font-semibold text-green-600">
+                                                            {formatCurrency(
+                                                                paidAmount
+                                                            )}
+                                                        </p>
+                                                        {order.transactions &&
+                                                            order.transactions
+                                                                .length > 0 && (
+                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                    (
+                                                                    {
+                                                                        order
+                                                                            .transactions
+                                                                            .length
+                                                                    }{" "}
+                                                                    transaction
+                                                                    {order
+                                                                        .transactions
+                                                                        .length !==
+                                                                    1
+                                                                        ? "s"
+                                                                        : ""}
+                                                                    )
+                                                                </p>
+                                                            )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-gray-600">
+                                                            Remaining Amount
+                                                        </p>
+                                                        <p className="font-semibold text-red-600">
+                                                            {formatCurrency(
+                                                                remaining
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {order.totalAmount > 0 && (
+                                                    <div className="mt-3">
+                                                        <div className="flex justify-between text-sm mb-1">
+                                                            <span>
+                                                                Payment Progress
+                                                            </span>
+                                                            <span>
+                                                                {(
+                                                                    (paidAmount /
+                                                                        order.totalAmount) *
+                                                                    100
+                                                                ).toFixed(1)}
+                                                                %
+                                                            </span>
+                                                        </div>
+                                                        <Progress
+                                                            value={
+                                                                (paidAmount /
+                                                                    order.totalAmount) *
+                                                                100
+                                                            }
+                                                            className="h-1"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                })}
                         </div>
                     )}
                 </CardContent>
