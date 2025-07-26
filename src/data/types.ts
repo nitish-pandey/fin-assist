@@ -86,6 +86,7 @@ export interface Entity {
     organizationId: string;
     createdAt: string;
     updatedAt: string;
+    isDefault?: boolean;
 
     orders?: Order[];
 }

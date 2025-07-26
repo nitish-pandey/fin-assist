@@ -74,6 +74,7 @@ export const SellOrderPage = () => {
                 entities={entities.filter((e) => e.isVendor)}
                 onSubmit={onCreateOrder}
                 addEntity={addEntity}
+                defaultEntity={entities.find((e) => e.isDefault)}
                 type="SELL"
             />
         </section>

@@ -25,13 +25,22 @@ import { Account, TransactionDetails } from "@/data/types";
 
 interface AddTransactionProps {
     account: Account | null;
-    onAddTransaction: (amount: number, description: string, details: object) => Promise<void>;
+    onAddTransaction: (
+        amount: number,
+        description: string,
+        type: "BUY" | "SELL" | "MISC",
+        details: object
+    ) => Promise<void>;
 }
 
-export function AddTransactionDialog({ account, onAddTransaction }: AddTransactionProps) {
+export function AddTransactionDialog({
+    account,
+    onAddTransaction,
+}: AddTransactionProps) {
     const [open, setOpen] = useState(false);
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
+    const [type, setType] = useState<"BUY" | "SELL" | "MISC">("BUY");
     const [isLoading, setIsLoading] = useState(false);
     const [details, setDetails] = useState<TransactionDetails>({});
 
@@ -40,7 +49,7 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!amount || !description) {
+        if (!amount) {
             toast({
                 title: "Error",
                 description: "Please fill in all fields",
@@ -63,7 +72,12 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
         setIsLoading(true);
 
         try {
-            await onAddTransaction(numericAmount, description, details || {});
+            await onAddTransaction(
+                numericAmount,
+                description,
+                type,
+                details || {}
+            );
             toast({
                 title: "Success",
                 description: "Transaction added successfully",
@@ -104,7 +118,9 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
             <DialogContent className="sm:max-w-[425px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Add Transaction</DialogTitle>
-                    <DialogDescription>Add a new transaction to your account.</DialogDescription>
+                    <DialogDescription>
+                        Add a new transaction to your account.
+                    </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
                     <Card className="bg-muted/50">
@@ -114,13 +130,17 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
                                     <span className="text-sm font-medium text-muted-foreground">
                                         Account
                                     </span>
-                                    <span className="text-sm font-semibold">{account.name}</span>
+                                    <span className="text-sm font-semibold">
+                                        {account.name}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm font-medium text-muted-foreground">
                                         Type
                                     </span>
-                                    <span className="text-sm">{account.type}</span>
+                                    <span className="text-sm">
+                                        {account.type}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm font-medium text-muted-foreground">
@@ -164,8 +184,50 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
                                 placeholder="Enter transaction details"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                required
                             />
+                        </div>
+                        <div className="grid gap-2">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="type">Transaction Type</Label>
+                                <div className="flex items-center space-x-2">
+                                    <Label
+                                        htmlFor="debit"
+                                        className={cn(
+                                            "cursor-pointer rounded-md px-3 py-1 text-sm",
+                                            type === "SELL"
+                                                ? "bg-primary text-primary-foreground"
+                                                : "bg-muted"
+                                        )}
+                                        onClick={() => setType("SELL")}
+                                    >
+                                        Debit
+                                    </Label>
+                                    <Label
+                                        htmlFor="credit"
+                                        className={cn(
+                                            "cursor-pointer rounded-md px-3 py-1 text-sm",
+                                            type === "BUY"
+                                                ? "bg-primary text-primary-foreground"
+                                                : "bg-muted"
+                                        )}
+                                        onClick={() => setType("BUY")}
+                                    >
+                                        Credit
+                                    </Label>
+                                    <Label
+                                        htmlFor="misc"
+                                        className={cn(
+                                            "cursor-pointer rounded-md px-3 py-1 text-sm",
+                                            type === "MISC"
+                                                ? "bg-primary text-primary-foreground"
+                                                : "bg-muted"
+                                        )}
+                                        onClick={() => setType("MISC")}
+                                    >
+                                        Miscellaneous
+                                    </Label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {account.type === "CHEQUE" && (
@@ -186,7 +248,9 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
                                 />
                             </div>
                             <div className="grid gap-2 py-4">
-                                <Label htmlFor="details">Cheque Issuer Bank</Label>
+                                <Label htmlFor="details">
+                                    Cheque Issuer Bank
+                                </Label>
                                 <Input
                                     id="chequeIssuerBank"
                                     name="chequeIssuerBank"

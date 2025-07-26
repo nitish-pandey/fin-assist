@@ -2,7 +2,13 @@
 
 import type React from "react";
 import { useState } from "react";
-import { FaUniversity, FaCreditCard, FaMoneyBillWave, FaEye, FaEyeSlash } from "react-icons/fa";
+import {
+    FaUniversity,
+    FaCreditCard,
+    FaMoneyBillWave,
+    FaEye,
+    FaEyeSlash,
+} from "react-icons/fa";
 
 interface AccountCardProps {
     accountName: string;
@@ -11,6 +17,7 @@ interface AccountCardProps {
     balance: number;
     onClick?: () => void;
     isSelected?: boolean;
+    type?: string;
 }
 
 const AccountCard: React.FC<AccountCardProps> = ({
@@ -20,6 +27,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
     balance,
     onClick,
     isSelected,
+    type = "NA",
 }) => {
     const [showBalance, setShowBalance] = useState(false);
 
@@ -38,7 +46,9 @@ const AccountCard: React.FC<AccountCardProps> = ({
                 <div className="flex gap-3 items-center justify-between">
                     <div className="flex items-center space-x-3">
                         <FaUniversity className="text-blue-600 text-2xl" />
-                        <h3 className="text-xl font-semibold text-gray-800">{accountName}</h3>
+                        <h3 className="text-xl font-semibold text-gray-800">
+                            {accountName}
+                        </h3>
                     </div>
                     <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
                         {bankName}
@@ -53,7 +63,7 @@ const AccountCard: React.FC<AccountCardProps> = ({
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                     <div className="flex items-center space-x-2">
                         <FaMoneyBillWave className="text-green-500 text-xl" />
-                        <p className="text-sm text-gray-600">Current Balance</p>
+                        <p className="text-sm text-gray-600">{type}</p>
                     </div>
                     <div className="flex items-center space-x-2">
                         {showBalance ? (
@@ -65,12 +75,16 @@ const AccountCard: React.FC<AccountCardProps> = ({
                                 })}
                             </p>
                         ) : (
-                            <p className="text-2xl font-bold text-gray-600">{"*".repeat(8)}</p>
+                            <p className="text-2xl font-bold text-gray-600">
+                                {"*".repeat(8)}
+                            </p>
                         )}
                         <button
                             onClick={toggleBalance}
                             className="text-blue-500 hover:text-blue-700 focus:outline-none"
-                            aria-label={showBalance ? "Hide balance" : "Show balance"}
+                            aria-label={
+                                showBalance ? "Hide balance" : "Show balance"
+                            }
                         >
                             {showBalance ? (
                                 <FaEyeSlash className="text-xl" />

@@ -72,6 +72,33 @@ export function BasicDetailsForm({
             categoryId: product.categoryId || "",
         },
     });
+
+    // Watch all form fields and update product when any field changes
+    useEffect(() => {
+        // Use formState.isDirty to check if form has been touched
+        const { isDirty } = form.formState;
+
+        // Only subscribe to watch if the form has been interacted with
+        if (isDirty) {
+            const subscription = form.watch(() => {
+                const formValues = form.getValues();
+                // Only update if values are different from the current product state
+                if (
+                    formValues.name !== product.name ||
+                    formValues.description !== product.description ||
+                    formValues.price !== product.price ||
+                    formValues.stock !== product.stock ||
+                    formValues.code !== product.code ||
+                    formValues.sku !== product.sku ||
+                    formValues.categoryId !== product.categoryId
+                ) {
+                    updateProduct(formValues as Partial<Product>);
+                }
+            });
+
+            return () => subscription.unsubscribe();
+        }
+    }, [form, form.formState.isDirty, updateProduct, product]);
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
         product.categoryId
     ); // Update form values when product changes

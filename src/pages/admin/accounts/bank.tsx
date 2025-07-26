@@ -11,7 +11,9 @@ export default function BankAccounts() {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+    const [selectedAccount, setSelectedAccount] = useState<Account | null>(
+        null
+    );
 
     // Fetch accounts from API
     const fetchAccounts = useCallback(async () => {
@@ -50,10 +52,18 @@ export default function BankAccounts() {
             {/* Header Section */}
             <div className="flex items-center justify-between border-b pb-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Bank Accounts</h2>
-                    <p className="text-sm text-gray-500">View and manage your bank accounts</p>
+                    <h2 className="text-2xl font-bold text-gray-800">
+                        Bank Accounts
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                        View and manage your bank accounts
+                    </p>
                 </div>
-                <CreateAccountForm type="BANK" onSubmit={onSubmit} disableType={true} />
+                <CreateAccountForm
+                    type="BANK"
+                    onSubmit={onSubmit}
+                    disableType={true}
+                />
             </div>
 
             {/* Loading State */}
@@ -64,7 +74,9 @@ export default function BankAccounts() {
             ) : error ? (
                 <p className="text-center text-red-500">{error}</p>
             ) : accounts.length === 0 ? (
-                <p className="text-center text-gray-500 mt-6">No bank accounts found.</p>
+                <p className="text-center text-gray-500 mt-6">
+                    No bank accounts found.
+                </p>
             ) : (
                 <>
                     {/* Account List */}
@@ -76,6 +88,7 @@ export default function BankAccounts() {
                                 accountNumber={account.details.accountNumber}
                                 bankName={account.details.bankName}
                                 balance={account.balance}
+                                type="BANK"
                                 onClick={() => setSelectedAccount(account)}
                                 isSelected={selectedAccount?.id === account.id}
                             />

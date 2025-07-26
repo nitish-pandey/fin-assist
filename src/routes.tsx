@@ -123,7 +123,7 @@ export const routes: RouteObject[] = [
                             },
                             {
                                 element: <CASHACCOUNTS />,
-                                path: "cash",
+                                path: "cash_counter",
                             },
                         ],
                     },

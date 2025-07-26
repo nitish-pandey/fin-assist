@@ -38,6 +38,19 @@ const OrgCategories = () => {
         setError(null);
     };
 
+    const handleRetry = async () => {
+        setLoading(true);
+        try {
+            const { data } = await api.get(`/orgs/${orgId}/category`);
+            setCategories(data);
+            setError(null);
+        } catch (err) {
+            setError("An error occurred while fetching categories");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="">
             <div className="flex justify-between items-center mb-6">
@@ -56,7 +69,7 @@ const OrgCategories = () => {
                     <CategoryList
                         categories={categories}
                         loading={loading}
-                        onRetry={() => {}}
+                        onRetry={handleRetry}
                     />
                 </div>
             )}

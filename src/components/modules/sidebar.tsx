@@ -149,7 +149,7 @@ export default function Sidebar() {
                 },
                 {
                     name: "Cash",
-                    path: getPathname("accounts/cash"),
+                    path: getPathname("accounts/cash_counter"),
                     icon: CashIcon,
                 },
             ],

@@ -13,7 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Product } from "@/data/types";
-import CreateProductModal from "@/pages/admin/products/Create_product_modal";
+// import CreateProductModal from "@/pages/admin/products/Create_product_modal";
+import { Link } from "react-router-dom";
+import { useOrg } from "@/providers/org-provider";
 
 interface SelectedProduct {
     productId: string;
@@ -33,6 +35,7 @@ export function ProductDetails({
     addedProducts,
     onUpdateProducts,
 }: ProductDetailsProps) {
+    const { orgId } = useOrg();
     const updateProductAtIndex = useCallback(
         (index: number, updates: Partial<SelectedProduct>) => {
             const updated = addedProducts.map((item, i) =>
@@ -239,7 +242,6 @@ export function ProductDetails({
                                             }
                                             className="text-right h-9"
                                             disabled={!item.variantId}
-                                            step="0.01"
                                         />
                                     </div>
 
@@ -278,7 +280,13 @@ export function ProductDetails({
                         >
                             <Plus className="h-4 w-4 mr-2" /> Add New Purchases
                         </Button>
-                        <CreateProductModal />
+                        {/* <CreateProductModal /> */}
+                        <Link
+                            to={`/org/${orgId}/products/create`}
+                            className="text-sm text-blue-600 hover:underline border border-blue-600 px-2 py-1 rounded hover:bg-blue-50 flex items-center gap-1"
+                        >
+                            Create New Product
+                        </Link>
                     </div>
                     <div className="text-lg font-semibold text-slate-700">
                         Total: Rs {totalAmount.toFixed(2)}

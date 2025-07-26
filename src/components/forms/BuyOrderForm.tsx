@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useCallback, useState } from "react";
+import { useMemo, useCallback, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Entity, Product, Account } from "@/data/types";
 import { ProductDetails } from "./ProductDetails";
@@ -38,6 +38,7 @@ interface BuyProductFormProps {
     accounts: Account[];
     addEntity: (entity: Partial<Entity>) => Promise<Entity | null>;
     onSubmit: (data: object) => Promise<void> | void;
+    defaultEntity?: Entity | null;
 }
 
 export default function BuyProductForm({
@@ -47,15 +48,43 @@ export default function BuyProductForm({
     accounts,
     addEntity,
     onSubmit,
+    defaultEntity = null,
 }: // onSubmit,
 BuyProductFormProps) {
-    const [buyState, setBuyState] = useState<BuyProductData>({
-        entity: undefined,
-        products: [{ productId: "", variantId: "", rate: 0, quantity: 1 }],
-        discount: 0,
-        charges: [],
-        payments: [],
+    const [buyState, setBuyState] = useState<BuyProductData>(() => {
+        // Try to get saved state from localStorage
+        const savedState = localStorage.getItem(`order-${type}`);
+        if (savedState) {
+            try {
+                return JSON.parse(savedState);
+            } catch (error) {
+                console.error("Failed to parse saved state:", error);
+            }
+        }
+        // Return default state if no saved state exists or parsing fails
+        return {
+            entity: defaultEntity || null,
+            products: [{ productId: "", variantId: "", rate: 0, quantity: 1 }],
+            discount: 0,
+            charges: [],
+            payments: [],
+        };
     });
+
+    useEffect(() => {
+        // If defaultEntity is provided, set it in the state
+        if (defaultEntity) {
+            setBuyState((prev) => ({
+                ...prev,
+                entity: defaultEntity,
+            }));
+        }
+    }, [defaultEntity]);
+
+    // Save to localStorage whenever buyState changes
+    useEffect(() => {
+        localStorage.setItem(`order-${type}`, JSON.stringify(buyState));
+    }, [buyState]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
