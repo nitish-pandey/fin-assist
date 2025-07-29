@@ -51,6 +51,7 @@ export default function BuyProductForm({
     defaultEntity = null,
 }: // onSubmit,
 BuyProductFormProps) {
+    console.log("BuyProductForm rendered with type:", entities);
     const [buyState, setBuyState] = useState<BuyProductData>(() => {
         // Try to get saved state from localStorage
         const savedState = localStorage.getItem(`order-${type}`);
@@ -78,6 +79,7 @@ BuyProductFormProps) {
                 ...prev,
                 entity: defaultEntity,
             }));
+            console.log("Default entity set:", defaultEntity);
         }
     }, [defaultEntity]);
 
@@ -201,7 +203,20 @@ BuyProductFormProps) {
             discount,
             charges,
             type,
-            payments,
+            payments:
+                entity?.isDefault &&
+                accounts.find((acc) => acc.type === "CASH_COUNTER")
+                    ? [
+                          {
+                              amount: grandTotal,
+                              accountId:
+                                  accounts.find(
+                                      (acc) => acc.type === "CASH_COUNTER"
+                                  )?.id || "",
+                              details: {},
+                          },
+                      ]
+                    : payments,
         };
         if (parsedProducts.length === 0) {
             setError("Please add at least one product.");
@@ -275,13 +290,14 @@ BuyProductFormProps) {
                     charges={buyState.charges}
                     setCharge={handleUpdateCharges}
                 />
-
-                <PaymentSelector
-                    selectedPayments={buyState.payments}
-                    setSelectedPayments={handleUpdatePayments}
-                    accounts={accounts}
-                    grandTotal={grandTotal}
-                />
+                {buyState.entity?.isDefault ? null : (
+                    <PaymentSelector
+                        selectedPayments={buyState.payments}
+                        setSelectedPayments={handleUpdatePayments}
+                        accounts={accounts}
+                        grandTotal={grandTotal}
+                    />
+                )}
 
                 {/* <BillUpload
                     files={[]}
