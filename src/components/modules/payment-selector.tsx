@@ -16,7 +16,13 @@ import type { Account } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+    Card,
+    CardHeader,
+    CardContent,
+    CardTitle,
+    CardDescription,
+} from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import AddPaymentDialog from "../modals/AddPaymentDialog";
 
@@ -32,6 +38,7 @@ interface PaymentSelectorProps {
     selectedPayments: PaymentDetails[];
     setSelectedPayments: (payments: PaymentDetails[]) => void;
     error?: string | null;
+    type: "BUY" | "SELL" | "MISC";
 }
 
 // Icon by account type
@@ -68,7 +75,9 @@ const PaymentItem = ({
             </div>
             <div className="flex flex-col">
                 <span className="font-medium">{account.name}</span>
-                <span className="text-xs text-muted-foreground">{account.type}</span>
+                <span className="text-xs text-muted-foreground">
+                    {account.type}
+                </span>
             </div>
         </div>
         <div className="flex items-center gap-2">
@@ -94,11 +103,22 @@ const EmptyState = () => (
     </div>
 );
 
-const TotalSummary = ({ totalPaid, grandTotal }: { totalPaid: number; grandTotal: number }) => {
-    const remaining = useMemo(() => grandTotal - totalPaid, [totalPaid, grandTotal]);
+const TotalSummary = ({
+    totalPaid,
+    grandTotal,
+}: {
+    totalPaid: number;
+    grandTotal: number;
+}) => {
+    const remaining = useMemo(
+        () => grandTotal - totalPaid,
+        [totalPaid, grandTotal]
+    );
     return (
         <div className="flex flex-col items-end">
-            <span className="text-sm font-medium">Total Paid: Rs {totalPaid.toFixed(2)}</span>
+            <span className="text-sm font-medium">
+                Total Paid: Rs {totalPaid.toFixed(2)}
+            </span>
             {remaining > 0 ? (
                 <span className="text-xs text-muted-foreground">
                     Remaining: Rs {remaining.toFixed(2)}
@@ -118,6 +138,7 @@ export default function PaymentSelector({
     selectedPayments,
     setSelectedPayments,
     error,
+    type,
 }: PaymentSelectorProps) {
     const totalPaid = useMemo(
         () => selectedPayments.reduce((acc, p) => acc + p.amount, 0),
@@ -127,10 +148,20 @@ export default function PaymentSelector({
     const removePayment = (index: number) =>
         setSelectedPayments(selectedPayments.filter((_, i) => i !== index));
 
-    const handleAddPayment = (amount: number, accountId: string, details: object) =>
-        setSelectedPayments([...selectedPayments, { amount, accountId, details }]);
+    const handleAddPayment = (
+        amount: number,
+        accountId: string,
+        details: object
+    ) =>
+        setSelectedPayments([
+            ...selectedPayments,
+            { amount, accountId, details },
+        ]);
 
-    const overpaidBy = useMemo(() => totalPaid - grandTotal, [totalPaid, grandTotal]);
+    const overpaidBy = useMemo(
+        () => totalPaid - grandTotal,
+        [totalPaid, grandTotal]
+    );
 
     return (
         <Card className="bg-gray-100 border-0 shadow-none">
@@ -138,9 +169,14 @@ export default function PaymentSelector({
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle>Payment Methods</CardTitle>
-                        <CardDescription>Select how you want to pay</CardDescription>
+                        <CardDescription>
+                            Select how you want to pay
+                        </CardDescription>
                     </div>
-                    <TotalSummary totalPaid={totalPaid} grandTotal={grandTotal} />
+                    <TotalSummary
+                        totalPaid={totalPaid}
+                        grandTotal={grandTotal}
+                    />
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -153,15 +189,15 @@ export default function PaymentSelector({
                 {overpaidBy > 0 && (
                     <div className="p-3 bg-yellow-100 text-yellow-800 rounded-md flex gap-2 items-center text-sm">
                         <AlertTriangle className="w-4 h-4" />
-                        Payment exceeds the total by Rs {Math.abs(overpaidBy).toFixed(2)}. Please
-                        adjust.
+                        Payment exceeds the total by Rs{" "}
+                        {Math.abs(overpaidBy).toFixed(2)}. Please adjust.
                     </div>
                 )}
 
                 <div className="flex items-center justify-between">
                     <h3 className="text-sm font-medium">Selected Payments</h3>
                     <AddPaymentDialog
-                        type="BUY"
+                        type={type}
                         accounts={accounts}
                         remainingAmount={grandTotal}
                         onAddPayment={handleAddPayment}
@@ -171,7 +207,9 @@ export default function PaymentSelector({
                 <div
                     className={cn(
                         "rounded-md border",
-                        selectedPayments.length === 0 ? "bg-muted/50" : "bg-background"
+                        selectedPayments.length === 0
+                            ? "bg-muted/50"
+                            : "bg-background"
                     )}
                 >
                     {selectedPayments.length === 0 ? (
@@ -189,7 +227,9 @@ export default function PaymentSelector({
                                             key={`${payment.accountId}-${index}`}
                                             payment={payment}
                                             account={account}
-                                            onRemove={() => removePayment(index)}
+                                            onRemove={() =>
+                                                removePayment(index)
+                                            }
                                         />
                                     );
                                 })}

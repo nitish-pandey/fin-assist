@@ -296,6 +296,7 @@ BuyProductFormProps) {
                         setSelectedPayments={handleUpdatePayments}
                         accounts={accounts}
                         grandTotal={grandTotal}
+                        type={type}
                     />
                 )}
 

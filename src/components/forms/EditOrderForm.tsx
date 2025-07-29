@@ -280,6 +280,7 @@ EditOrderFormProps) {
                     selectedPayments={editOrderState.payments}
                     setSelectedPayments={handleUpdatePayments}
                     accounts={accounts}
+                    type={type}
                     grandTotal={grandTotal}
                 />
 
