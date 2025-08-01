@@ -17,13 +17,13 @@ interface TransactionData {
 }
 
 interface DashboardData {
-    transactions: TransactionData[];
-    products: number;
-    entities: number;
-    creditPending: number;
-    debitPending: number;
-    buyPaid: number;
-    sellPaid: number;
+    transactions?: TransactionData[] | null;
+    products?: number | null;
+    entities?: number;
+    creditPending?: number | null;
+    debitPending?: number | null;
+    buyPaid?: number | null;
+    sellPaid?: number | null;
 }
 
 interface ApiResponse {
@@ -85,23 +85,24 @@ const Dashboard = () => {
 
     // Derived data calculations
     const getDerivedData = (dashboardData: DashboardData) => {
-        const totalTransactions = dashboardData.transactions.reduce(
-            (sum, item) => sum + item.value,
-            0
-        );
+        const totalTransactions =
+            dashboardData.transactions?.reduce(
+                (sum, item) => sum + item.value,
+                0
+            ) || 0;
         const totalTransactionsFormatted = `${(
             totalTransactions / 1000
         ).toFixed(2)}K`;
 
         const creditPendingFormatted = `${(
-            dashboardData.creditPending / 1000
+            (dashboardData.creditPending || 0) / 1000
         ).toFixed(2)}K`;
         const debitPendingFormatted = `${(
-            dashboardData.debitPending / 1000
+            (dashboardData.debitPending || 0) / 1000
         ).toFixed(2)}K`;
 
-        const buyDue = 100 - dashboardData.buyPaid;
-        const sellDue = 100 - dashboardData.sellPaid;
+        const buyDue = 100 - (dashboardData.buyPaid || 0);
+        const sellDue = 100 - (dashboardData.sellPaid || 0);
 
         // Format months for display (remove year)
         const chartData = dashboardData.transactions;
@@ -298,7 +299,7 @@ const Dashboard = () => {
 
                         <div className="h-64 w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={derivedData.chartData}>
+                                <LineChart data={derivedData.chartData || []}>
                                     <XAxis
                                         dataKey="month"
                                         axisLine={false}
@@ -417,7 +418,7 @@ const Dashboard = () => {
                                         </span>
                                         <span className="text-sm text-gray-900 ml-auto">
                                             {data.buyPaid === undefined ||
-                                            isNaN(data.buyPaid) ||
+                                            isNaN(data.buyPaid || 0) ||
                                             data.buyPaid === null
                                                 ? "NA"
                                                 : data.buyPaid.toFixed(2)}
@@ -430,7 +431,7 @@ const Dashboard = () => {
                                         </span>
                                         <span className="text-sm text-gray-900 ml-auto">
                                             {data.buyPaid === undefined ||
-                                            isNaN(data.buyPaid) ||
+                                            isNaN(data.buyPaid || 0) ||
                                             data.buyPaid === null
                                                 ? "NA"
                                                 : derivedData.buyDue.toFixed(2)}
@@ -440,7 +441,9 @@ const Dashboard = () => {
                             </div>
 
                             <div className="ml-8">
-                                <ProgressCircle percentage={data.buyPaid} />
+                                <ProgressCircle
+                                    percentage={data.buyPaid || 0}
+                                />
                             </div>
                         </div>
                     </div>
@@ -470,7 +473,7 @@ const Dashboard = () => {
                                         </span>
                                         <span className="text-sm text-gray-900 ml-auto">
                                             {data.sellPaid === undefined ||
-                                            isNaN(data.sellPaid) ||
+                                            isNaN(data.sellPaid || 0) ||
                                             data.sellPaid === null
                                                 ? "NA"
                                                 : data.sellPaid}
@@ -483,7 +486,7 @@ const Dashboard = () => {
                                         </span>
                                         <span className="text-sm text-gray-900 ml-auto">
                                             {data.sellPaid === undefined ||
-                                            isNaN(data.sellPaid) ||
+                                            isNaN(data.sellPaid || 0) ||
                                             data.sellPaid === null
                                                 ? "NA"
                                                 : derivedData.sellDue}
@@ -493,7 +496,9 @@ const Dashboard = () => {
                             </div>
 
                             <div className="ml-8">
-                                <ProgressCircle percentage={data.sellPaid} />
+                                <ProgressCircle
+                                    percentage={data.sellPaid || 0}
+                                />
                             </div>
                         </div>
                     </div>

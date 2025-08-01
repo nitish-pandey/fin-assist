@@ -18,7 +18,7 @@ const EntityInfo = () => {
             api.get(`/orgs/${orgId}/entities`)
                 .then((res) => {
                     console.log("Fetched entities:", res.data);
-                    setEntities(res.data);
+                    setEntities(res.data ?? []);
                 })
                 .catch((error) => {
                     console.error("Failed to fetch entities:", error);
