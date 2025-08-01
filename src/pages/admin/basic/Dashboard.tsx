@@ -154,7 +154,7 @@ const Dashboard = () => {
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-xl font-bold text-gray-900">
-                        {percentage}%
+                        {percentage.toFixed(2)}%
                     </span>
                 </div>
             </div>
@@ -420,7 +420,7 @@ const Dashboard = () => {
                                             isNaN(data.buyPaid) ||
                                             data.buyPaid === null
                                                 ? "NA"
-                                                : data.buyPaid}
+                                                : data.buyPaid.toFixed(2)}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -433,7 +433,7 @@ const Dashboard = () => {
                                             isNaN(data.buyPaid) ||
                                             data.buyPaid === null
                                                 ? "NA"
-                                                : derivedData.buyDue}
+                                                : derivedData.buyDue.toFixed(2)}
                                         </span>
                                     </div>
                                 </div>

@@ -42,7 +42,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
             setUser(res);
             setOrgs(res.organizations || []);
-            setPermissions(res.permissions || []);
+            setPermissions(res.roleAccess || []);
             // if user is in an auth route, redirect to home
             if (
                 window.location.pathname.startsWith("/auth") ||

@@ -106,7 +106,7 @@ export default function ProfilePage() {
                                     Permissions
                                 </div>
                                 <div className="text-2xl font-bold">
-                                    {user.permissions?.length || 0}
+                                    {user.roleAccess?.length || 0}
                                 </div>
                             </div>
                             <div className="rounded-lg border p-3">

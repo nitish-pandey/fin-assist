@@ -7,7 +7,7 @@ export interface User {
     updatedAt: string;
 
     organizations?: Organization[];
-    permissions?: RoleAccess[];
+    roleAccess?: RoleAccess[];
 }
 
 export interface Organization {
@@ -34,6 +34,7 @@ export interface RoleAccess {
     access: ACCESS;
     user?: User;
     organization?: Organization;
+    createdAt: string;
 }
 
 export interface Invite {

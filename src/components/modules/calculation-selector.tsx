@@ -444,94 +444,93 @@ export default function CalculationSelector({
                                     {charges.map((charge) => (
                                         <div
                                             key={charge.id}
-                                            className="space-y-2 rounded-lg border p-3 bg-white"
+                                            className="space-y-3 rounded-lg border p-4 bg-white shadow-sm"
                                         >
-                                            {/* Label Input */}
-                                            <div className="w-full">
-                                                <Label className="text-xs text-slate-600 mb-1 block">
-                                                    Charge Label
-                                                </Label>
-                                                <Input
-                                                    type="text"
-                                                    value={charge.label}
-                                                    onChange={(e) =>
-                                                        handleChargeLabelChange(
-                                                            charge.id,
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    disabled={charge.isVat}
-                                                    placeholder="Enter charge name"
-                                                    className="h-8 text-sm"
-                                                />
+                                            {/* Header with Label and Type Toggle */}
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="flex-1 min-w-0">
+                                                    <Label className="text-xs text-slate-600 mb-2 block font-medium">
+                                                        Charge Label
+                                                    </Label>
+                                                    <Input
+                                                        type="text"
+                                                        value={charge.label}
+                                                        onChange={(e) =>
+                                                            handleChargeLabelChange(
+                                                                charge.id,
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        disabled={charge.isVat}
+                                                        placeholder="Enter charge name"
+                                                        className="h-9 text-sm"
+                                                    />
+                                                </div>
+
+                                                {/* Type Toggle */}
+                                                {!charge.isVat && (
+                                                    <div className="flex-shrink-0">
+                                                        <Label className="text-xs text-slate-600 mb-2 block font-medium">
+                                                            Type
+                                                        </Label>
+                                                        <div className="flex gap-1">
+                                                            <Button
+                                                                type="button"
+                                                                variant={
+                                                                    charge.type ===
+                                                                    "fixed"
+                                                                        ? "default"
+                                                                        : "outline"
+                                                                }
+                                                                size="sm"
+                                                                className="h-9 px-3 text-xs font-medium"
+                                                                onClick={() =>
+                                                                    handleChargeTypeChange(
+                                                                        charge.id,
+                                                                        "fixed"
+                                                                    )
+                                                                }
+                                                            >
+                                                                Fixed (Rs)
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                variant={
+                                                                    charge.type ===
+                                                                    "percentage"
+                                                                        ? "default"
+                                                                        : "outline"
+                                                                }
+                                                                size="sm"
+                                                                className="h-9 px-3 text-xs font-medium"
+                                                                onClick={() =>
+                                                                    handleChargeTypeChange(
+                                                                        charge.id,
+                                                                        "percentage"
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Percent className="h-3 w-3 mr-1" />
+                                                                Percentage
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            {/* Type Toggle */}
-                                            {!charge.isVat && (
-                                                <div className="flex items-center gap-2">
-                                                    <Label className="text-xs text-slate-600">
-                                                        Type:
-                                                    </Label>
-                                                    <div className="flex gap-1">
-                                                        <Button
-                                                            type="button"
-                                                            variant={
-                                                                charge.type ===
-                                                                "fixed"
-                                                                    ? "default"
-                                                                    : "outline"
-                                                            }
-                                                            size="sm"
-                                                            className="h-6 px-2 text-xs"
-                                                            onClick={() =>
-                                                                handleChargeTypeChange(
-                                                                    charge.id,
-                                                                    "fixed"
-                                                                )
-                                                            }
-                                                        >
-                                                            Fixed (Rs)
-                                                        </Button>
-                                                        <Button
-                                                            type="button"
-                                                            variant={
-                                                                charge.type ===
-                                                                "percentage"
-                                                                    ? "default"
-                                                                    : "outline"
-                                                            }
-                                                            size="sm"
-                                                            className="h-6 px-2 text-xs"
-                                                            onClick={() =>
-                                                                handleChargeTypeChange(
-                                                                    charge.id,
-                                                                    "percentage"
-                                                                )
-                                                            }
-                                                        >
-                                                            <Percent className="h-2.5 w-2.5 mr-1" />
-                                                            Percentage
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Amount and Percentage Inputs */}
-                                            <div className="flex gap-3">
+                                            {/* Value Inputs */}
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 {/* Percentage Input */}
                                                 {charge.type ===
-                                                "fixed" ? null : (
-                                                    <div className="w-full">
-                                                        <Label className="text-xs text-slate-600 mb-1 block">
+                                                    "percentage" && (
+                                                    <div>
+                                                        <Label className="text-xs text-slate-600 mb-2 block font-medium">
                                                             Percentage (%)
                                                         </Label>
                                                         <div className="relative">
-                                                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">
-                                                                %
-                                                            </span>
                                                             <Input
                                                                 type="number"
-                                                                className="h-8 pr-6 text-sm"
+                                                                className="h-9 pr-8 text-sm"
                                                                 value={
                                                                     charge.percentage
                                                                 }
@@ -546,24 +545,27 @@ export default function CalculationSelector({
                                                                 disabled={
                                                                     charge.isVat
                                                                 }
+                                                                min="0"
+                                                                max="100"
+                                                                step="0.01"
                                                             />
+                                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
+                                                                %
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 )}
 
-                                                {charge.type ===
-                                                "percentage" ? null : (
-                                                    <div className="w-full">
-                                                        <Label className="text-xs text-slate-600 mb-1 block">
+                                                {/* Amount Input */}
+                                                {charge.type === "fixed" && (
+                                                    <div>
+                                                        <Label className="text-xs text-slate-600 mb-2 block font-medium">
                                                             Amount (Rs)
                                                         </Label>
                                                         <div className="relative">
-                                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">
-                                                                Rs
-                                                            </span>
                                                             <Input
                                                                 type="number"
-                                                                className="h-8 pl-6 text-sm"
+                                                                className="h-9 pl-8 text-sm"
                                                                 value={
                                                                     charge.amount
                                                                 }
@@ -575,28 +577,63 @@ export default function CalculationSelector({
                                                                     )
                                                                 }
                                                                 placeholder="0.00"
+                                                                min="0"
+                                                                step="0.01"
                                                             />
+                                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none">
+                                                                Rs
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 )}
+
+                                                {/* Calculated Value Display */}
+                                                <div>
+                                                    <Label className="text-xs text-slate-600 mb-2 block font-medium">
+                                                        {charge.type ===
+                                                        "percentage"
+                                                            ? "Calculated Amount"
+                                                            : "Calculated Percentage"}
+                                                    </Label>
+                                                    <div className="h-9 px-3 bg-slate-50 border border-slate-200 rounded-md flex items-center text-sm text-slate-600">
+                                                        {charge.type ===
+                                                        "percentage"
+                                                            ? `Rs ${(
+                                                                  (subTotal *
+                                                                      charge.percentage) /
+                                                                  100
+                                                              ).toFixed(2)}`
+                                                            : `${
+                                                                  subTotal > 0
+                                                                      ? (
+                                                                            (charge.amount /
+                                                                                subTotal) *
+                                                                            100
+                                                                        ).toFixed(
+                                                                            2
+                                                                        )
+                                                                      : "0"
+                                                              }%`}
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             {/* Remove Button */}
                                             {vatStatus === "always" &&
                                             charge.isVat ? null : (
-                                                <div className="flex justify-end">
+                                                <div className="flex justify-end pt-2 border-t border-slate-100">
                                                     <Button
                                                         type="button"
                                                         variant="outline"
                                                         size="sm"
-                                                        className="h-7 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
+                                                        className="h-8 px-3 text-xs text-rose-600 border-rose-200 hover:bg-rose-50 hover:border-rose-300 transition-colors"
                                                         onClick={() =>
                                                             removeCharge(
                                                                 charge.id
                                                             )
                                                         }
                                                     >
-                                                        <Trash2 className="h-3 w-3 mr-1" />
+                                                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                                                         Remove
                                                     </Button>
                                                 </div>
@@ -605,12 +642,12 @@ export default function CalculationSelector({
                                     ))}
                                 </div>
 
-                                <div className="flex gap-3 mt-4">
+                                <div className="flex flex-col sm:flex-row gap-3 mt-4">
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         type="button"
-                                        className="h-8 text-sm flex-1 border-blue-200 text-blue-600 hover:bg-blue-50"
+                                        className="h-9 text-sm flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-colors font-medium"
                                         onClick={handleAddNewCharge}
                                     >
                                         <Plus className="h-4 w-4 mr-2" />
@@ -622,7 +659,7 @@ export default function CalculationSelector({
                                             variant="outline"
                                             size="sm"
                                             type="button"
-                                            className="h-8 text-sm flex-1 border-green-200 text-green-600 hover:bg-green-50"
+                                            className="h-9 text-sm flex-1 border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 transition-colors font-medium"
                                             onClick={handleAddVAT}
                                         >
                                             <Receipt className="h-4 w-4 mr-2" />

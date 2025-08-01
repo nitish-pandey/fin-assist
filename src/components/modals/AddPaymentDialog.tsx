@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Account, TransactionDetails } from "@/data/types";
 import {
     Dialog,
@@ -38,6 +38,12 @@ export default function AddPaymentDialog({
     const [error, setError] = useState<string | null>(null);
     const [details, setDetails] = useState<TransactionDetails>({});
 
+    // Find the default cash account
+    const cashAccount = useMemo(
+        () => accounts.find((acc) => acc.type === "CASH_COUNTER"),
+        [accounts]
+    );
+
     const selectedAccount = useMemo(
         () => accounts.find((a) => a.id === accountId),
         [accountId, accounts]
@@ -45,12 +51,36 @@ export default function AddPaymentDialog({
 
     const isChequeAccount = selectedAccount?.type === "CHEQUE";
 
+    // Set defaults when dialog opens
+    useEffect(() => {
+        if (isOpen) {
+            // Default to cash account if available
+            if (cashAccount) {
+                setAccountId(cashAccount.id);
+            }
+            // Default to remaining amount if available
+            if (remainingAmount !== undefined && remainingAmount > 0) {
+                setAmount(remainingAmount);
+            }
+        }
+    }, [isOpen, cashAccount, remainingAmount]);
+
     const resetState = () => {
         setIsOpen(false);
         setAmount("");
         setAccountId("");
         setDetails({});
         setError(null);
+    };
+
+    const addAllRemaining = () => {
+        if (remainingAmount !== undefined && remainingAmount > 0) {
+            setAmount(remainingAmount);
+            if (cashAccount) {
+                setAccountId(cashAccount.id);
+            }
+            setError(null);
+        }
     };
 
     const validateAndSubmit = () => {
@@ -88,12 +118,26 @@ export default function AddPaymentDialog({
                     </DialogHeader>
 
                     {remainingAmount !== undefined && (
-                        <p className="text-sm text-muted-foreground font-medium">
-                            Remaining:{" "}
-                            <span className="text-primary">
-                                Rs {remainingAmount.toFixed(2)}
-                            </span>
-                        </p>
+                        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-3">
+                            <p className="text-sm text-muted-foreground font-medium">
+                                Remaining:{" "}
+                                <span className="text-primary font-semibold">
+                                    Rs {remainingAmount.toFixed(2)}
+                                </span>
+                            </p>
+                            {remainingAmount > 0 && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={addAllRemaining}
+                                    type="button"
+                                    className="w-full"
+                                >
+                                    Add All Remaining (Rs{" "}
+                                    {remainingAmount.toFixed(2)})
+                                </Button>
+                            )}
+                        </div>
                     )}
 
                     <div className="space-y-4">
@@ -129,8 +173,25 @@ export default function AddPaymentDialog({
                                 <SelectContent>
                                     {accounts.map((acc) => (
                                         <SelectItem key={acc.id} value={acc.id}>
-                                            {acc.name} (Rs{" "}
-                                            {acc.balance.toFixed(2)})
+                                            <div className="flex items-center justify-between w-full">
+                                                <span className="flex items-center gap-2">
+                                                    {acc.name}
+                                                    {acc.type ===
+                                                        "CASH_COUNTER" && (
+                                                        <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
+                                                            Cash
+                                                        </span>
+                                                    )}
+                                                    {acc.type === "CHEQUE" && (
+                                                        <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                                                            Cheque
+                                                        </span>
+                                                    )}
+                                                </span>
+                                                <span className="text-sm text-muted-foreground ml-2">
+                                                    Rs {acc.balance.toFixed(2)}
+                                                </span>
+                                            </div>
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -212,17 +273,36 @@ export default function AddPaymentDialog({
                         )}
                     </div>
 
-                    <DialogFooter className="pt-4 flex justify-end">
-                        <Button
-                            variant="outline"
-                            onClick={resetState}
-                            type="button"
-                        >
-                            Cancel
-                        </Button>
-                        <Button onClick={validateAndSubmit} type="button">
-                            Add Payment
-                        </Button>
+                    <DialogFooter className="pt-4 flex justify-between">
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={resetState}
+                                type="button"
+                            >
+                                Cancel
+                            </Button>
+                            <Button onClick={validateAndSubmit} type="button">
+                                Add Payment
+                            </Button>
+                        </div>
+                        {remainingAmount !== undefined &&
+                            remainingAmount > 0 && (
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => {
+                                        addAllRemaining();
+                                        setTimeout(
+                                            () => validateAndSubmit(),
+                                            100
+                                        );
+                                    }}
+                                    type="button"
+                                    className="ml-auto"
+                                >
+                                    Quick Add All
+                                </Button>
+                            )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

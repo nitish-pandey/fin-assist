@@ -208,7 +208,7 @@ const AccountDetails = ({
                         <div>
                             {localAccount.transactions &&
                             localAccount.transactions.filter(
-                                (t) => t.type === "BUY"
+                                (t) => t.orderId && t.type === "BUY"
                             ).length > 0 ? (
                                 <TableComponent
                                     title="Buy Payments"
@@ -221,7 +221,7 @@ const AccountDetails = ({
                                             : paymentColumns
                                     }
                                     data={localAccount.transactions.filter(
-                                        (t) => t.type === "BUY"
+                                        (t) => t.type === "BUY" && t.orderId
                                     )}
                                 />
                             ) : (
@@ -235,7 +235,7 @@ const AccountDetails = ({
                         <div>
                             {localAccount.transactions &&
                             localAccount.transactions.filter(
-                                (t) => t.type === "SELL"
+                                (t) => t.type === "SELL" && t.orderId
                             ).length > 0 ? (
                                 <TableComponent
                                     title="Sell Payments"
@@ -248,7 +248,7 @@ const AccountDetails = ({
                                             : paymentColumns
                                     }
                                     data={localAccount.transactions.filter(
-                                        (t) => t.type === "SELL"
+                                        (t) => t.type === "SELL" && t.orderId
                                     )}
                                 />
                             ) : (
@@ -261,9 +261,8 @@ const AccountDetails = ({
                     <TabsContent value="others">
                         <div>
                             {localAccount.transactions &&
-                            localAccount.transactions.filter(
-                                (t) => t.type === "MISC"
-                            ).length > 0 ? (
+                            localAccount.transactions.filter((t) => !t.orderId)
+                                .length > 0 ? (
                                 <TableComponent
                                     title="Other Payments"
                                     allowSearch={false}
@@ -285,7 +284,7 @@ const AccountDetails = ({
                                             : paymentColumns
                                     }
                                     data={localAccount.transactions.filter(
-                                        (t) => t.type === "MISC"
+                                        (t) => !t.orderId
                                     )}
                                 />
                             ) : (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BasicDetailsForm } from "./basic-details-form";
@@ -77,6 +78,7 @@ export default function ProductForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isGeneratingVariants, setIsGeneratingVariants] = useState(false);
     const { toast } = useToast();
+    const navigate = useNavigate();
     const formRef = useRef<HTMLDivElement>(null);
 
     const steps = [
@@ -218,16 +220,17 @@ export default function ProductForm() {
             // Simulate API call
             // await new Promise((resolve) => setTimeout(resolve, 1000));
             console.log("Product Details:", product);
-            await api.post(`/orgs/${orgId}/products`, product); // Reset form and show toast
-            setProduct(initialProduct);
-            setIsSkuManuallyEdited(false);
-            setStep(1);
+            const response = await api.post(`/orgs/${orgId}/products`, product);
 
-            toast({
-                title: "Product Created Successfully",
-                description:
-                    "Your product has been created and is now available.",
+            // Navigate to success page with product details
+            const searchParams = new URLSearchParams({
+                productName: product.name,
+                ...(response.data?.id && { productId: response.data.id }),
             });
+
+            navigate(
+                `/org/${orgId}/products/success?${searchParams.toString()}`
+            );
         } catch (error) {
             toast({
                 title: "Error",

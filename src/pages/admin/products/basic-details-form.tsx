@@ -33,10 +33,6 @@ const formSchema = z.object({
     description: z.string().optional(),
     price: z.coerce.number().min(0.01, "Price must be greater than zero"),
     stock: z.coerce.number().min(0, "Stock cannot be negative"),
-    code: z
-        .string()
-        .min(8, "Product code must be at least 8 characters")
-        .regex(/^[a-zA-Z0-9]+$/, "Product code must be alphanumeric"),
     sku: z
         .string()
         .min(1, "SKU is required")
@@ -67,7 +63,6 @@ export function BasicDetailsForm({
             description: product.description,
             price: product.price || 0,
             stock: product.stock || 0,
-            code: product.code || "",
             sku: product.sku || "",
             categoryId: product.categoryId || "",
         },
@@ -88,7 +83,6 @@ export function BasicDetailsForm({
                     formValues.description !== product.description ||
                     formValues.price !== product.price ||
                     formValues.stock !== product.stock ||
-                    formValues.code !== product.code ||
                     formValues.sku !== product.sku ||
                     formValues.categoryId !== product.categoryId
                 ) {
@@ -117,33 +111,32 @@ export function BasicDetailsForm({
                 description: product.description,
                 price: product.price,
                 stock: product.stock,
-                code: product.code,
                 sku: product.sku,
                 categoryId: product.categoryId || "",
             });
         }
     }, [product, form]);
 
-    useEffect(() => {
-        let buffer = "";
+    // useEffect(() => {
+    //     let buffer = "";
 
-        const handleKeyDown = (e: KeyboardEvent) => {
-            // Allow only visible characters and Enter
-            if (e.key.length === 1) {
-                buffer += e.key;
-            } else if (e.key === "Enter") {
-                if (buffer.length >= 8) {
-                    form.setValue("code", buffer); // Set barcode in form field
-                }
-                buffer = "";
-            }
-        };
+    //     const handleKeyDown = (e: KeyboardEvent) => {
+    //         // Allow only visible characters and Enter
+    //         if (e.key.length === 1) {
+    //             buffer += e.key;
+    //         } else if (e.key === "Enter") {
+    //             if (buffer.length >= 8) {
+    //                 form.setValue("code", buffer); // Set barcode in form field
+    //             }
+    //             buffer = "";
+    //         }
+    //     };
 
-        window.addEventListener("keydown", handleKeyDown);
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [form]);
+    //     window.addEventListener("keydown", handleKeyDown);
+    //     return () => {
+    //         window.removeEventListener("keydown", handleKeyDown);
+    //     };
+    // }, [form]);
 
     // Handle form submission
     function onSubmit(values: z.infer<typeof formSchema>) {
@@ -222,22 +215,6 @@ export function BasicDetailsForm({
 
                     <FormField
                         control={form.control}
-                        name="code"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Product Code</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        placeholder="Enter product code"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
                         name="sku"
                         render={({ field }) => (
                             <FormItem>
@@ -283,7 +260,7 @@ export function BasicDetailsForm({
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Base Price{" "}
+                                        Base Selling Price{" "}
                                         <span className="text-destructive">
                                             *
                                         </span>
@@ -301,6 +278,21 @@ export function BasicDetailsForm({
                                 </FormItem>
                             )}
                         />
+                        <div className="space-y-2">
+                            <FormLabel>
+                                Estimated Price{" "}
+                                <span className="text-destructive">*</span>
+                            </FormLabel>
+                            <FormControl>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    defaultValue={0}
+                                    step="0.01"
+                                    placeholder="0.00"
+                                />
+                            </FormControl>
+                        </div>
 
                         <FormField
                             control={form.control}
@@ -308,7 +300,7 @@ export function BasicDetailsForm({
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Stock{" "}
+                                        Base Stock{" "}
                                         <span className="text-destructive">
                                             *
                                         </span>

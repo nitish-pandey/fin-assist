@@ -69,6 +69,19 @@ export function AddTransactionDialog({
             return;
         }
 
+        // Prevent credit transactions from exceeding account balance
+        if (type === "BUY" && account && numericAmount > account.balance) {
+            toast({
+                title: "Error",
+                description: `Credit amount cannot exceed account balance of ${formatCurrency(
+                    account.balance,
+                    "USD"
+                )}`,
+                variant: "destructive",
+            });
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -213,18 +226,6 @@ export function AddTransactionDialog({
                                         onClick={() => setType("BUY")}
                                     >
                                         Credit
-                                    </Label>
-                                    <Label
-                                        htmlFor="misc"
-                                        className={cn(
-                                            "cursor-pointer rounded-md px-3 py-1 text-sm",
-                                            type === "MISC"
-                                                ? "bg-primary text-primary-foreground"
-                                                : "bg-muted"
-                                        )}
-                                        onClick={() => setType("MISC")}
-                                    >
-                                        Miscellaneous
                                     </Label>
                                 </div>
                             </div>
