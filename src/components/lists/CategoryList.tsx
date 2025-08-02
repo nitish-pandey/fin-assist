@@ -51,13 +51,27 @@ const CategoryList: React.FC<CategoryListProps> = ({
             accessorKey: "createdAt",
             header: "Created At",
             cell: (props) =>
-                new Date(props.row.original.createdAt).toLocaleDateString(),
+                new Date(props.row.original.createdAt).toLocaleDateString(
+                    undefined,
+                    {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                    }
+                ),
         },
         {
             accessorKey: "updatedAt",
             header: "Updated At",
             cell: (props) =>
-                new Date(props.row.original.updatedAt).toLocaleDateString(),
+                new Date(props.row.original.updatedAt).toLocaleDateString(
+                    undefined,
+                    {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                    }
+                ),
             enableSorting: false,
         },
         {
@@ -79,7 +93,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
             data={categories}
             allowPagination={true}
             allowSearch={true}
-            allowSelection={true}
+            allowSelection={false}
         />
     );
 };

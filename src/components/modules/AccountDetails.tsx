@@ -39,8 +39,8 @@ const AccountDetails = ({
     const [localAccount, setLocalAccount] = useState<Account | null>(account);
     const paymentColumns: ColumnDef<Transaction>[] = [
         {
-            header: "ID",
-            accessorKey: "id",
+            header: "Description",
+            accessorKey: "description",
         },
         {
             header: "Amount",

@@ -1,444 +1,325 @@
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
-import {
-    Building,
-    Mail,
-    Globe,
-    User,
-    CreditCard,
-    Edit,
-    Clock,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useMemo } from "react";
+import { Building, Mail, Globe, CreditCard, Clock } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Organization } from "@/data/types";
 import { api } from "@/utils/api";
 import EditOrgModal from "@/components/modals/EditOrgInfo";
 import { useOrg } from "@/providers/org-provider";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function OrgInfoPage() {
     const { orgId, refetch, organization } = useOrg();
-    const [activeTab, setActiveTab] = useState("overview");
 
-    if (!organization) return <ErrorState />;
+    const timeFormatted = useMemo(() => {
+        if (!organization?.createdAt) return "N/A";
+        return formatTimeAgo(organization.createdAt);
+    }, [organization?.createdAt]);
 
-    const onEditSubmit = async (updatedData: Partial<Organization>) => {
-        await api.put(`/orgs/${orgId}`, { ...organization, ...updatedData });
-        refetch();
+    if (!organization) return <LoadingState />;
+
+    const handleEditSubmit = async (updatedData: Partial<Organization>) => {
+        try {
+            await api.put(`/orgs/${orgId}`, {
+                ...organization,
+                ...updatedData,
+            });
+            refetch();
+        } catch (error) {
+            console.error("Failed to update organization:", error);
+        }
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
-            {/* Hero Section */}
-            <div className="bg-white border-b">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                        <div className="flex items-center gap-5">
-                            <Avatar className="h-24 w-24 border-4 border-white shadow-lg rounded-xl">
+        <div className="bg-gray-50/50 p-4 md:p-8">
+            <div className="max-w-6xl mx-auto space-y-8">
+                {/* Header */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-sm">
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                        <div className="flex items-center gap-4">
+                            <Avatar className="h-20 w-20 rounded-xl shadow-sm border-2 border-gray-100">
                                 <AvatarImage
                                     src={organization.logo || undefined}
                                     alt={`${organization.name} logo`}
                                 />
-                                <AvatarFallback className="bg-primary/10">
-                                    <Building className="h-12 w-12 text-primary" />
+                                <AvatarFallback className="bg-blue-50 text-blue-600 text-xl font-semibold rounded-xl">
+                                    {organization.name.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
-                            <div>
+                            <div className="space-y-2">
                                 <div className="flex items-center gap-3">
-                                    <h1 className="text-3xl font-bold text-slate-900">
+                                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
                                         {organization.name}
                                     </h1>
-                                    <Badge
-                                        variant="outline"
-                                        className="bg-primary/10 text-primary border-primary/20"
-                                    >
+                                    <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">
                                         Active
                                     </Badge>
                                 </div>
-                                <div className="flex items-center gap-2 mt-1 text-slate-500">
-                                    <Globe className="h-4 w-4" />
-                                    <span>
-                                        {organization.domain || "No domain"}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2 mt-1 text-slate-500">
-                                    <Clock className="h-4 w-4" />
-                                    <span>
-                                        Created{" "}
-                                        {formatTimeAgo(organization.createdAt)}
-                                    </span>
+                                <div className="flex flex-col gap-1 text-sm text-gray-600">
+                                    <div className="flex items-center gap-2">
+                                        <Globe className="h-4 w-4" />
+                                        <span>
+                                            {organization.domain || "No domain"}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="h-4 w-4" />
+                                        <span>Created {timeFormatted}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="flex flex-wrap gap-3">
+                        <div className="md:ml-auto">
                             <EditOrgModal
                                 orgData={organization}
-                                onSubmit={onEditSubmit}
+                                onSubmit={handleEditSubmit}
                             />
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <Tabs
-                    defaultValue="overview"
-                    value={activeTab}
-                    onValueChange={setActiveTab}
-                    className="w-full"
-                >
-                    <TabsList className="mb-8">
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="details">Details</TabsTrigger>
-                        <TabsTrigger value="history">History</TabsTrigger>
-                    </TabsList>
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Organization Details */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <Card className="border-gray-200 shadow-sm">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg font-semibold text-gray-900">
+                                    Organization Details
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <InfoField
+                                    icon={Building}
+                                    label="Organization Name"
+                                    value={organization.name}
+                                    iconColor="text-blue-600"
+                                />
+                                <InfoField
+                                    icon={Mail}
+                                    label="Contact Email"
+                                    value={organization.contact}
+                                    iconColor="text-emerald-600"
+                                />
+                                <InfoField
+                                    icon={Globe}
+                                    label="Domain"
+                                    value={organization.domain}
+                                    iconColor="text-purple-600"
+                                />
 
-                    <TabsContent value="overview" className="space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <Card className="col-span-2">
-                                <CardContent className="p-6">
-                                    <h2 className="text-xl font-semibold mb-4 text-slate-900">
-                                        Organization Information
-                                    </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <InfoCard
-                                            icon={Building}
-                                            label="Organization Name"
-                                            value={organization.name}
-                                            iconColor="text-emerald-500"
-                                            bgColor="bg-emerald-50"
-                                        />
-                                        <InfoCard
-                                            icon={Mail}
-                                            label="Contact Email"
-                                            value={organization.contact}
-                                            iconColor="text-blue-500"
-                                            bgColor="bg-blue-50"
-                                        />
-                                        <InfoCard
-                                            icon={Globe}
-                                            label="Domain"
-                                            value={organization.domain}
-                                            iconColor="text-indigo-500"
-                                            bgColor="bg-indigo-50"
-                                        />
-                                        <InfoCard
-                                            icon={User}
-                                            label="Owner ID"
-                                            value={organization.ownerId}
-                                            iconColor="text-violet-500"
-                                            bgColor="bg-violet-50"
-                                        />
+                                {organization.description && (
+                                    <div className="pt-4 border-t border-gray-100">
+                                        <p className="text-sm font-medium text-gray-700 mb-2">
+                                            Description
+                                        </p>
+                                        <p className="text-gray-600 leading-relaxed">
+                                            {organization.description}
+                                        </p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
 
-                            <Card>
-                                <CardContent className="p-6">
-                                    <h2 className="text-xl font-semibold mb-4 text-slate-900">
-                                        Tax Information
-                                    </h2>
-                                    <div className="space-y-4">
-                                        <InfoCard
-                                            icon={CreditCard}
-                                            label="PAN"
-                                            value={organization.pan}
-                                            iconColor="text-amber-500"
-                                            bgColor="bg-amber-50"
-                                        />
-                                        <InfoCard
-                                            icon={CreditCard}
-                                            label="VAT"
-                                            value={organization.vat}
-                                            iconColor="text-rose-500"
-                                            bgColor="bg-rose-50"
-                                        />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
+                    {/* Tax Information */}
+                    <div className="space-y-6">
+                        <Card className="border-gray-200 shadow-sm">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg font-semibold text-gray-900">
+                                    Tax Information
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <InfoField
+                                    icon={CreditCard}
+                                    label="PAN"
+                                    value={organization.pan}
+                                    iconColor="text-amber-600"
+                                />
+                            </CardContent>
+                        </Card>
 
-                        <Card>
-                            <CardContent className="p-6">
-                                <h2 className="text-xl font-semibold mb-4 text-slate-900">
+                        {/* Timestamps */}
+                        <Card className="border-gray-200 shadow-sm">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-lg font-semibold text-gray-900">
                                     Timeline
-                                </h2>
-                                <div className="space-y-6">
-                                    <TimelineItem
-                                        title="Organization Created"
-                                        date={organization.createdAt}
-                                        icon={Building}
-                                        iconColor="text-green-500"
-                                        bgColor="bg-green-50"
-                                    />
-                                    <TimelineItem
-                                        title="Last Updated"
-                                        date={organization.updatedAt}
-                                        icon={Edit}
-                                        iconColor="text-blue-500"
-                                        bgColor="bg-blue-50"
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="details">
-                        <Card>
-                            <CardContent className="p-6">
-                                <h2 className="text-xl font-semibold mb-6 text-slate-900">
-                                    Detailed Information
-                                </h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-3">
                                     <div>
-                                        <h3 className="text-lg font-medium mb-4 text-slate-800">
-                                            Organization Details
-                                        </h3>
-                                        <div className="space-y-4">
-                                            <DetailItem
-                                                label="Name"
-                                                value={organization.name}
-                                            />
-                                            <DetailItem
-                                                label="Contact"
-                                                value={organization.contact}
-                                            />
-                                            <DetailItem
-                                                label="Domain"
-                                                value={organization.domain}
-                                            />
-                                            <DetailItem
-                                                label="Owner ID"
-                                                value={organization.ownerId}
-                                            />
-                                        </div>
+                                        <p className="text-sm font-medium text-gray-700">
+                                            Created
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            {formatDate(organization.createdAt)}
+                                        </p>
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-medium mb-4 text-slate-800">
-                                            Tax Information
-                                        </h3>
-                                        <div className="space-y-4">
-                                            <DetailItem
-                                                label="PAN"
-                                                value={organization.pan}
-                                            />
-                                            <DetailItem
-                                                label="VAT"
-                                                value={organization.vat}
-                                            />
-                                            <DetailItem
-                                                label="VAT Status"
-                                                value={
-                                                    organization.vatStatus ||
-                                                    "N/A"
-                                                }
-                                            />
-                                        </div>
-
-                                        <h3 className="text-lg font-medium mt-8 mb-4 text-slate-800">
-                                            Timestamps
-                                        </h3>
-                                        <div className="space-y-4">
-                                            <DetailItem
-                                                label="Created At"
-                                                value={formatDate(
-                                                    organization.createdAt
-                                                )}
-                                            />
-                                            <DetailItem
-                                                label="Updated At"
-                                                value={formatDate(
-                                                    organization.updatedAt
-                                                )}
-                                            />
-                                        </div>
+                                        <p className="text-sm font-medium text-gray-700">
+                                            Last Updated
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            {formatDate(organization.updatedAt)}
+                                        </p>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
-                    </TabsContent>
-
-                    <TabsContent value="history">
-                        <Card>
-                            <CardContent className="p-6">
-                                <h2 className="text-xl font-semibold mb-6 text-slate-900">
-                                    Organization History
-                                </h2>
-                                <div className="space-y-6">
-                                    <HistoryItem
-                                        action="Organization Created"
-                                        date={organization.createdAt}
-                                        user="System"
-                                        details="Initial organization setup"
-                                    />
-                                    <HistoryItem
-                                        action="Information Updated"
-                                        date={organization.updatedAt}
-                                        user="Admin"
-                                        details="Organization information was updated"
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+                    </div>
+                </div>
             </div>
         </div>
     );
 }
 
-const InfoCard = ({
+// Optimized component for displaying organization information fields
+const InfoField = ({
     icon: Icon,
     label,
     value,
-    iconColor = "text-primary",
-    bgColor = "bg-primary/10",
+    iconColor = "text-gray-600",
 }: {
     icon: React.ElementType;
     label: string;
     value?: string | null;
     iconColor?: string;
-    bgColor?: string;
 }) => (
-    <div className="flex items-start gap-4 p-4 bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-        <div className={`${bgColor} p-3 rounded-lg`}>
-            <Icon className={`h-5 w-5 ${iconColor}`} />
+    <div className="flex items-start gap-3 py-3">
+        <div className="mt-0.5">
+            <Icon className={`h-4 w-4 ${iconColor}`} />
         </div>
-        <div>
-            <p className="text-sm font-medium text-slate-500">{label}</p>
-            <p className="text-base font-semibold text-slate-900 mt-1">
-                {value || "N/A"}
+        <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-gray-700">{label}</p>
+            <p className="text-sm text-gray-900 mt-0.5 break-words">
+                {value || (
+                    <span className="text-gray-400 italic">Not provided</span>
+                )}
             </p>
         </div>
     </div>
 );
 
-const DetailItem = ({
-    label,
-    value,
-}: {
-    label: string;
-    value?: string | null;
-}) => (
-    <div>
-        <p className="text-sm font-medium text-slate-500">{label}</p>
-        <p className="text-base font-semibold text-slate-900 mt-1">
-            {value || "N/A"}
-        </p>
-        <Separator className="mt-3" />
-    </div>
-);
-
-const TimelineItem = ({
-    title,
-    date,
-    icon: Icon,
-    iconColor = "text-primary",
-    bgColor = "bg-primary/10",
-}: {
-    title: string;
-    date?: string;
-    icon: React.ElementType;
-    iconColor?: string;
-    bgColor?: string;
-}) => (
-    <div className="flex items-start gap-4">
-        <div className={`${bgColor} p-3 rounded-full shrink-0`}>
-            <Icon className={`h-5 w-5 ${iconColor}`} />
-        </div>
-        <div>
-            <p className="font-medium text-slate-900">{title}</p>
-            <p className="text-sm text-slate-500 mt-1">{formatDate(date)}</p>
-        </div>
-    </div>
-);
-
-const HistoryItem = ({
-    action,
-    date,
-    user,
-    details,
-}: {
-    action: string;
-    date?: string;
-    user: string;
-    details: string;
-}) => (
-    <div className="border-l-2 border-slate-200 pl-6 pb-2 relative">
-        <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-primary"></div>
-        <p className="font-medium text-slate-900">{action}</p>
-        <p className="text-sm text-slate-500 mt-1">{formatDate(date)}</p>
-        <div className="mt-2 flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">
-                {user}
-            </Badge>
-            <p className="text-sm text-slate-600">{details}</p>
-        </div>
-    </div>
-);
-
-const ErrorState = () => (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-        <Card className="max-w-md w-full shadow-lg border rounded-lg overflow-hidden">
-            <div className="bg-red-50 p-6 flex flex-col items-center">
-                <div className="bg-red-100 p-3 rounded-full mb-4">
-                    <Building className="h-8 w-8 text-red-500" />
+// Loading state with improved skeleton design
+const LoadingState = () => (
+    <div className="min-h-screen bg-gray-50/50 p-4 md:p-8">
+        <div className="max-w-6xl mx-auto space-y-8">
+            <Card className="border-gray-200 shadow-sm">
+                <div className="p-6 md:p-8">
+                    <div className="flex items-center gap-4">
+                        <Skeleton className="h-20 w-20 rounded-xl" />
+                        <div className="space-y-3 flex-1">
+                            <Skeleton className="h-8 w-64" />
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-4 w-32" />
+                        </div>
+                    </div>
                 </div>
-                <h2 className="text-xl font-bold text-red-700 mb-2">
-                    Organization Not Found
-                </h2>
-                <p className="text-center text-red-600">
-                    We couldn't retrieve the organization details at this time.
-                </p>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-6">
+                    <Card className="border-gray-200 shadow-sm">
+                        <div className="p-6">
+                            <Skeleton className="h-6 w-48 mb-6" />
+                            <div className="space-y-4">
+                                {Array.from({ length: 4 }).map((_, i) => (
+                                    <div key={i} className="flex gap-3 py-3">
+                                        <Skeleton className="h-4 w-4 mt-0.5" />
+                                        <div className="space-y-2 flex-1">
+                                            <Skeleton className="h-4 w-24" />
+                                            <Skeleton className="h-4 w-32" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+
+                <div className="space-y-6">
+                    <Card className="border-gray-200 shadow-sm">
+                        <div className="p-6">
+                            <Skeleton className="h-6 w-32 mb-6" />
+                            <div className="space-y-4">
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                    <div key={i} className="flex gap-3 py-3">
+                                        <Skeleton className="h-4 w-4 mt-0.5" />
+                                        <div className="space-y-2 flex-1">
+                                            <Skeleton className="h-4 w-16" />
+                                            <Skeleton className="h-4 w-24" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card className="border-gray-200 shadow-sm">
+                        <div className="p-6">
+                            <Skeleton className="h-6 w-24 mb-6" />
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-16" />
+                                    <Skeleton className="h-4 w-32" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-20" />
+                                    <Skeleton className="h-4 w-28" />
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
             </div>
-            <CardContent className="p-6">
-                <div className="space-y-4">
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-4 w-1/2" />
-                    </div>
-                    <Separator />
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-4 w-2/3" />
-                    </div>
-                    <Button className="w-full" variant="outline">
-                        Try Again
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
+        </div>
     </div>
 );
 
-const formatDate = (dateString?: string) =>
-    dateString ? new Date(dateString).toLocaleString() : "N/A";
-
-const formatTimeAgo = (dateString?: string) => {
+// Utility functions for date formatting
+const formatDate = (dateString?: string): string => {
     if (!dateString) return "N/A";
 
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    try {
+        return new Date(dateString).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    } catch {
+        return "Invalid date";
+    }
+};
 
-    if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
-    if (diffInSeconds < 3600)
-        return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400)
-        return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    if (diffInSeconds < 2592000)
-        return `${Math.floor(diffInSeconds / 86400)} days ago`;
-    if (diffInSeconds < 31536000)
-        return `${Math.floor(diffInSeconds / 2592000)} months ago`;
+const formatTimeAgo = (dateString?: string): string => {
+    if (!dateString) return "N/A";
 
-    return `${Math.floor(diffInSeconds / 31536000)} years ago`;
+    try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor(
+            (now.getTime() - date.getTime()) / 1000
+        );
+
+        if (diffInSeconds < 60) return "just now";
+        if (diffInSeconds < 3600)
+            return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400)
+            return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 2592000)
+            return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        if (diffInSeconds < 31536000)
+            return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
+
+        return `${Math.floor(diffInSeconds / 31536000)}y ago`;
+    } catch {
+        return "Invalid date";
+    }
 };

@@ -82,7 +82,6 @@ export default function EditOrgModal({ onSubmit, orgData }: EditOrgModalProps) {
                             { id: "name", label: "Name", required: true },
                             { id: "contact", label: "Contact", required: true },
                             { id: "pan", label: "PAN", required: true },
-                            { id: "vat", label: "VAT", required: true },
                             { id: "domain", label: "Domain", required: false },
                         ].map(({ id, label, required }) => (
                             <div key={id} className="space-y-2">
