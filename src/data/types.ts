@@ -124,15 +124,12 @@ export interface Product {
     name: string;
     categoryId: string;
     image: string | null;
-    buyPrice: number;
-    estimatedPrice: number;
-    stock: number;
-    code: string;
     sku: string;
     description: string | null;
     organizationId: string;
     createdAt: string;
     updatedAt: string;
+    isPublished: boolean;
 
     variants?: ProductVariant[];
     category?: Category | null;

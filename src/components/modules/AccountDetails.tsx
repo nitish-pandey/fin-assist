@@ -195,7 +195,13 @@ const AccountDetails = ({
                                               ]
                                             : paymentColumns
                                     }
-                                    data={localAccount.transactions}
+                                    data={localAccount.transactions.sort(
+                                        (a, b) =>
+                                            new Date(b.createdAt).getTime() -
+                                            new Date(a.createdAt).getTime()
+                                    )}
+                                    showFooter={true}
+                                    allowPagination={true}
                                 />
                             ) : (
                                 <p className="bg-white rounded-lg p-2">
@@ -223,6 +229,8 @@ const AccountDetails = ({
                                     data={localAccount.transactions.filter(
                                         (t) => t.type === "BUY" && t.orderId
                                     )}
+                                    showFooter={true}
+                                    allowPagination={true}
                                 />
                             ) : (
                                 <p className="bg-white rounded-lg p-2">
@@ -250,6 +258,8 @@ const AccountDetails = ({
                                     data={localAccount.transactions.filter(
                                         (t) => t.type === "SELL" && t.orderId
                                     )}
+                                    showFooter={true}
+                                    allowPagination={true}
                                 />
                             ) : (
                                 <p className="bg-white rounded-lg p-2">
@@ -267,7 +277,7 @@ const AccountDetails = ({
                                     title="Other Payments"
                                     allowSearch={false}
                                     allowExport={false}
-                                    allowPagination={false}
+                                    allowPagination={true}
                                     // columns={[
                                     //     ...paymentColumns,
                                     //     {
@@ -286,6 +296,7 @@ const AccountDetails = ({
                                     data={localAccount.transactions.filter(
                                         (t) => !t.orderId
                                     )}
+                                    showFooter={true}
                                 />
                             ) : (
                                 <p className="bg-white rounded-lg p-2">

@@ -16,7 +16,6 @@ import EntityInfo from "./pages/admin/basic/Entity";
 import CreateAccountPage from "./pages/admin/accounts/CreateAccount";
 import ViewAccountPage from "./pages/admin/accounts/ViewAccount";
 import OrderViewPage from "./pages/admin/order/view";
-import CreateOrderPage from "./pages/admin/order/create";
 import SingleOrderPage from "./pages/admin/order/SingleOrderPage";
 import DashboardPage from "./pages/admin/basic/Dashboard";
 import AllTransactionPage from "./pages/admin/transactions/all";
@@ -174,10 +173,6 @@ export const routes: RouteObject[] = [
                             {
                                 element: <OrderViewPage />,
                                 path: "view",
-                            },
-                            {
-                                element: <CreateOrderPage />,
-                                path: "create",
                             },
                             {
                                 element: <SingleOrderPage />,

@@ -34,11 +34,103 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import {
+    Dialog,
+    DialogTrigger,
+    DialogContent,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+    DialogClose,
+} from "@/components/ui/dialog";
 import { useOrg } from "@/providers/org-provider";
 import { useParams } from "react-router-dom";
 import { api } from "@/utils/api";
 import { Product } from "@/data/types";
 import { RemoveModal } from "@/components/modals/RemoveModal";
+import { useToast } from "@/hooks/use-toast";
+
+// Custom Publish Modal Component
+const PublishModal: React.FC<{
+    isPublished: boolean;
+    onToggle: () => Promise<void>;
+    loading: boolean;
+}> = ({ isPublished, onToggle, loading }) => {
+    const [modalLoading, setModalLoading] = useState(false);
+    const { toast } = useToast();
+
+    const handleToggle = async () => {
+        try {
+            setModalLoading(true);
+            await onToggle();
+            toast({
+                title: "Success",
+                description: `Product ${
+                    isPublished ? "unpublished" : "published"
+                } successfully.`,
+            });
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: `Failed to ${
+                    isPublished ? "unpublish" : "publish"
+                } product.`,
+                variant: "destructive",
+            });
+        } finally {
+            setModalLoading(false);
+        }
+    };
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button
+                    variant={isPublished ? "outline" : "default"}
+                    disabled={loading}
+                >
+                    {loading
+                        ? isPublished
+                            ? "Unpublishing..."
+                            : "Publishing..."
+                        : isPublished
+                        ? "Unpublish"
+                        : "Publish"}
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>
+                    {isPublished ? "Unpublish Product" : "Publish Product"}
+                </DialogTitle>
+                <DialogDescription>
+                    {isPublished
+                        ? "Are you sure you want to unpublish this product? It will no longer be visible to customers."
+                        : "Are you sure you want to publish this product? It will be visible to customers."}
+                </DialogDescription>
+                <DialogFooter className="flex justify-end gap-2">
+                    <DialogClose asChild>
+                        <Button variant="secondary" disabled={modalLoading}>
+                            Cancel
+                        </Button>
+                    </DialogClose>
+                    <Button
+                        onClick={handleToggle}
+                        variant={isPublished ? "outline" : "default"}
+                        disabled={modalLoading}
+                    >
+                        {modalLoading
+                            ? isPublished
+                                ? "Unpublishing..."
+                                : "Publishing..."
+                            : isPublished
+                            ? "Unpublish"
+                            : "Publish"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
 
 const SingleProductPage = () => {
     const { productId } = useParams<{ productId: string }>() as {
@@ -50,13 +142,14 @@ const SingleProductPage = () => {
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [publishLoading, setPublishLoading] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
             try {
                 setLoading(true);
                 const response = await api.get(
-                    `orgs/${orgId}/products/${productId}`
+                    `/orgs/${orgId}/products/${productId}`
                 );
                 setProduct(response.data);
             } catch (error) {
@@ -83,6 +176,31 @@ const SingleProductPage = () => {
             console.error("Error deleting product:", error);
             setError("Failed to delete product. Please try again.");
             throw new Error("Failed to delete product");
+        }
+    };
+
+    const handleTogglePublish = async () => {
+        if (!product) return;
+        try {
+            setPublishLoading(true);
+            const response = await api.put(
+                `/orgs/${orgId}/products/${product.id}`,
+                {
+                    isPublished: !product.isPublished,
+                }
+            );
+            setProduct(response.data.data);
+            console.log(
+                `Product ${
+                    product.isPublished ? "unpublished" : "published"
+                } successfully`
+            );
+        } catch (error) {
+            console.error("Error updating product:", error);
+            setError("Failed to update product. Please try again.");
+            throw new Error("Failed to update product");
+        } finally {
+            setPublishLoading(false);
         }
     };
 
@@ -149,7 +267,7 @@ const SingleProductPage = () => {
     }
     const totalStock = product.variants
         ? product.variants.reduce((sum, variant) => sum + variant.stock, 0)
-        : product.stock;
+        : 0;
 
     const lowStockThreshold = 5;
     const hasLowStock = totalStock <= lowStockThreshold;
@@ -184,6 +302,11 @@ const SingleProductPage = () => {
                 </div>
 
                 <div className="flex items-center space-x-2">
+                    <PublishModal
+                        isPublished={product.isPublished}
+                        onToggle={handleTogglePublish}
+                        loading={publishLoading}
+                    />
                     <RemoveModal
                         title="Delete Product"
                         text="Delete Product"
@@ -213,19 +336,30 @@ const SingleProductPage = () => {
                                     )}
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-lg font-semibold">
-                                        Rs {product.buyPrice.toFixed(2)}
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <Badge
+                                            variant={
+                                                hasLowStock
+                                                    ? "destructive"
+                                                    : "secondary"
+                                            }
+                                        >
+                                            {hasLowStock
+                                                ? "Low Stock"
+                                                : "In Stock"}
+                                        </Badge>
+                                        <Badge
+                                            variant={
+                                                product.isPublished
+                                                    ? "default"
+                                                    : "secondary"
+                                            }
+                                        >
+                                            {product.isPublished
+                                                ? "Published"
+                                                : "Draft"}
+                                        </Badge>
                                     </div>
-                                    <Badge
-                                        variant={
-                                            hasLowStock
-                                                ? "destructive"
-                                                : "secondary"
-                                        }
-                                        className="mt-1"
-                                    >
-                                        {hasLowStock ? "Low Stock" : "In Stock"}
-                                    </Badge>
                                 </div>
                             </div>
 
@@ -233,11 +367,23 @@ const SingleProductPage = () => {
 
                             {/* Product Information */}
                             <div className="grid grid-cols-2 gap-y-4 text-sm mb-6">
-                                <div className="font-medium">Product Code</div>
-                                <div>{product.code}</div>
-
                                 <div className="font-medium">SKU</div>
                                 <div>{product.sku}</div>
+
+                                <div className="font-medium">Status</div>
+                                <div>
+                                    <Badge
+                                        variant={
+                                            product.isPublished
+                                                ? "default"
+                                                : "secondary"
+                                        }
+                                    >
+                                        {product.isPublished
+                                            ? "Published"
+                                            : "Draft"}
+                                    </Badge>
+                                </div>
 
                                 <div className="font-medium">Total Stock</div>
                                 <div>{totalStock} units</div>
