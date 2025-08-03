@@ -126,7 +126,7 @@ export function ProductDetails({
                                                     variantId:
                                                         firstVariant?.id || "",
                                                     rate:
-                                                        firstVariant?.price ||
+                                                        firstVariant?.estimatedPrice ||
                                                         0,
                                                 });
                                             }}
@@ -144,7 +144,9 @@ export function ProductDetails({
                                                     id: v.id,
                                                     label: `${
                                                         v.name
-                                                    } - $${v.price.toFixed(2)}`,
+                                                    } - $${v.estimatedPrice.toFixed(
+                                                        2
+                                                    )}`,
                                                 }))}
                                                 selectedId={
                                                     item.variantId || ""
@@ -162,7 +164,7 @@ export function ProductDetails({
                                                             {
                                                                 variantId:
                                                                     variant.id,
-                                                                rate: variant.price,
+                                                                rate: variant.estimatedPrice,
                                                             }
                                                         );
                                                     }

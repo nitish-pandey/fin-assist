@@ -28,6 +28,7 @@ interface EditOrderFormData {
         label: string;
         type: "fixed" | "percentage";
         percentage: number;
+        bearedByEntity: boolean;
     }[];
     payments: { amount: number; accountId: string; details: object }[];
 }
@@ -68,6 +69,7 @@ const EditOrderPage = () => {
                     label: c.label,
                     type: "fixed",
                     percentage: (c.amount / order.baseAmount) * 100 || 0,
+                    bearedByEntity: c.bearedByEntity || false,
                 })) || [],
             payments:
                 order.transactions?.map((p) => ({

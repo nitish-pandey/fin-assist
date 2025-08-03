@@ -28,6 +28,7 @@ interface EditOrderFormData {
         type: "fixed" | "percentage";
         isVat?: boolean;
         percentage: number;
+        bearedByEntity: boolean;
     }[];
     payments: { amount: number; accountId: string; details: object }[];
 }
@@ -124,6 +125,7 @@ EditOrderFormProps) {
                 label: string;
                 type: "fixed" | "percentage";
                 percentage: number;
+                bearedByEntity: boolean;
             }[]
         ) => {
             setEditOrderState((prev) => ({

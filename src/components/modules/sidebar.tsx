@@ -185,13 +185,18 @@ export default function Sidebar() {
                     current: org.id === orgId,
                 })) || [];
         const permittedOrgs: OrgData[] =
-            permissions?.map((perm) => ({
-                id: perm.organizationId,
-                name: perm.organizationId || "Organization",
-                logo: <Notebook />,
-                type: "Shared",
-                current: perm.organizationId == orgId,
-            })) || [];
+            permissions
+                ?.filter(
+                    (perm) =>
+                        !ownedOrgs.some((org) => org.id === perm.organizationId)
+                )
+                .map((perm) => ({
+                    id: perm.organizationId,
+                    name: perm.organization?.name || "Shared Org",
+                    logo: <Notebook />,
+                    type: "Shared",
+                    current: perm.organizationId === orgId,
+                })) || [];
         setTeams([...ownedOrgs, ...permittedOrgs]);
     }, [orgs, permissions, orgId]);
 

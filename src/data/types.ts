@@ -107,7 +107,8 @@ export interface ProductVariant {
     description: string | null;
     productId: string;
 
-    price: number;
+    buyPrice: number;
+    estimatedPrice: number;
     stock: number;
 
     values: object;
@@ -123,7 +124,8 @@ export interface Product {
     name: string;
     categoryId: string;
     image: string | null;
-    price: number;
+    buyPrice: number;
+    estimatedPrice: number;
     stock: number;
     code: string;
     sku: string;
@@ -161,7 +163,12 @@ export interface Order {
     entityId?: string | null;
     createdAt: string;
     updatedAt: string;
-    charges?: { id: string; amount: number; label: string }[];
+    charges?: {
+        id: string;
+        amount: number;
+        label: string;
+        bearedByEntity: boolean;
+    }[];
 
     organization?: Organization | null;
     entity?: Entity | null;

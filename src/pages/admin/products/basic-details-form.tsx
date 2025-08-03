@@ -31,7 +31,8 @@ import AddCategory from "@/components/modals/AddCategory";
 const formSchema = z.object({
     name: z.string().min(1, "Product name is required"),
     description: z.string().optional(),
-    price: z.coerce.number().min(0.01, "Price must be greater than zero"),
+    buyPrice: z.coerce.number().min(0.01, "Price must be greater than zero"),
+    sellPrice: z.coerce.number().min(0.01, "Price must be greater than zero"),
     stock: z.coerce.number().min(0, "Stock cannot be negative"),
     sku: z
         .string()
@@ -61,7 +62,8 @@ export function BasicDetailsForm({
         defaultValues: {
             name: product.name,
             description: product.description,
-            price: product.price || 0,
+            buyPrice: product.buyPrice || 0,
+            sellPrice: product.sellPrice || 0,
             stock: product.stock || 0,
             sku: product.sku || "",
             categoryId: product.categoryId || "",
@@ -81,7 +83,8 @@ export function BasicDetailsForm({
                 if (
                     formValues.name !== product.name ||
                     formValues.description !== product.description ||
-                    formValues.price !== product.price ||
+                    formValues.buyPrice !== product.buyPrice ||
+                    formValues.sellPrice !== product.sellPrice ||
                     formValues.stock !== product.stock ||
                     formValues.sku !== product.sku ||
                     formValues.categoryId !== product.categoryId
@@ -101,7 +104,8 @@ export function BasicDetailsForm({
         if (
             product.name !== form.getValues("name") ||
             product.description !== form.getValues("description") ||
-            product.price !== form.getValues("price") ||
+            product.buyPrice !== form.getValues("buyPrice") ||
+            product.sellPrice !== form.getValues("sellPrice") ||
             product.stock !== form.getValues("stock") ||
             product.sku !== form.getValues("sku") ||
             product.categoryId !== selectedCategoryId
@@ -109,7 +113,8 @@ export function BasicDetailsForm({
             form.reset({
                 name: product.name,
                 description: product.description,
-                price: product.price,
+                buyPrice: product.buyPrice,
+                sellPrice: product.sellPrice,
                 stock: product.stock,
                 sku: product.sku,
                 categoryId: product.categoryId || "",
@@ -256,11 +261,11 @@ export function BasicDetailsForm({
                     <div className="grid grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
-                            name="price"
+                            name="buyPrice"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Base Selling Price{" "}
+                                        Cost Price{" "}
                                         <span className="text-destructive">
                                             *
                                         </span>
@@ -278,21 +283,30 @@ export function BasicDetailsForm({
                                 </FormItem>
                             )}
                         />
-                        <div className="space-y-2">
-                            <FormLabel>
-                                Estimated Price{" "}
-                                <span className="text-destructive">*</span>
-                            </FormLabel>
-                            <FormControl>
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    defaultValue={0}
-                                    step="0.01"
-                                    placeholder="0.00"
-                                />
-                            </FormControl>
-                        </div>
+                        <FormField
+                            control={form.control}
+                            name="sellPrice"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>
+                                        Selling Price{" "}
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         <FormField
                             control={form.control}

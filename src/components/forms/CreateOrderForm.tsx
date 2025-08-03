@@ -3,7 +3,13 @@
 import type React from "react";
 import { useState, useMemo } from "react";
 import type { Entity, Product, Account } from "@/data/types";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -37,9 +43,9 @@ export function CreateOrderForm({
     onCreateOrder,
 }: CreateOrderFormProps) {
     const [type, setType] = useState<"BUY" | "SELL">("BUY");
-    const [selectedProducts, setSelectedProducts] = useState<{ id: string; quantity: number }[]>(
-        []
-    );
+    const [selectedProducts, setSelectedProducts] = useState<
+        { id: string; quantity: number }[]
+    >([]);
     const [selectedPayments, setSelectedPayments] = useState<
         { amount: number; accountId: string }[]
     >([]);
@@ -48,22 +54,35 @@ export function CreateOrderForm({
     const totalProductsAmount = useMemo(() => {
         return selectedProducts.reduce((sum, product) => {
             const productDetails = products.find((p) => p.id === product.id);
-            return sum + (productDetails?.price || 0) * product.quantity;
+            return (
+                sum + (productDetails?.estimatedPrice || 0) * product.quantity
+            );
         }, 0);
     }, [selectedProducts, products]);
 
     const totalPaymentsAmount = useMemo(() => {
-        return selectedPayments.reduce((sum, payment) => sum + payment.amount, 0);
+        return selectedPayments.reduce(
+            (sum, payment) => sum + payment.amount,
+            0
+        );
     }, [selectedPayments]);
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        onCreateOrder(type, selectedProducts, selectedPayments, selectedEntity?.id);
+        onCreateOrder(
+            type,
+            selectedProducts,
+            selectedPayments,
+            selectedEntity?.id
+        );
     };
 
     const adjustProductQuantity = (index: number, change: number) => {
         const updatedProducts = [...selectedProducts];
-        updatedProducts[index].quantity = Math.max(1, updatedProducts[index].quantity + change);
+        updatedProducts[index].quantity = Math.max(
+            1,
+            updatedProducts[index].quantity + change
+        );
         setSelectedProducts(updatedProducts);
     };
 
@@ -79,7 +98,9 @@ export function CreateOrderForm({
         <form onSubmit={handleFormSubmit} className="space-y-8">
             <Card className="w-full max-w-4xl mx-auto">
                 <CardHeader>
-                    <CardTitle className="text-3xl font-bold">Create New Order</CardTitle>
+                    <CardTitle className="text-3xl font-bold">
+                        Create New Order
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Tabs defaultValue="products" className="space-y-6">
@@ -91,7 +112,9 @@ export function CreateOrderForm({
                         <TabsContent value="products">
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-semibold">Selected Products</h3>
+                                    <h3 className="text-lg font-semibold">
+                                        Selected Products
+                                    </h3>
                                     <AddProductDialog
                                         products={products}
                                         onAddProduct={(id) => {
@@ -116,8 +139,14 @@ export function CreateOrderForm({
                                                     <span className="font-medium">
                                                         {productDetails?.name}
                                                     </span>
-                                                    <Badge variant="secondary" className="ml-2">
-                                                        Rs{productDetails?.price.toFixed(2)}
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="ml-2"
+                                                    >
+                                                        Rs
+                                                        {productDetails?.estimatedPrice.toFixed(
+                                                            2
+                                                        )}
                                                     </Badge>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
@@ -125,7 +154,10 @@ export function CreateOrderForm({
                                                         variant="outline"
                                                         size="icon"
                                                         onClick={() =>
-                                                            adjustProductQuantity(index, -1)
+                                                            adjustProductQuantity(
+                                                                index,
+                                                                -1
+                                                            )
                                                         }
                                                     >
                                                         <Minus className="h-4 w-4" />
@@ -137,7 +169,10 @@ export function CreateOrderForm({
                                                         variant="outline"
                                                         size="icon"
                                                         onClick={() =>
-                                                            adjustProductQuantity(index, 1)
+                                                            adjustProductQuantity(
+                                                                index,
+                                                                1
+                                                            )
                                                         }
                                                     >
                                                         <Plus className="h-4 w-4" />
@@ -145,7 +180,9 @@ export function CreateOrderForm({
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => removeProduct(index)}
+                                                        onClick={() =>
+                                                            removeProduct(index)
+                                                        }
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
@@ -153,7 +190,8 @@ export function CreateOrderForm({
                                                 <div className="w-24 text-right">
                                                     Rs
                                                     {(
-                                                        (productDetails?.price || 0) *
+                                                        (productDetails?.estimatedPrice ||
+                                                            0) *
                                                         product.quantity
                                                     ).toFixed(2)}
                                                 </div>
@@ -166,7 +204,9 @@ export function CreateOrderForm({
                         <TabsContent value="payments">
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-semibold">Selected Payments</h3>
+                                    <h3 className="text-lg font-semibold">
+                                        Selected Payments
+                                    </h3>
                                     <AddPaymentDialog
                                         type={type}
                                         accounts={accounts}
@@ -198,12 +238,17 @@ export function CreateOrderForm({
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <span className="font-medium">
-                                                        Rs{payment.amount.toFixed(2)}
+                                                        Rs
+                                                        {payment.amount.toFixed(
+                                                            2
+                                                        )}
                                                     </span>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => removePayment(index)}
+                                                        onClick={() =>
+                                                            removePayment(index)
+                                                        }
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
@@ -216,17 +261,25 @@ export function CreateOrderForm({
                         </TabsContent>
                         <TabsContent value="entity">
                             <div className="space-y-4">
-                                <h3 className="text-lg font-semibold">Select Entity</h3>
+                                <h3 className="text-lg font-semibold">
+                                    Select Entity
+                                </h3>
                                 <SelectEntityDialog
                                     entities={entities}
                                     onSelectEntity={(entityId) =>
-                                        setSelectedEntity(entities.find((e) => e.id === entityId))
+                                        setSelectedEntity(
+                                            entities.find(
+                                                (e) => e.id === entityId
+                                            )
+                                        )
                                     }
                                 />
                                 {selectedEntity && (
                                     <Card>
                                         <CardContent className="p-4">
-                                            <h4 className="font-medium mb-2">Selected Entity:</h4>
+                                            <h4 className="font-medium mb-2">
+                                                Selected Entity:
+                                            </h4>
                                             <p>{selectedEntity.name}</p>
                                             {selectedEntity.description && (
                                                 <p className="text-sm text-muted-foreground mt-2">
@@ -245,7 +298,9 @@ export function CreateOrderForm({
                         <div className="flex justify-between items-center">
                             <RadioGroup
                                 defaultValue={type}
-                                onValueChange={(value) => setType(value as "BUY" | "SELL")}
+                                onValueChange={(value) =>
+                                    setType(value as "BUY" | "SELL")
+                                }
                                 className="flex space-x-4"
                             >
                                 <div className="flex items-center space-x-2">
@@ -271,7 +326,8 @@ export function CreateOrderForm({
                         </div>
                         {totalProductsAmount !== totalPaymentsAmount && (
                             <div className="text-sm text-red-500 font-medium">
-                                Warning: Total products amount does not match total payments amount.
+                                Warning: Total products amount does not match
+                                total payments amount.
                             </div>
                         )}
                     </div>

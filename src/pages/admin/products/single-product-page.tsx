@@ -214,7 +214,7 @@ const SingleProductPage = () => {
                                 </div>
                                 <div className="text-right">
                                     <div className="text-lg font-semibold">
-                                        Rs {product.price.toFixed(2)}
+                                        Rs {product.buyPrice.toFixed(2)}
                                     </div>
                                     <Badge
                                         variant={
@@ -304,7 +304,10 @@ const SingleProductPage = () => {
                                                                 SKU
                                                             </TableHead>
                                                             <TableHead>
-                                                                Price
+                                                                Buy Price
+                                                            </TableHead>
+                                                            <TableHead>
+                                                                Estimated Price
                                                             </TableHead>
                                                             <TableHead>
                                                                 Stock
@@ -354,7 +357,13 @@ const SingleProductPage = () => {
                                                                         </TableCell>
                                                                         <TableCell>
                                                                             Rs{" "}
-                                                                            {variant.price.toFixed(
+                                                                            {variant.buyPrice.toFixed(
+                                                                                2
+                                                                            )}
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            Rs{" "}
+                                                                            {variant.estimatedPrice.toFixed(
                                                                                 2
                                                                             )}
                                                                         </TableCell>

@@ -19,18 +19,33 @@ interface VariantsFormProps {
     isLoading: boolean;
 }
 
-export function VariantsForm({ variants, updateVariants, isLoading }: VariantsFormProps) {
+export function VariantsForm({
+    variants,
+    updateVariants,
+    isLoading,
+}: VariantsFormProps) {
     // Get all unique option names for table headers
     const optionNames =
         variants.length > 0
-            ? Object.keys(variants[0].options).filter((key) => key !== "undefined")
+            ? Object.keys(variants[0].values).filter(
+                  (key) => key !== "undefined"
+              )
             : [];
 
-    const updateVariant = (index: number, field: keyof ProductVariant, value: any) => {
+    const updateVariant = (
+        index: number,
+        field: "buyPrice" | "sellPrice" | "stock" | "sku",
+        value: any
+    ) => {
         const newVariants = [...variants];
 
-        if (field === "price" || field === "stock") {
-            newVariants[index][field] = value === "" ? 0 : Number.parseFloat(value);
+        if (
+            field === "buyPrice" ||
+            field === "sellPrice" ||
+            field === "stock"
+        ) {
+            newVariants[index][field] =
+                value === "" ? 0 : Number.parseFloat(value);
         } else {
             newVariants[index][field] = value;
         }
@@ -72,11 +87,15 @@ export function VariantsForm({ variants, updateVariants, isLoading }: VariantsFo
             {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg">
                     <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
-                    <p className="text-muted-foreground">Generating variants...</p>
+                    <p className="text-muted-foreground">
+                        Generating variants...
+                    </p>
                 </div>
             ) : variants.length === 0 ? (
                 <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                    <h3 className="text-lg font-medium">No variants available</h3>
+                    <h3 className="text-lg font-medium">
+                        No variants available
+                    </h3>
                     <p className="text-muted-foreground">
                         Add product options first to generate variants
                     </p>
@@ -89,12 +108,16 @@ export function VariantsForm({ variants, updateVariants, isLoading }: VariantsFo
                                 <TableHeader className="sticky top-0 bg-background z-10">
                                     <TableRow>
                                         {optionNames.map((option) => (
-                                            <TableHead key={option} className="font-medium">
+                                            <TableHead
+                                                key={option}
+                                                className="font-medium"
+                                            >
                                                 {option}
                                             </TableHead>
                                         ))}
                                         <TableHead>SKU</TableHead>
-                                        <TableHead>Price</TableHead>
+                                        <TableHead>Buy Price</TableHead>
+                                        <TableHead>Sell Price</TableHead>
                                         <TableHead>Stock</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -102,8 +125,11 @@ export function VariantsForm({ variants, updateVariants, isLoading }: VariantsFo
                                     {variants.map((variant, index) => (
                                         <TableRow key={index} className="group">
                                             {optionNames.map((option) => (
-                                                <TableCell key={option} className="font-medium">
-                                                    {variant.options[option]}
+                                                <TableCell
+                                                    key={option}
+                                                    className="font-medium"
+                                                >
+                                                    {variant.values[option]}
                                                 </TableCell>
                                             ))}
                                             <TableCell>
@@ -111,28 +137,68 @@ export function VariantsForm({ variants, updateVariants, isLoading }: VariantsFo
                                                     id={`variant-${index}-sku`}
                                                     value={variant.sku}
                                                     onChange={(e) =>
-                                                        updateVariant(index, "sku", e.target.value)
+                                                        updateVariant(
+                                                            index,
+                                                            "sku",
+                                                            e.target.value
+                                                        )
                                                     }
                                                     onKeyDown={(e) =>
-                                                        handleKeyDown(e, index, "sku")
+                                                        handleKeyDown(
+                                                            e,
+                                                            index,
+                                                            "sku"
+                                                        )
                                                     }
                                                     className="h-8 bg-transparent"
                                                 />
                                             </TableCell>
                                             <TableCell>
                                                 <Input
-                                                    id={`variant-${index}-price`}
+                                                    id={`variant-${index}-buyPrice`}
                                                     type="number"
-                                                    value={variant.price || ""}
+                                                    value={
+                                                        variant.buyPrice || ""
+                                                    }
                                                     onChange={(e) =>
                                                         updateVariant(
                                                             index,
-                                                            "price",
+                                                            "buyPrice",
                                                             e.target.value
                                                         )
                                                     }
                                                     onKeyDown={(e) =>
-                                                        handleKeyDown(e, index, "price")
+                                                        handleKeyDown(
+                                                            e,
+                                                            index,
+                                                            "buyPrice"
+                                                        )
+                                                    }
+                                                    min="0"
+                                                    step="0.01"
+                                                    className="h-8 bg-transparent"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Input
+                                                    id={`variant-${index}-sellPrice`}
+                                                    type="number"
+                                                    value={
+                                                        variant.sellPrice || ""
+                                                    }
+                                                    onChange={(e) =>
+                                                        updateVariant(
+                                                            index,
+                                                            "sellPrice",
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                    onKeyDown={(e) =>
+                                                        handleKeyDown(
+                                                            e,
+                                                            index,
+                                                            "sellPrice"
+                                                        )
                                                     }
                                                     min="0"
                                                     step="0.01"
@@ -152,7 +218,11 @@ export function VariantsForm({ variants, updateVariants, isLoading }: VariantsFo
                                                         )
                                                     }
                                                     onKeyDown={(e) =>
-                                                        handleKeyDown(e, index, "stock")
+                                                        handleKeyDown(
+                                                            e,
+                                                            index,
+                                                            "stock"
+                                                        )
                                                     }
                                                     min="0"
                                                     step="1"

@@ -23,7 +23,8 @@ interface AdditionalCharge {
     amount: number;
     type: "fixed" | "percentage";
     percentage: number;
-    isVat?: boolean; // Optional property to indicate if it's a VAT charge
+    isVat?: boolean;
+    bearedByEntity: boolean;
 }
 
 interface CalculationSelectorProps {
@@ -35,7 +36,8 @@ interface CalculationSelectorProps {
         label: string;
         type: "fixed" | "percentage";
         percentage: number;
-        isVat?: boolean; // Optional property to indicate if it's a VAT charge
+        isVat?: boolean;
+        bearedByEntity: boolean;
     }[];
     setDiscount: (value: number) => void;
     setCharge: (
@@ -46,6 +48,7 @@ interface CalculationSelectorProps {
             type: "fixed" | "percentage";
             percentage: number;
             isVat?: boolean;
+            bearedByEntity: boolean;
         }[]
     ) => void;
 }
@@ -150,6 +153,7 @@ export default function CalculationSelector({
                 id: Date.now().toString(),
                 label: "VAT",
                 percentage: 13, // Default 13% VAT
+                bearedByEntity: true,
                 type: "percentage",
                 amount: (subTotal * 13) / 100, // Calculate VAT based on subtotal
                 isVat: true,
@@ -159,12 +163,14 @@ export default function CalculationSelector({
     }, [vatStatus, charges, subTotal, setCharge]);
 
     const grandTotal = useMemo(() => {
-        const chargesTotal = charges.reduce((sum, c) => {
-            if (c.type === "percentage") {
-                return sum + (subTotal * c.percentage) / 100;
-            }
-            return sum + c.amount;
-        }, 0);
+        const chargesTotal = charges
+            .filter((charge) => charge.amount > 0 && charge.bearedByEntity)
+            .reduce((sum, c) => {
+                if (c.type === "percentage") {
+                    return sum + (subTotal * c.percentage) / 100;
+                }
+                return sum + c.amount;
+            }, 0);
         const total = subTotal - actualDiscount + chargesTotal;
         return Math.max(total, 0);
     }, [subTotal, actualDiscount, charges]);
@@ -175,6 +181,7 @@ export default function CalculationSelector({
             label: "",
             amount: 0,
             type: "fixed",
+            bearedByEntity: false,
             percentage: 0,
         };
         setCharge([...charges, newCharge]);
@@ -188,6 +195,7 @@ export default function CalculationSelector({
             type: "percentage",
             amount: (subTotal * 13) / 100, // Calculate VAT based on subtotal
             isVat: true,
+            bearedByEntity: true,
         };
         setCharge([...charges, vatCharge]);
     };
@@ -265,6 +273,19 @@ export default function CalculationSelector({
                         percentage: newPercentage,
                     };
                 }
+            }
+            return charge;
+        });
+        setCharge(updatedCharges);
+    };
+
+    const handleChargeBearedByChange = (
+        id: string,
+        bearedByEntity: boolean
+    ) => {
+        const updatedCharges = charges.map((charge) => {
+            if (charge.id === id) {
+                return { ...charge, bearedByEntity };
             }
             return charge;
         });
@@ -466,6 +487,54 @@ export default function CalculationSelector({
                                                         className="h-9 text-sm"
                                                     />
                                                 </div>
+                                                {!charge.isVat && (
+                                                    <div className="flex-shrink-0">
+                                                        <Label
+                                                            className="text-xs text-slate-600 mb-2 block font-medium
+                                                        "
+                                                        >
+                                                            Beared By
+                                                        </Label>
+                                                        <div className="flex gap-1">
+                                                            <Button
+                                                                type="button"
+                                                                variant={
+                                                                    charge.bearedByEntity
+                                                                        ? "default"
+                                                                        : "outline"
+                                                                }
+                                                                size="sm"
+                                                                className="h-9 px-3 text-xs font-medium"
+                                                                onClick={() =>
+                                                                    handleChargeBearedByChange(
+                                                                        charge.id,
+                                                                        true
+                                                                    )
+                                                                }
+                                                            >
+                                                                Entity
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                variant={
+                                                                    !charge.bearedByEntity
+                                                                        ? "default"
+                                                                        : "outline"
+                                                                }
+                                                                size="sm"
+                                                                className="h-9 px-3 text-xs font-medium"
+                                                                onClick={() =>
+                                                                    handleChargeBearedByChange(
+                                                                        charge.id,
+                                                                        false
+                                                                    )
+                                                                }
+                                                            >
+                                                                Vendor
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
 
                                                 {/* Type Toggle */}
                                                 {!charge.isVat && (
@@ -707,29 +776,36 @@ export default function CalculationSelector({
                                 </div>
                             )}
 
-                            {charges.map((charge) => {
-                                const chargeAmount =
-                                    charge.type === "percentage"
-                                        ? (subTotal * charge.percentage) / 100
-                                        : charge.amount;
-                                return (
-                                    chargeAmount > 0 && (
-                                        <div
-                                            key={charge.id}
-                                            className="flex items-center justify-between"
-                                        >
-                                            <span className="text-slate-500">
-                                                {charge.label}
-                                                {charge.type === "percentage" &&
-                                                    ` (${charge.percentage}%)`}
-                                            </span>
-                                            <span className="font-medium">
-                                                Rs {chargeAmount.toFixed(2)}
-                                            </span>
-                                        </div>
-                                    )
-                                );
-                            })}
+                            {charges
+                                .filter(
+                                    (charge) =>
+                                        charge.isVat || charge.bearedByEntity
+                                )
+                                .map((charge) => {
+                                    const chargeAmount =
+                                        charge.type === "percentage"
+                                            ? (subTotal * charge.percentage) /
+                                              100
+                                            : charge.amount;
+                                    return (
+                                        chargeAmount > 0 && (
+                                            <div
+                                                key={charge.id}
+                                                className="flex items-center justify-between"
+                                            >
+                                                <span className="text-slate-500">
+                                                    {charge.label}
+                                                    {charge.type ===
+                                                        "percentage" &&
+                                                        ` (${charge.percentage}%)`}
+                                                </span>
+                                                <span className="font-medium">
+                                                    Rs {chargeAmount.toFixed(2)}
+                                                </span>
+                                            </div>
+                                        )
+                                    );
+                                })}
                         </div>
                     </CardContent>
                 </Card>

@@ -20,7 +20,7 @@ export function SummaryView({ product }: SummaryViewProps) {
     // Get all unique option names for table headers
     const optionNames =
         product.variants && product.variants.length > 0
-            ? Object.keys(product.variants[0].options).filter(
+            ? Object.keys(product.variants[0].values).filter(
                   (key) => key !== "undefined"
               )
             : [];
@@ -28,10 +28,10 @@ export function SummaryView({ product }: SummaryViewProps) {
     // Calculate total inventory value
     const totalInventoryValue = product.variants
         ? product.variants.reduce(
-              (total, variant) => total + variant.price * variant.stock,
+              (total, variant) => total + variant.buyPrice * variant.stock,
               0
           )
-        : product.price * product.stock;
+        : product.buyPrice * product.stock;
 
     return (
         <div className="space-y-6">
@@ -69,7 +69,15 @@ export function SummaryView({ product }: SummaryViewProps) {
                                         Base Price
                                     </dt>
                                     <dd className="mt-1 text-lg font-medium">
-                                        {formatCurrency(product.price)}
+                                        {formatCurrency(product.buyPrice)}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-muted-foreground">
+                                        Selling Price
+                                    </dt>
+                                    <dd className="mt-1 text-lg font-medium">
+                                        {formatCurrency(product.sellPrice)}
                                     </dd>
                                 </div>
                                 <div>
@@ -172,7 +180,8 @@ export function SummaryView({ product }: SummaryViewProps) {
                                                 </TableHead>
                                             ))}
                                             <TableHead>SKU</TableHead>
-                                            <TableHead>Price</TableHead>
+                                            <TableHead>Buy Price</TableHead>
+                                            <TableHead>Sell Price</TableHead>
                                             <TableHead>Stock</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -188,7 +197,7 @@ export function SummaryView({ product }: SummaryViewProps) {
                                                             >
                                                                 {
                                                                     variant
-                                                                        .options[
+                                                                        .values[
                                                                         option
                                                                     ]
                                                                 }
@@ -200,7 +209,12 @@ export function SummaryView({ product }: SummaryViewProps) {
                                                     </TableCell>
                                                     <TableCell>
                                                         {formatCurrency(
-                                                            variant.price
+                                                            variant.buyPrice
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {formatCurrency(
+                                                            variant.sellPrice
                                                         )}
                                                     </TableCell>
                                                     <TableCell>

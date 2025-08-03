@@ -92,7 +92,8 @@ export default function ProductForm() {
     const initialProduct: Product = {
         name: "",
         description: "",
-        price: 0,
+        buyPrice: 0,
+        sellPrice: 0,
         categoryId: "",
         code: "",
         stock: 0,
@@ -162,7 +163,8 @@ export default function ProductForm() {
                         product.sku,
                         product.name,
                         product.options || [],
-                        product.price,
+                        product.buyPrice,
+                        product.sellPrice,
                         product.stock
                     );
                     setProduct((prev) => ({
@@ -177,7 +179,8 @@ export default function ProductForm() {
         }
     }, [
         product.options,
-        product.price,
+        product.buyPrice,
+        product.sellPrice,
         product.stock,
         product.name,
         product.sku,

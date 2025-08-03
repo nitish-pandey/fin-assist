@@ -23,7 +23,8 @@ export function generateVariants(
     productName: string,
     productSKU: string,
     options: ProductOptions[],
-    basePrice: number,
+    buyPrice: number,
+    sellPrice: number,
     baseStock: number
 ): ProductVariant[] {
     // If no options, return empty array
@@ -69,10 +70,12 @@ export function generateVariants(
             return [
                 {
                     name: productName + "-" + variantName,
+                    description: `Variant of ${productName} with options: ${variantName}`,
                     sku,
-                    price: basePrice,
+                    buyPrice: buyPrice,
+                    sellPrice: sellPrice,
                     stock: baseStock,
-                    options: optionSlugs,
+                    values: optionSlugs,
                 },
             ];
         }

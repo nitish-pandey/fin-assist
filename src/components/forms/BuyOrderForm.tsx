@@ -2,13 +2,16 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Entity, Product, Account } from "@/data/types";
+import { Entity, Product, Account, Order } from "@/data/types";
 import { ProductDetails } from "./ProductDetails";
 import { useToast } from "@/hooks/use-toast";
 import EntitySelector from "../modules/entity-selector";
 import PaymentSelector from "../modules/payment-selector";
 import CalculationSelector from "../modules/calculation-selector";
 import { X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader } from "../ui/dialog";
+import { api } from "@/utils/api";
+import { useOrg } from "@/providers/org-provider";
 // import BillUpload from "../modules/bill-upload";
 
 interface OrderProduct {
@@ -25,6 +28,7 @@ interface OrderCharge {
     isVat?: boolean;
     type: "fixed" | "percentage";
     percentage: number;
+    bearedByEntity: boolean;
 }
 
 interface OrderPayment {
@@ -47,7 +51,7 @@ interface BuyProductFormProps {
     products: Product[];
     accounts: Account[];
     addEntity: (entity: Partial<Entity>) => Promise<Entity | null>;
-    onSubmit: (data: object) => Promise<void> | void;
+    onSubmit: (data: object) => Promise<Order> | void;
     defaultEntity?: Entity | null;
 }
 
@@ -65,15 +69,17 @@ const calculateChargeAmount = (
     charges: OrderCharge[]
 ): number => {
     const baseAmount = subTotal - discount;
-    return charges.reduce((sum, charge) => {
-        let chargeAmount = 0;
-        if (charge.type === "percentage") {
-            chargeAmount = (baseAmount * charge.percentage) / 100;
-        } else {
-            chargeAmount = charge.amount;
-        }
-        return sum + (isNaN(chargeAmount) ? 0 : chargeAmount);
-    }, 0);
+    return charges
+        .filter((charge) => charge.bearedByEntity === true)
+        .reduce((sum, charge) => {
+            let chargeAmount = 0;
+            if (charge.type === "percentage") {
+                chargeAmount = (baseAmount * charge.percentage) / 100;
+            } else {
+                chargeAmount = charge.amount;
+            }
+            return sum + (isNaN(chargeAmount) ? 0 : chargeAmount);
+        }, 0);
 };
 
 const calculateGrandTotal = (
@@ -130,6 +136,61 @@ const createInitialState = (
     };
 };
 
+const AccountSelectionDialog = ({
+    accounts,
+    onSelect,
+    onClose,
+}: {
+    accounts: Account[];
+    onSelect: (account: Account) => void;
+    onClose: () => void;
+}) => {
+    return (
+        <Dialog open={true} onOpenChange={onClose}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <h2 className="text-xl font-semibold">Select an Account</h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Choose an account to process vendor charges
+                    </p>
+                </DialogHeader>
+                <div className="mt-4 max-h-[300px] overflow-y-auto">
+                    <ul className="space-y-2">
+                        {accounts.map((account) => (
+                            <li
+                                key={account.id}
+                                onClick={() => onSelect(account)}
+                                className="flex items-center p-3 rounded-md border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+                            >
+                                <div className="flex-1">
+                                    <h3 className="font-medium">
+                                        {account.name}
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        {account.type}
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="ml-2"
+                                >
+                                    Select
+                                </Button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+                <div className="mt-4 flex justify-end">
+                    <Button variant="outline" onClick={onClose}>
+                        Cancel
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
 export default function BuyProductForm({
     type,
     entities,
@@ -144,6 +205,12 @@ export default function BuyProductForm({
     );
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [isAccountSelectionActive, setIsAccountSelectionActive] =
+        useState(false);
+    const [selectedAccount, setSelectedAccount] = useState<Account | null>(
+        null
+    );
+    // Toast hook for notifications
 
     const { toast } = useToast();
 
@@ -175,12 +242,25 @@ export default function BuyProductForm({
         const totalPaid = calculateTotalPaid(formData.payments);
         const remainingAmount = calculateRemainingAmount(grandTotal, totalPaid);
 
+        const vendorCharges = formData.charges
+            .filter((charge) => charge.bearedByEntity === false)
+            .reduce((sum, charge) => {
+                let chargeAmount = 0;
+                if (charge.type === "percentage") {
+                    chargeAmount = (subTotal * charge.percentage) / 100;
+                } else {
+                    chargeAmount = charge.amount;
+                }
+                return sum + (isNaN(chargeAmount) ? 0 : chargeAmount);
+            }, 0);
+
         return {
             subTotal,
             chargeAmount,
             grandTotal,
             totalPaid,
             remainingAmount,
+            vendorCharges,
         };
     }, [
         formData.products,
@@ -262,13 +342,18 @@ export default function BuyProductForm({
 
         return null;
     };
-
+    const { orgId } = useOrg();
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         const validationError = validateForm();
         if (validationError) {
             setError(validationError);
+            return;
+        }
+
+        if (calculations.vendorCharges > 0 && !selectedAccount) {
+            setIsAccountSelectionActive(true);
             return;
         }
 
@@ -297,16 +382,32 @@ export default function BuyProductForm({
                     : formData.payments;
 
             const submitData = {
-                entity: formData.entity,
+                entityId: formData.entity?.id,
                 products: validProducts,
                 discount: formData.discount,
-                charges: formData.charges,
+                charges: formData.charges.filter(
+                    (charge) => charge.amount > 0 && charge.bearedByEntity
+                ),
                 type,
                 payments: finalPayments,
             };
 
             console.log("Submitting order data:", submitData);
-            await onSubmit(submitData);
+            const createdOrder = await onSubmit(submitData);
+            if (
+                createdOrder &&
+                selectedAccount &&
+                calculations.vendorCharges > 0
+            ) {
+                await api.post(
+                    `/orgs/${orgId}/accounts/${selectedAccount.id}/transactions`,
+                    {
+                        amount: calculations.vendorCharges,
+                        type: "BUY",
+                        description: `Vendor Charges-NBC from order - ${createdOrder.id}`,
+                    }
+                );
+            }
 
             resetForm();
             toast({
@@ -386,6 +487,14 @@ export default function BuyProductForm({
                             </span>
                         </div>
                     )}
+                    {calculations.vendorCharges > 0 && (
+                        <div className="flex justify-between items-center text-sm mb-2 text-purple-600">
+                            <span>Vendor Charges:</span>
+                            <span>
+                                +₹{calculations.vendorCharges.toFixed(2)}
+                            </span>
+                        </div>
+                    )}
                     <div className="flex justify-between items-center font-semibold border-t pt-2">
                         <span>Grand Total:</span>
                         <span>₹{calculations.grandTotal.toFixed(2)}</span>
@@ -438,6 +547,21 @@ export default function BuyProductForm({
                     </Button>
                 </div>
             </form>
+            {isAccountSelectionActive && (
+                <AccountSelectionDialog
+                    accounts={accounts}
+                    onSelect={(account) => {
+                        setSelectedAccount(account);
+                        setIsAccountSelectionActive(false);
+                        // Create a synthetic event object
+                        const syntheticEvent = {
+                            preventDefault: () => {},
+                        } as React.FormEvent;
+                        handleSubmit(syntheticEvent);
+                    }}
+                    onClose={() => setIsAccountSelectionActive(false)}
+                />
+            )}
         </div>
     );
 }
