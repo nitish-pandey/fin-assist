@@ -44,6 +44,10 @@ export const ProductList = ({
             header: "Price",
         },
         {
+            accessorKey: "stock",
+            header: "Stock",
+        },
+        {
             header: "SKU",
             accessorKey: "sku",
         },

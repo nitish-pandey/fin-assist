@@ -31,8 +31,8 @@ import AddCategory from "@/components/modals/AddCategory";
 const formSchema = z.object({
     name: z.string().min(1, "Product name is required"),
     description: z.string().optional(),
-    buyPrice: z.coerce.number().min(0.01, "Price must be greater than zero"),
-    sellPrice: z.coerce.number().min(0.01, "Price must be greater than zero"),
+    buyPrice: z.coerce.number(),
+    sellPrice: z.coerce.number(),
     stock: z.coerce.number().min(0, "Stock cannot be negative"),
     sku: z
         .string()
