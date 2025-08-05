@@ -107,11 +107,6 @@ export default function Sidebar() {
                     icon: TransactionIcon,
                 },
                 {
-                    name: "VAT",
-                    path: getPathname("transactions/vat"),
-                    icon: TransactionIcon,
-                },
-                {
                     name: "Buy",
                     path: getPathname("transactions/buy"),
                     icon: TransactionIcon,
@@ -119,6 +114,16 @@ export default function Sidebar() {
                 {
                     name: "Sell",
                     path: getPathname("transactions/sell"),
+                    icon: TransactionIcon,
+                },
+                {
+                    name: "VAT",
+                    path: getPathname("transactions/vat"),
+                    icon: TransactionIcon,
+                },
+                {
+                    name: "Profit & Loss",
+                    path: getPathname("transactions/profit-loss"),
                     icon: TransactionIcon,
                 },
             ],

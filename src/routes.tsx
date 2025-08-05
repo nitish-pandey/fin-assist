@@ -39,6 +39,7 @@ import NotVerifiedPage from "./pages/auth/NotVerified";
 import VerificationPage from "./pages/auth/VerifyEmail";
 import VATPage from "./pages/admin/transactions/VAT";
 import EditOrderPage from "./pages/admin/order/edit-order";
+import ProfitLossPage from "./pages/admin/order/profit-loss";
 
 export const routes: RouteObject[] = [
     {
@@ -200,16 +201,20 @@ export const routes: RouteObject[] = [
                                 path: "all",
                             },
                             {
-                                element: <VATPage />,
-                                path: "vat",
-                            },
-                            {
                                 element: <BuyTransactionPage />,
                                 path: "buy",
                             },
                             {
                                 element: <SellTransactionPage />,
                                 path: "sell",
+                            },
+                            {
+                                element: <VATPage />,
+                                path: "vat",
+                            },
+                            {
+                                path: "profit-loss",
+                                element: <ProfitLossPage />,
                             },
                         ],
                     },

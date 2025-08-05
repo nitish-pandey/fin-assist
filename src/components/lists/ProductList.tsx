@@ -46,6 +46,16 @@ export const ProductList = ({
         {
             accessorKey: "stock",
             header: "Stock",
+            cell: (props) => {
+                return (
+                    <div className="text-center">
+                        {props.row.original.variants?.reduce(
+                            (acc, variant) => acc + variant.stock,
+                            0
+                        )}
+                    </div>
+                );
+            },
         },
         {
             header: "SKU",

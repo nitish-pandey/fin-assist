@@ -233,7 +233,7 @@ export function ProductDetails({
                                     <div className="col-span-2">
                                         <Input
                                             type="number"
-                                            value={item.rate.toFixed(2)}
+                                            value={item.rate}
                                             onChange={(e) =>
                                                 updateProductAtIndex(index, {
                                                     rate:

@@ -405,6 +405,7 @@ export default function BuyProductForm({
                         amount: calculations.vendorCharges,
                         type: "BUY",
                         description: `Vendor Charges-NBC from order - ${createdOrder.id}`,
+                        orderId: createdOrder.id,
                     }
                 );
             }

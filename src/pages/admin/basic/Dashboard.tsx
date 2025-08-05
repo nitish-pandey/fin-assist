@@ -46,6 +46,24 @@ interface PaymentStatusSummary {
     paidPercentage: number;
 }
 
+interface RecentOrder {
+    id: string;
+    orderNumber: string;
+    totalAmount: number;
+    paymentStatus: "PENDING" | "PARTIAL" | "PAID";
+    createdAt: string;
+    type: "BUY" | "SELL";
+}
+
+interface OrderSummary {
+    totalOrders: number;
+    totalRevenue: number;
+    totalPaid: number;
+    averageOrderValue: number;
+    pendingAmount: number;
+    recentOrders: RecentOrder[];
+}
+
 interface DashboardData {
     transactions?: TransactionData[] | null;
     products?: number | null;
@@ -70,6 +88,7 @@ interface DashboardData {
     accounts?: Account[];
     averageOrderValue?: number;
     paymentStatusSummary?: PaymentStatusSummary;
+    orderSummary?: OrderSummary;
 }
 
 interface ApiResponse {
@@ -88,12 +107,21 @@ const Dashboard = () => {
     const fetchDashboardData = async (): Promise<ApiResponse> => {
         try {
             const data = await api.get(`/orgs/${orgId}/dashboard`);
+            const orderSummary = await api.get(`/orgs/${orgId}/orders/summary`);
+            console.log("Order Summary Data:", orderSummary.data);
             console.log("Fetching dashboard data from API:", data.data);
+            
+            // Combine dashboard data with order summary
+            const combinedData = {
+                ...data.data,
+                orderSummary: orderSummary.data
+            };
+            
             return {
-                success: data.status === 200,
-                data: data.data as DashboardData,
+                success: data.status === 200 && orderSummary.status === 200,
+                data: combinedData as DashboardData,
                 error:
-                    data.status !== 200
+                    data.status !== 200 || orderSummary.status !== 200
                         ? "Failed to fetch dashboard data"
                         : undefined,
             };
@@ -583,7 +611,9 @@ const Dashboard = () => {
                                     </span>
                                 </div>
                                 <span className="font-bold text-gray-900">
-                                    {derivedData.averageOrderValueFormatted}
+                                    ₹{data.orderSummary?.averageOrderValue 
+                                        ? Math.round(data.orderSummary.averageOrderValue)
+                                        : data.averageOrderValue || 0}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between">
@@ -761,6 +791,103 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Recent Orders Section */}
+                {data.orderSummary?.recentOrders && data.orderSummary.recentOrders.length > 0 && (
+                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                                Recent Orders
+                            </h3>
+                            <div className="text-sm text-gray-600">
+                                Showing {data.orderSummary.recentOrders.length} recent orders
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-gray-200">
+                                        <th className="text-left py-2 px-3 font-medium text-gray-900">Order #</th>
+                                        <th className="text-left py-2 px-3 font-medium text-gray-900">Type</th>
+                                        <th className="text-right py-2 px-3 font-medium text-gray-900">Amount</th>
+                                        <th className="text-center py-2 px-3 font-medium text-gray-900">Status</th>
+                                        <th className="text-right py-2 px-3 font-medium text-gray-900">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {data.orderSummary.recentOrders.map((order) => (
+                                        <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                            <td className="py-2 px-3">
+                                                <div className="font-medium text-gray-900">
+                                                    {order.orderNumber}
+                                                </div>
+                                            </td>
+                                            <td className="py-2 px-3">
+                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                                    order.type === 'BUY' 
+                                                        ? 'bg-blue-100 text-blue-800' 
+                                                        : 'bg-green-100 text-green-800'
+                                                }`}>
+                                                    {order.type}
+                                                </span>
+                                            </td>
+                                            <td className="py-2 px-3 text-right font-medium">
+                                                ₹{order.totalAmount.toLocaleString()}
+                                            </td>
+                                            <td className="py-2 px-3 text-center">
+                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                                    order.paymentStatus === 'PAID'
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : order.paymentStatus === 'PARTIAL'
+                                                        ? 'bg-yellow-100 text-yellow-800'
+                                                        : 'bg-red-100 text-red-800'
+                                                }`}>
+                                                    {order.paymentStatus}
+                                                </span>
+                                            </td>
+                                            <td className="py-2 px-3 text-right text-gray-600">
+                                                {new Date(order.createdAt).toLocaleDateString('en-US', {
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    year: 'numeric'
+                                                })}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Order Summary Stats */}
+                        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-gray-200">
+                            <div className="text-center p-2 bg-blue-50 rounded">
+                                <div className="text-lg font-bold text-blue-600">
+                                    {data.orderSummary.totalOrders}
+                                </div>
+                                <div className="text-xs text-blue-700">Total Orders</div>
+                            </div>
+                            <div className="text-center p-2 bg-green-50 rounded">
+                                <div className="text-lg font-bold text-green-600">
+                                    ₹{(data.orderSummary.totalRevenue / 1000).toFixed(1)}K
+                                </div>
+                                <div className="text-xs text-green-700">Total Revenue</div>
+                            </div>
+                            <div className="text-center p-2 bg-purple-50 rounded">
+                                <div className="text-lg font-bold text-purple-600">
+                                    ₹{(data.orderSummary.totalPaid / 1000).toFixed(1)}K
+                                </div>
+                                <div className="text-xs text-purple-700">Total Paid</div>
+                            </div>
+                            <div className="text-center p-2 bg-orange-50 rounded">
+                                <div className="text-lg font-bold text-orange-600">
+                                    ₹{(data.orderSummary.pendingAmount / 1000).toFixed(1)}K
+                                </div>
+                                <div className="text-xs text-orange-700">Pending</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

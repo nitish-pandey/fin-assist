@@ -530,7 +530,7 @@ export default function CalculationSelector({
                                                                     )
                                                                 }
                                                             >
-                                                                Vendor
+                                                                Business
                                                             </Button>
                                                         </div>
                                                     </div>
