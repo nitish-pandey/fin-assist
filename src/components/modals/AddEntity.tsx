@@ -137,7 +137,7 @@ const AddEntity: React.FC<AddEntityProps> = ({
                     setError(null);
                 }}
             >
-                {text || "Add Entity"}
+                {text || "Add Entity/Party"}
             </Button>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent>

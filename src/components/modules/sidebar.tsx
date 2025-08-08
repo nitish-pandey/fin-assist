@@ -93,7 +93,7 @@ export default function Sidebar() {
             ],
         },
         {
-            name: "Entities",
+            name: "Entity/Party",
             path: getPathname("entity"),
             icon: EntityIcon,
         },

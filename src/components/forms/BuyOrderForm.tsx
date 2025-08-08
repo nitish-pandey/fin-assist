@@ -214,12 +214,12 @@ export default function BuyProductForm({
 
     const { toast } = useToast();
 
-    // Update state when defaultEntity changes
+    // Update state when defaultEntity changes, but only if no entity is currently selected
     useEffect(() => {
-        if (defaultEntity && defaultEntity !== formData.entity) {
+        if (defaultEntity && !formData.entity) {
             setFormData((prev) => ({ ...prev, entity: defaultEntity }));
         }
-    }, [defaultEntity, formData.entity]);
+    }, [defaultEntity]);
 
     // Save to localStorage whenever formData changes
     useEffect(() => {

@@ -49,7 +49,7 @@ const EntityInfo = () => {
     return (
         <div className="w-full mx-auto">
             <div className="flex flex-row items-center justify-between">
-                <h2 className="text-3xl font-bold">Entities</h2>
+                <h2 className="text-3xl font-bold">Entity/Party</h2>
                 <AddEntity addEntity={addEntity} />
             </div>
 
@@ -59,12 +59,14 @@ const EntityInfo = () => {
                 ) : (
                     <Tabs defaultValue="all" className="w-full">
                         <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="all">All Entities</TabsTrigger>
+                            <TabsTrigger value="all">
+                                All Entities/Parties
+                            </TabsTrigger>
                             <TabsTrigger value="merchant">
-                                Merchant Entities
+                                Merchant Entities/Parties
                             </TabsTrigger>
                             <TabsTrigger value="vendor">
-                                Vendor Entities
+                                Vendor Entities/Parties
                             </TabsTrigger>
                         </TabsList>
 
