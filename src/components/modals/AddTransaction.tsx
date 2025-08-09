@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -19,9 +19,43 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { Account, TransactionDetails } from "@/data/types";
+import { useOrg } from "@/providers/org-provider";
+import { api } from "@/utils/api";
+import { Account, TransactionDetails, Entity } from "@/data/types";
+import { TransactionCategory } from "@/data/expense-income-types";
+
+// Category options based on transaction type
+const EXPENSE_CATEGORIES: { value: TransactionCategory; label: string }[] = [
+    { value: "OFFICE_RENT", label: "Office Rent" },
+    { value: "EMPLOYEE_SALARY", label: "Employee Salary" },
+    { value: "UTILITY_BILLS", label: "Utility Bills" },
+    { value: "OFFICE_SUPPLIES", label: "Office Supplies" },
+    { value: "TRAVEL_EXPENSE", label: "Travel Expense" },
+    { value: "MARKETING_ADVERTISING", label: "Marketing & Advertising" },
+    { value: "PROFESSIONAL_FEES", label: "Professional Fees" },
+    { value: "EQUIPMENT_MAINTENANCE", label: "Equipment Maintenance" },
+    { value: "INSURANCE", label: "Insurance" },
+    { value: "TAXES", label: "Taxes" },
+    { value: "DONATIONS_GIVEN", label: "Donations Given" },
+    { value: "INTEREST_PAID", label: "Interest Paid" },
+    { value: "DEPRECIATION", label: "Depreciation" },
+    { value: "MISCELLANEOUS_EXPENSE", label: "Miscellaneous Expense" },
+];
+
+const INCOME_CATEGORIES: { value: TransactionCategory; label: string }[] = [
+    { value: "SERVICE_INCOME", label: "Service Income" },
+    { value: "CONSULTING_INCOME", label: "Consulting Income" },
+    { value: "RENTAL_INCOME", label: "Rental Income" },
+    { value: "INTEREST_RECEIVED", label: "Interest Received" },
+    { value: "DONATIONS_RECEIVED", label: "Donations Received" },
+    { value: "COMMISSION_INCOME", label: "Commission Income" },
+    { value: "DIVIDEND_INCOME", label: "Dividend Income" },
+    { value: "CAPITAL_GAINS", label: "Capital Gains" },
+    { value: "MISCELLANEOUS_INCOME", label: "Miscellaneous Income" },
+];
 
 interface AddTransactionProps {
     account: Account | null;
@@ -37,22 +71,51 @@ export function AddTransactionDialog({
     account,
     onAddTransaction,
 }: AddTransactionProps) {
+    const { orgId } = useOrg();
     const [open, setOpen] = useState(false);
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
     const [type, setType] = useState<"BUY" | "SELL" | "MISC">("BUY");
+    const [category, setCategory] = useState<TransactionCategory | "">("");
+    const [entityId, setEntityId] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
     const [details, setDetails] = useState<TransactionDetails>({});
+    const [entities, setEntities] = useState<Entity[]>([]);
 
     const { toast } = useToast();
+
+    // Load entities when component mounts
+    useEffect(() => {
+        const loadEntities = async () => {
+            if (orgId) {
+                try {
+                    const response = await api.get(`/orgs/${orgId}/entities`);
+                    setEntities(response.data || []);
+                } catch (error) {
+                    console.error("Failed to load entities:", error);
+                }
+            }
+        };
+        loadEntities();
+    }, [orgId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!amount) {
+        if (!amount || !description) {
             toast({
                 title: "Error",
-                description: "Please fill in all fields",
+                description: "Please fill in amount and description",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        // Require category for expense/income transactions
+        if (type !== "MISC" && !category) {
+            toast({
+                title: "Error",
+                description: "Please select a category for this transaction",
                 variant: "destructive",
             });
             return;
@@ -85,12 +148,36 @@ export function AddTransactionDialog({
         setIsLoading(true);
 
         try {
+            // Add the regular account transaction
             await onAddTransaction(
                 numericAmount,
                 description,
                 type,
                 details || {}
             );
+
+            // If this is an expense or income transaction, also create an expense/income record
+            if (type !== "MISC" && category && orgId && account) {
+                const expenseIncomeData = {
+                    amount: numericAmount,
+                    description,
+                    category: category as TransactionCategory,
+                    isExpense: type === "BUY", // BUY = expense (money going out), SELL = income (money coming in)
+                    accountId: account.id,
+                    entityId: entityId || undefined,
+                    tags: [],
+                    notes: `Account transaction: ${type}`,
+                    isRecurring: false,
+                };
+
+                try {
+                    await api.post(`/orgs/${orgId}/expenses-income`, expenseIncomeData);
+                } catch (expenseIncomeError) {
+                    console.error("Failed to create expense/income record:", expenseIncomeError);
+                    // Don't fail the whole transaction if expense/income creation fails
+                }
+            }
+
             toast({
                 title: "Success",
                 description: "Transaction added successfully",
@@ -98,6 +185,8 @@ export function AddTransactionDialog({
             setOpen(false);
             setAmount("");
             setDescription("");
+            setCategory("");
+            setEntityId("");
         } catch (error) {
             toast({
                 title: "Error",
@@ -213,7 +302,7 @@ export function AddTransactionDialog({
                                         )}
                                         onClick={() => setType("SELL")}
                                     >
-                                        Debit
+                                        Income (Credit)
                                     </Label>
                                     <Label
                                         htmlFor="credit"
@@ -225,11 +314,49 @@ export function AddTransactionDialog({
                                         )}
                                         onClick={() => setType("BUY")}
                                     >
-                                        Credit
+                                        Expense (Debit)
                                     </Label>
                                 </div>
                             </div>
                         </div>
+
+                        {/* Category Selection - only show for expense/income transactions */}
+                        {type !== "MISC" && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="category">Category</Label>
+                                <Select value={category} onValueChange={(value: string) => setCategory(value as TransactionCategory)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={`Select ${type === "BUY" ? "expense" : "income"} category`} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {(type === "BUY" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map((cat) => (
+                                            <SelectItem key={cat.value} value={cat.value}>
+                                                {cat.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {/* Entity Selection - only show for expense/income transactions */}
+                        {type !== "MISC" && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="entity">Entity (Optional)</Label>
+                                <Select value={entityId} onValueChange={(value: string) => setEntityId(value)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select entity" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {entities.map((entity) => (
+                                            <SelectItem key={entity.id} value={entity.id}>
+                                                {entity.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
                     </div>
                     {account.type === "CHEQUE" && (
                         <>

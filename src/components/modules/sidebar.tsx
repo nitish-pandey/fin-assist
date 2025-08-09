@@ -129,6 +129,27 @@ export default function Sidebar() {
             ],
         },
         {
+            name: "Expenses & Income",
+            icon: TransactionIcon,
+            subItems: [
+                {
+                    name: "Expenses",
+                    path: getPathname("expenses"),
+                    icon: TransactionIcon,
+                },
+                {
+                    name: "Income",
+                    path: getPathname("income"),
+                    icon: TransactionIcon,
+                },
+                {
+                    name: "Recurring",
+                    path: getPathname("recurring"),
+                    icon: TransactionIcon,
+                },
+            ],
+        },
+        {
             name: "Accounts",
             icon: AccountIcon,
             subItems: [

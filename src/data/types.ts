@@ -221,3 +221,104 @@ export interface Transaction {
     order?: Order | null;
     organization?: Organization | null;
 }
+
+// Expense and Income Management Types
+export enum TransactionCategory {
+    // Expense Categories
+    OFFICE_RENT = "OFFICE_RENT",
+    EMPLOYEE_SALARY = "EMPLOYEE_SALARY",
+    UTILITY_BILLS = "UTILITY_BILLS",
+    OFFICE_SUPPLIES = "OFFICE_SUPPLIES",
+    TRAVEL_EXPENSE = "TRAVEL_EXPENSE",
+    MARKETING_ADVERTISING = "MARKETING_ADVERTISING",
+    PROFESSIONAL_FEES = "PROFESSIONAL_FEES",
+    EQUIPMENT_MAINTENANCE = "EQUIPMENT_MAINTENANCE",
+    INSURANCE = "INSURANCE",
+    TAXES = "TAXES",
+    DONATIONS_GIVEN = "DONATIONS_GIVEN",
+    INTEREST_PAID = "INTEREST_PAID",
+    DEPRECIATION = "DEPRECIATION",
+    MISCELLANEOUS_EXPENSE = "MISCELLANEOUS_EXPENSE",
+    
+    // Income Categories
+    SERVICE_INCOME = "SERVICE_INCOME",
+    CONSULTING_INCOME = "CONSULTING_INCOME",
+    RENTAL_INCOME = "RENTAL_INCOME",
+    INTEREST_RECEIVED = "INTEREST_RECEIVED",
+    DONATIONS_RECEIVED = "DONATIONS_RECEIVED",
+    COMMISSION_INCOME = "COMMISSION_INCOME",
+    DIVIDEND_INCOME = "DIVIDEND_INCOME",
+    CAPITAL_GAINS = "CAPITAL_GAINS",
+    MISCELLANEOUS_INCOME = "MISCELLANEOUS_INCOME",
+    
+    // Existing for backward compatibility
+    PRODUCT_SALE = "PRODUCT_SALE",
+    PRODUCT_PURCHASE = "PRODUCT_PURCHASE",
+}
+
+export enum RecurrenceType {
+    NONE = "NONE",
+    DAILY = "DAILY",
+    WEEKLY = "WEEKLY",
+    MONTHLY = "MONTHLY",
+    QUARTERLY = "QUARTERLY",
+    YEARLY = "YEARLY",
+}
+
+export interface ExpenseIncomeTransaction {
+    id: string;
+    amount: number;
+    description: string;
+    category: TransactionCategory;
+    isExpense: boolean;
+    
+    // Recurrence fields
+    isRecurring: boolean;
+    recurrenceType: RecurrenceType;
+    recurrenceInterval?: number;
+    nextDueDate?: string;
+    endDate?: string;
+    
+    // Reference fields
+    organizationId: string;
+    accountId: string;
+    entityId?: string;
+    
+    // Metadata
+    tags: string[];
+    notes?: string;
+    attachments?: any;
+    
+    createdAt: string;
+    updatedAt: string;
+    
+    // Relations
+    account?: Account;
+    entity?: Entity;
+    parentTransaction?: ExpenseIncomeTransaction;
+    childTransactions?: ExpenseIncomeTransaction[];
+}
+
+export interface ExpenseIncomeSummary {
+    totalExpenses: number;
+    totalIncome: number;
+    netAmount: number;
+    byCategory: {
+        category: TransactionCategory;
+        amount: number;
+        count: number;
+        isExpense: boolean;
+    }[];
+    byMonth: {
+        month: string;
+        totalExpenses: number;
+        totalIncome: number;
+        netAmount: number;
+    }[];
+    topCategories: {
+        category: TransactionCategory;
+        amount: number;
+        percentage: number;
+        isExpense: boolean;
+    }[];
+}
