@@ -73,6 +73,9 @@ export interface Account {
     createdAt: string;
     updatedAt: string;
 
+    interestRate?: number | null;
+    accumulatedInterest?: number | null;
+    interestChanges: { date: string; rate: number }[];
     transactions?: Transaction[];
 }
 
@@ -239,7 +242,7 @@ export enum TransactionCategory {
     INTEREST_PAID = "INTEREST_PAID",
     DEPRECIATION = "DEPRECIATION",
     MISCELLANEOUS_EXPENSE = "MISCELLANEOUS_EXPENSE",
-    
+
     // Income Categories
     SERVICE_INCOME = "SERVICE_INCOME",
     CONSULTING_INCOME = "CONSULTING_INCOME",
@@ -250,7 +253,7 @@ export enum TransactionCategory {
     DIVIDEND_INCOME = "DIVIDEND_INCOME",
     CAPITAL_GAINS = "CAPITAL_GAINS",
     MISCELLANEOUS_INCOME = "MISCELLANEOUS_INCOME",
-    
+
     // Existing for backward compatibility
     PRODUCT_SALE = "PRODUCT_SALE",
     PRODUCT_PURCHASE = "PRODUCT_PURCHASE",
@@ -271,27 +274,27 @@ export interface ExpenseIncomeTransaction {
     description: string;
     category: TransactionCategory;
     isExpense: boolean;
-    
+
     // Recurrence fields
     isRecurring: boolean;
     recurrenceType: RecurrenceType;
     recurrenceInterval?: number;
     nextDueDate?: string;
     endDate?: string;
-    
+
     // Reference fields
     organizationId: string;
     accountId: string;
     entityId?: string;
-    
+
     // Metadata
     tags: string[];
     notes?: string;
     attachments?: any;
-    
+
     createdAt: string;
     updatedAt: string;
-    
+
     // Relations
     account?: Account;
     entity?: Entity;

@@ -40,7 +40,9 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
     disableType = false,
 }) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [formState, setFormState] = useState<"idle" | "submitting" | "success" | "error">("idle");
+    const [formState, setFormState] = useState<
+        "idle" | "submitting" | "success" | "error"
+    >("idle");
     const { toast } = useToast();
     const {
         register,
@@ -49,7 +51,7 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
         watch,
         reset,
         formState: { errors },
-    } = useForm<Account>({ defaultValues: { type: type } });
+    } = useForm<Account>({ defaultValues: { type: type, interestRate: 0 } });
 
     const accountTypes: ACCOUNT_TYPE[] = ["BANK", "BANK_OD", "CHEQUE", "MISC"];
     const accountType = watch("type");
@@ -97,11 +99,15 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
                             <Input
                                 id="name"
                                 className="pl-10"
-                                {...register("name", { required: "Account name is required" })}
+                                {...register("name", {
+                                    required: "Account name is required",
+                                })}
                             />
                         </div>
                         {errors.name && (
-                            <p className="text-sm text-destructive">{errors.name.message}</p>
+                            <p className="text-sm text-destructive">
+                                {errors.name.message}
+                            </p>
                         )}
                     </div>
 
@@ -116,12 +122,17 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
                                 className="pl-10"
                                 {...register("balance", {
                                     required: "Balance is required",
-                                    min: { value: 0, message: "Balance must be positive" },
+                                    min: {
+                                        value: 0,
+                                        message: "Balance must be positive",
+                                    },
                                 })}
                             />
                         </div>
                         {errors.balance && (
-                            <p className="text-sm text-destructive">{errors.balance.message}</p>
+                            <p className="text-sm text-destructive">
+                                {errors.balance.message}
+                            </p>
                         )}
                     </div>
 
@@ -147,7 +158,10 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
                                             </SelectItem>
                                         ))}
                                         {!avoidCashCounter && (
-                                            <SelectItem key="CASH_COUNTER" value="CASH_COUNTER">
+                                            <SelectItem
+                                                key="CASH_COUNTER"
+                                                value="CASH_COUNTER"
+                                            >
                                                 Cash Counter
                                             </SelectItem>
                                         )}
@@ -156,14 +170,18 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
                             )}
                         />
                         {errors.type && (
-                            <p className="text-sm text-destructive">{errors.type.message}</p>
+                            <p className="text-sm text-destructive">
+                                {errors.type.message}
+                            </p>
                         )}
                     </div>
 
                     {(accountType === "BANK" || accountType === "BANK_OD") && (
                         <>
                             <div className="space-y-2">
-                                <Label htmlFor="details.bankName">Bank Name</Label>
+                                <Label htmlFor="details.bankName">
+                                    Bank Name
+                                </Label>
                                 <Input
                                     id="details.bankName"
                                     {...register("details.bankName", {
@@ -178,7 +196,9 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="details.accountNumber">Account Number</Label>
+                                <Label htmlFor="details.accountNumber">
+                                    Account Number
+                                </Label>
                                 <Input
                                     id="details.accountNumber"
                                     {...register("details.accountNumber", {
@@ -191,12 +211,37 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
                                     </p>
                                 )}
                             </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="details.interestRate">
+                                    Interest Rate
+                                </Label>
+                                <Input
+                                    id="details.interestRate"
+                                    type="number"
+                                    step="0.01"
+                                    {...register("interestRate", {
+                                        required: "Interest rate is required",
+                                        min: {
+                                            value: 0,
+                                            message:
+                                                "Interest rate must be positive",
+                                        },
+                                    })}
+                                />
+                                {errors.interestRate && (
+                                    <p className="text-sm text-destructive">
+                                        {errors.interestRate.message}
+                                    </p>
+                                )}
+                            </div>
                         </>
                     )}
 
                     {accountType === "CHEQUE" && (
                         <div className="space-y-2">
-                            <Label htmlFor="details.chequeDate">Cheque Date</Label>
+                            <Label htmlFor="details.chequeDate">
+                                Cheque Date
+                            </Label>
                             <div className="relative">
                                 <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                                 <Input
@@ -209,7 +254,11 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
                         </div>
                     )}
 
-                    <Button type="submit" disabled={formState === "submitting"} className="w-full">
+                    <Button
+                        type="submit"
+                        disabled={formState === "submitting"}
+                        className="w-full"
+                    >
                         {formState === "submitting" ? (
                             <>
                                 <svg
