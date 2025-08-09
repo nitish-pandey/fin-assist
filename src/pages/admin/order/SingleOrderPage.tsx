@@ -385,7 +385,14 @@ const OrderItems = ({ items }: { items: OrderItem[] }) => {
                                 className="hover:bg-muted/50"
                             >
                                 <TableCell className="font-medium">
-                                    {item.name}
+                                    <div>
+                                        <div>{item.name}</div>
+                                        {item.description && (
+                                            <div className="text-xs text-muted-foreground mt-1">
+                                                {item.description}
+                                            </div>
+                                        )}
+                                    </div>
                                 </TableCell>
                                 <TableCell className="text-right">
                                     {item.quantity}

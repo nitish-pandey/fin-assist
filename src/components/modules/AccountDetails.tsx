@@ -66,6 +66,34 @@ const AccountDetails = ({
         {
             header: "Type",
             accessorKey: "type",
+            cell: ({ row }) => {
+                const transaction = row.original;
+                const type = transaction.type;
+                
+                // Handle MISC transactions with subtypes
+                if (type === "MISC" && transaction.details && 
+                    typeof transaction.details === 'object' && 
+                    'transactionSubType' in transaction.details) {
+                    const subType = (transaction.details as any).transactionSubType;
+                    if (subType === 'EXPENSE') {
+                        return <span className="text-red-600 font-medium">Expense</span>;
+                    } else if (subType === 'INCOME') {
+                        return <span className="text-green-600 font-medium">Income</span>;
+                    }
+                }
+                
+                // Handle other transaction types
+                switch (type) {
+                    case "BUY":
+                        return <span className="text-red-600">Expense (Buy)</span>;
+                    case "SELL":
+                        return <span className="text-green-600">Income (Sell)</span>;
+                    case "MISC":
+                        return <span className="text-gray-600">Miscellaneous</span>;
+                    default:
+                        return <span>{type}</span>;
+                }
+            },
         },
         {
             header: "Date",
@@ -167,10 +195,10 @@ const AccountDetails = ({
                                 All Transactions
                             </TabsTrigger>
                             <TabsTrigger value="buy">
-                                Buy Transactions
+                                Expenses & Purchases
                             </TabsTrigger>
                             <TabsTrigger value="sell">
-                                Sell Transactions
+                                Income & Sales
                             </TabsTrigger>
                             <TabsTrigger value="others">
                                 Other Transactions
@@ -217,7 +245,7 @@ const AccountDetails = ({
                                 (t) => t.orderId && t.type === "BUY"
                             ).length > 0 ? (
                                 <TableComponent
-                                    title="Buy Payments"
+                                    title="Expenses & Purchase Payments"
                                     columns={
                                         type === "CHEQUE"
                                             ? [
@@ -227,14 +255,22 @@ const AccountDetails = ({
                                             : paymentColumns
                                     }
                                     data={localAccount.transactions.filter(
-                                        (t) => t.type === "BUY" && t.orderId
+                                        (t) => {
+                                            // Include BUY transactions and MISC transactions with EXPENSE subtype
+                                            if (t.type === "BUY" && t.orderId) return true;
+                                            if (t.type === "MISC" && t.orderId === null && t.details && 
+                                                typeof t.details === 'object' && 'transactionSubType' in t.details && 
+                                                t.details.transactionSubType === 'EXPENSE') return true;
+                                            if ((t.type as string).endsWith('(PURCHASE)') && t.orderId) return true;
+                                            return false;
+                                        }
                                     )}
                                     showFooter={true}
                                     allowPagination={true}
                                 />
                             ) : (
                                 <p className="bg-white rounded-lg p-2">
-                                    No buy payments found.
+                                    No expense or purchase payments found.
                                 </p>
                             )}
                         </div>
@@ -243,10 +279,18 @@ const AccountDetails = ({
                         <div>
                             {localAccount.transactions &&
                             localAccount.transactions.filter(
-                                (t) => t.type === "SELL" && t.orderId
+                                (t) => {
+                                    // Include SELL transactions and MISC transactions with INCOME subtype  
+                                    if (t.type === "SELL" && t.orderId) return true;
+                                    if (t.type === "MISC" && t.orderId === null && t.details && 
+                                        typeof t.details === 'object' && 'transactionSubType' in t.details && 
+                                        t.details.transactionSubType === 'INCOME') return true;
+                                    if ((t.type as string).endsWith('(SALE)') && t.orderId) return true;
+                                    return false;
+                                }
                             ).length > 0 ? (
                                 <TableComponent
-                                    title="Sell Payments"
+                                    title="Income & Sale Payments"
                                     columns={
                                         type === "CHEQUE"
                                             ? [
@@ -256,14 +300,22 @@ const AccountDetails = ({
                                             : paymentColumns
                                     }
                                     data={localAccount.transactions.filter(
-                                        (t) => t.type === "SELL" && t.orderId
+                                        (t) => {
+                                            // Include SELL transactions and MISC transactions with INCOME subtype
+                                            if (t.type === "SELL" && t.orderId) return true;
+                                            if (t.type === "MISC" && t.orderId === null && t.details && 
+                                                typeof t.details === 'object' && 'transactionSubType' in t.details && 
+                                                t.details.transactionSubType === 'INCOME') return true;
+                                            if ((t.type as string).endsWith('(SALE)') && t.orderId) return true;
+                                            return false;
+                                        }
                                     )}
                                     showFooter={true}
                                     allowPagination={true}
                                 />
                             ) : (
                                 <p className="bg-white rounded-lg p-2">
-                                    No sell payments found.
+                                    No income or sale payments found.
                                 </p>
                             )}
                         </div>

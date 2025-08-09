@@ -40,6 +40,9 @@ import VerificationPage from "./pages/auth/VerifyEmail";
 import VATPage from "./pages/admin/transactions/VAT";
 import EditOrderPage from "./pages/admin/order/edit-order";
 import ProfitLossPage from "./pages/admin/order/profit-loss";
+import ExpensesPage from "./pages/admin/expenses/ExpensesPage";
+import IncomePage from "./pages/admin/income/IncomePage";
+import RecurringTransactionsPage from "./pages/admin/recurring/RecurringTransactionsPage";
 
 export const routes: RouteObject[] = [
     {
@@ -217,6 +220,18 @@ export const routes: RouteObject[] = [
                                 element: <ProfitLossPage />,
                             },
                         ],
+                    },
+                    {
+                        path: "expenses",
+                        element: <ExpensesPage />,
+                    },
+                    {
+                        path: "income",
+                        element: <IncomePage />,
+                    },
+                    {
+                        path: "recurring",
+                        element: <RecurringTransactionsPage />,
                     },
                 ],
             },

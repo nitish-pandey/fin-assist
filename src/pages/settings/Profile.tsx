@@ -46,7 +46,7 @@ export default function ProfilePage() {
                                         alt={user.name}
                                     />
                                     <AvatarFallback>
-                                        {user.name.charAt(0)}
+                                        {user.name?.charAt(0)}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div>
