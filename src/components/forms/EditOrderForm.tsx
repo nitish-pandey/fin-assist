@@ -265,6 +265,7 @@ EditOrderFormProps) {
                 />
 
                 <ProductDetails
+                    type={type}
                     products={products}
                     onUpdateProducts={handleUpdateProducts}
                     addedProducts={editOrderState.products}

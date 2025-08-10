@@ -12,10 +12,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Product } from "@/data/types";
+import { OrderItem, Product } from "@/data/types";
 // import CreateProductModal from "@/pages/admin/products/Create_product_modal";
 import { Link } from "react-router-dom";
 import { useOrg } from "@/providers/org-provider";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "../ui/tooltip";
 
 interface SelectedProduct {
     productId: string;
@@ -25,12 +31,14 @@ interface SelectedProduct {
 }
 
 interface ProductDetailsProps {
+    type: "BUY" | "SELL";
     products: Product[];
     addedProducts: SelectedProduct[];
     onUpdateProducts: (products: SelectedProduct[]) => void;
 }
 
 export function ProductDetails({
+    type,
     products,
     addedProducts,
     onUpdateProducts,
@@ -64,6 +72,8 @@ export function ProductDetails({
     };
 
     const getProductDetails = (id: string) => products.find((p) => p.id === id);
+    const getVariantDetails = (id: string) =>
+        products.flatMap((p) => p.variants)?.find((v) => v && v.id === id);
 
     const totalAmount = useMemo(() => {
         return addedProducts.reduce(
@@ -95,6 +105,62 @@ export function ProductDetails({
                         {addedProducts.map((item, index) => {
                             const product = getProductDetails(item.productId);
                             const amount = item.quantity * item.rate;
+                            const variant = getVariantDetails(item.variantId);
+
+                            const buyOrders: OrderItem[] =
+                                variant?.items?.filter((item) => {
+                                    return item.order?.type === "BUY";
+                                }) || [];
+                            let availableStock = variant?.stock || 0;
+                            const applicableOrders: OrderItem[] =
+                                buyOrders
+                                    ?.sort((a, b) => {
+                                        const aDate = new Date(
+                                            a.createdAt || 0
+                                        );
+                                        const bDate = new Date(
+                                            b.createdAt || 0
+                                        );
+                                        return (
+                                            bDate.getTime() - aDate.getTime()
+                                        );
+                                    })
+                                    .map((item) => {
+                                        if (availableStock > 0) {
+                                            if (
+                                                availableStock < item.quantity
+                                            ) {
+                                                item.quantity -= availableStock;
+                                                availableStock = 0;
+                                            } else {
+                                                availableStock -= item.quantity;
+                                            }
+                                            return item;
+                                        }
+                                        return null;
+                                    })
+                                    .filter((item) => item !== null) || [];
+
+                            let newStock = item.quantity;
+
+                            const selectedOrders = applicableOrders
+                                .sort((a, b) => {
+                                    const aDate = new Date(a.createdAt || 0);
+                                    const bDate = new Date(b.createdAt || 0);
+                                    return aDate.getTime() - bDate.getTime();
+                                })
+                                .filter((order) => {
+                                    if (newStock > 0) {
+                                        if (newStock < order.quantity) {
+                                            order.quantity -= newStock;
+                                            newStock = 0;
+                                        } else {
+                                            newStock -= order.quantity;
+                                        }
+                                        return true;
+                                    }
+                                    return false;
+                                });
 
                             return (
                                 <div
@@ -202,6 +268,13 @@ export function ProductDetails({
                                             value={item.quantity}
                                             onChange={(e) =>
                                                 updateProductAtIndex(index, {
+                                                    quantity: parseInt(
+                                                        e.target.value
+                                                    ),
+                                                })
+                                            }
+                                            onBlur={(e) =>
+                                                updateProductAtIndex(index, {
                                                     quantity: Math.max(
                                                         1,
                                                         parseInt(
@@ -210,8 +283,7 @@ export function ProductDetails({
                                                     ),
                                                 })
                                             }
-                                            min={1}
-                                            className="w-14 h-8 text-center"
+                                            className="w-28 h-8 text-center"
                                         />
                                         <Button
                                             size="icon"
@@ -253,7 +325,7 @@ export function ProductDetails({
                                     </div>
 
                                     {/* Remove */}
-                                    <div className="col-span-1 flex justify-center">
+                                    <div className="col-span-1 flex gap-4 justify-center">
                                         <Button
                                             size="icon"
                                             type="button"
@@ -265,7 +337,61 @@ export function ProductDetails({
                                         >
                                             <X className="h-4 w-4" />
                                         </Button>
+                                        {type === "SELL" && (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger>
+                                                        i
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <div className="p-2 space-y-2">
+                                                            <h4 className="font-semibold mb-1">
+                                                                Your Purchase
+                                                            </h4>
+                                                            {selectedOrders.length >
+                                                            0 ? (
+                                                                selectedOrders.map(
+                                                                    (
+                                                                        orderItem,
+                                                                        i
+                                                                    ) => (
+                                                                        <div
+                                                                            key={
+                                                                                i
+                                                                            }
+                                                                            className="text-xs border-b pb-1 last:border-0"
+                                                                        >
+                                                                            <div className="flex gap-2 justify-between">
+                                                                                <span>
+                                                                                    Qty:{" "}
+                                                                                    {
+                                                                                        orderItem.quantity
+                                                                                    }
+                                                                                </span>
+                                                                                <span>
+                                                                                    Rate:
+                                                                                    ₹
+                                                                                    {
+                                                                                        orderItem.price
+                                                                                    }
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    )
+                                                                )
+                                                            ) : (
+                                                                <div className="text-sm text-gray-500">
+                                                                    No purchase
+                                                                    orders found
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        )}
                                     </div>
+                                    {/* a tool tip to show the all the selected order */}
                                 </div>
                             );
                         })}

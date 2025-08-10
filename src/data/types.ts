@@ -102,6 +102,8 @@ export interface Category {
     organizationId: string;
     createdAt: string;
     updatedAt: string;
+
+    products?: Product[];
 }
 
 export interface ProductVariant {
@@ -120,6 +122,8 @@ export interface ProductVariant {
 
     createdAt: string;
     updatedAt: string;
+
+    items?: OrderItem[];
 }
 
 export interface Product {
@@ -190,6 +194,8 @@ export interface OrderItem {
 
     createdAt: string;
     updatedAt: string;
+
+    order?: Order;
 }
 
 export interface TransactionDetails {

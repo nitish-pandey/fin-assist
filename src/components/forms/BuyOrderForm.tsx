@@ -106,10 +106,11 @@ const calculateRemainingAmount = (
 // Initial state factory
 const createInitialState = (
     type: string,
+    orgId: string,
     defaultEntity: Entity | null
 ): OrderFormData => {
     // Try to get saved state from localStorage
-    const savedState = localStorage.getItem(`order-${type}`);
+    const savedState = localStorage.getItem(`order-${orgId}-${type}`);
     if (savedState) {
         try {
             const parsed = JSON.parse(savedState);
@@ -200,8 +201,9 @@ export default function BuyProductForm({
     onSubmit,
     defaultEntity = null,
 }: BuyProductFormProps) {
+    const { orgId } = useOrg();
     const [formData, setFormData] = useState<OrderFormData>(() =>
-        createInitialState(type, defaultEntity)
+        createInitialState(type, orgId, defaultEntity)
     );
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -210,6 +212,7 @@ export default function BuyProductForm({
     const [selectedAccount, setSelectedAccount] = useState<Account | null>(
         null
     );
+
     // Toast hook for notifications
 
     const { toast } = useToast();
@@ -223,7 +226,10 @@ export default function BuyProductForm({
 
     // Save to localStorage whenever formData changes
     useEffect(() => {
-        localStorage.setItem(`order-${type}`, JSON.stringify(formData));
+        localStorage.setItem(
+            `order-${orgId}-${type}`,
+            JSON.stringify(formData)
+        );
     }, [formData, type]);
 
     // Memoized calculations
@@ -342,7 +348,6 @@ export default function BuyProductForm({
 
         return null;
     };
-    const { orgId } = useOrg();
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -445,6 +450,7 @@ export default function BuyProductForm({
                 />
 
                 <ProductDetails
+                    type={type}
                     products={products}
                     onUpdateProducts={handleUpdateProducts}
                     addedProducts={formData.products}
