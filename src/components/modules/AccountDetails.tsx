@@ -69,27 +69,47 @@ const AccountDetails = ({
             cell: ({ row }) => {
                 const transaction = row.original;
                 const type = transaction.type;
-                
+
                 // Handle MISC transactions with subtypes
-                if (type === "MISC" && transaction.details && 
-                    typeof transaction.details === 'object' && 
-                    'transactionSubType' in transaction.details) {
-                    const subType = (transaction.details as any).transactionSubType;
-                    if (subType === 'EXPENSE') {
-                        return <span className="text-red-600 font-medium">Expense</span>;
-                    } else if (subType === 'INCOME') {
-                        return <span className="text-green-600 font-medium">Income</span>;
+                if (
+                    type === "MISC" &&
+                    transaction.details &&
+                    typeof transaction.details === "object" &&
+                    "transactionSubType" in transaction.details
+                ) {
+                    const subType = (transaction.details as any)
+                        .transactionSubType;
+                    if (subType === "EXPENSE") {
+                        return (
+                            <span className="text-red-600 font-medium">
+                                Expense
+                            </span>
+                        );
+                    } else if (subType === "INCOME") {
+                        return (
+                            <span className="text-green-600 font-medium">
+                                Income
+                            </span>
+                        );
                     }
                 }
-                
+
                 // Handle other transaction types
                 switch (type) {
                     case "BUY":
-                        return <span className="text-red-600">Expense (Buy)</span>;
+                        return (
+                            <span className="text-red-600">Expense (Buy)</span>
+                        );
                     case "SELL":
-                        return <span className="text-green-600">Income (Sell)</span>;
+                        return (
+                            <span className="text-green-600">
+                                Income (Sell)
+                            </span>
+                        );
                     case "MISC":
-                        return <span className="text-gray-600">Miscellaneous</span>;
+                        return (
+                            <span className="text-gray-600">Miscellaneous</span>
+                        );
                     default:
                         return <span>{type}</span>;
                 }
@@ -122,28 +142,69 @@ const AccountDetails = ({
     const handleAddTransaction = async (
         amount: number,
         description: string,
-        type: "BUY" | "SELL" | "MISC",
-        details: object = {}
+        type: "BUY" | "SELL" | "MISC" | "TRANSFER",
+        details: object = {},
+        transferAccountId: string | null = null,
+        charge: number | null = null
     ) => {
-        const created = await api.post(
-            `/orgs/${account.organizationId}/accounts/${account.id}/transactions`,
-            {
-                amount,
-                type,
-                description,
-                details,
-            }
-        );
-        setLocalAccount((prev) => {
-            if (!prev) return null;
-            return {
-                ...prev,
-                balance:
-                    prev.balance +
-                    (type === "BUY" ? -amount : type === "SELL" ? amount : 0),
-                transactions: [...(prev.transactions || []), created.data],
-            };
-        });
+        if (type === "TRANSFER" && transferAccountId) {
+            await api.post(
+                `/orgs/${account.organizationId}/accounts/${transferAccountId}/transactions`,
+                {
+                    amount,
+                    type: "SELL",
+                    description:
+                        description + "-transfered from " + localAccount.name,
+                    details,
+                }
+            );
+            const created = await api.post(
+                `/orgs/${account.organizationId}/accounts/${account.id}/transactions`,
+                {
+                    amount: amount + (charge || 0),
+                    type: "BUY",
+                    description:
+                        description +
+                        "-transfered to " +
+                        transferAccountId +
+                        (charge && charge > 0 ? " with charge " + charge : ""),
+                    details,
+                }
+            );
+            setLocalAccount((prev) => {
+                if (!prev) return null;
+                return {
+                    ...prev,
+                    balance: prev.balance - (amount + (charge || 0)),
+                    transactions: [...(prev.transactions || []), created.data],
+                };
+            });
+        } else {
+            const created = await api.post(
+                `/orgs/${account.organizationId}/accounts/${account.id}/transactions`,
+                {
+                    amount,
+                    type,
+                    description,
+                    details,
+                }
+            );
+
+            setLocalAccount((prev) => {
+                if (!prev) return null;
+                return {
+                    ...prev,
+                    balance:
+                        prev.balance +
+                        (type === "BUY"
+                            ? -amount
+                            : type === "SELL"
+                            ? amount
+                            : 0),
+                    transactions: [...(prev.transactions || []), created.data],
+                };
+            });
+        }
     };
 
     return (
@@ -257,11 +318,26 @@ const AccountDetails = ({
                                     data={localAccount.transactions.filter(
                                         (t) => {
                                             // Include BUY transactions and MISC transactions with EXPENSE subtype
-                                            if (t.type === "BUY" && t.orderId) return true;
-                                            if (t.type === "MISC" && t.orderId === null && t.details && 
-                                                typeof t.details === 'object' && 'transactionSubType' in t.details && 
-                                                t.details.transactionSubType === 'EXPENSE') return true;
-                                            if ((t.type as string).endsWith('(PURCHASE)') && t.orderId) return true;
+                                            if (t.type === "BUY" && t.orderId)
+                                                return true;
+                                            if (
+                                                t.type === "MISC" &&
+                                                t.orderId === null &&
+                                                t.details &&
+                                                typeof t.details === "object" &&
+                                                "transactionSubType" in
+                                                    t.details &&
+                                                t.details.transactionSubType ===
+                                                    "EXPENSE"
+                                            )
+                                                return true;
+                                            if (
+                                                (t.type as string).endsWith(
+                                                    "(PURCHASE)"
+                                                ) &&
+                                                t.orderId
+                                            )
+                                                return true;
                                             return false;
                                         }
                                     )}
@@ -278,17 +354,25 @@ const AccountDetails = ({
                     <TabsContent value="sell">
                         <div>
                             {localAccount.transactions &&
-                            localAccount.transactions.filter(
-                                (t) => {
-                                    // Include SELL transactions and MISC transactions with INCOME subtype  
-                                    if (t.type === "SELL" && t.orderId) return true;
-                                    if (t.type === "MISC" && t.orderId === null && t.details && 
-                                        typeof t.details === 'object' && 'transactionSubType' in t.details && 
-                                        t.details.transactionSubType === 'INCOME') return true;
-                                    if ((t.type as string).endsWith('(SALE)') && t.orderId) return true;
-                                    return false;
-                                }
-                            ).length > 0 ? (
+                            localAccount.transactions.filter((t) => {
+                                // Include SELL transactions and MISC transactions with INCOME subtype
+                                if (t.type === "SELL" && t.orderId) return true;
+                                if (
+                                    t.type === "MISC" &&
+                                    t.orderId === null &&
+                                    t.details &&
+                                    typeof t.details === "object" &&
+                                    "transactionSubType" in t.details &&
+                                    t.details.transactionSubType === "INCOME"
+                                )
+                                    return true;
+                                if (
+                                    (t.type as string).endsWith("(SALE)") &&
+                                    t.orderId
+                                )
+                                    return true;
+                                return false;
+                            }).length > 0 ? (
                                 <TableComponent
                                     title="Income & Sale Payments"
                                     columns={
@@ -302,11 +386,26 @@ const AccountDetails = ({
                                     data={localAccount.transactions.filter(
                                         (t) => {
                                             // Include SELL transactions and MISC transactions with INCOME subtype
-                                            if (t.type === "SELL" && t.orderId) return true;
-                                            if (t.type === "MISC" && t.orderId === null && t.details && 
-                                                typeof t.details === 'object' && 'transactionSubType' in t.details && 
-                                                t.details.transactionSubType === 'INCOME') return true;
-                                            if ((t.type as string).endsWith('(SALE)') && t.orderId) return true;
+                                            if (t.type === "SELL" && t.orderId)
+                                                return true;
+                                            if (
+                                                t.type === "MISC" &&
+                                                t.orderId === null &&
+                                                t.details &&
+                                                typeof t.details === "object" &&
+                                                "transactionSubType" in
+                                                    t.details &&
+                                                t.details.transactionSubType ===
+                                                    "INCOME"
+                                            )
+                                                return true;
+                                            if (
+                                                (t.type as string).endsWith(
+                                                    "(SALE)"
+                                                ) &&
+                                                t.orderId
+                                            )
+                                                return true;
                                             return false;
                                         }
                                     )}

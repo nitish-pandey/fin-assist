@@ -104,38 +104,38 @@ const calculateRemainingAmount = (
 };
 
 // Initial state factory
-const createInitialState = (
-    type: string,
-    orgId: string,
-    defaultEntity: Entity | null
-): OrderFormData => {
-    // Try to get saved state from localStorage
-    const savedState = localStorage.getItem(`order-${orgId}-${type}`);
-    if (savedState) {
-        try {
-            const parsed = JSON.parse(savedState);
-            return {
-                entity: defaultEntity || parsed.entity || null,
-                products: parsed.products || [
-                    { productId: "", variantId: "", rate: 0, quantity: 1 },
-                ],
-                discount: parsed.discount || 0,
-                charges: parsed.charges || [],
-                payments: parsed.payments || [],
-            };
-        } catch (error) {
-            console.error("Failed to parse saved state:", error);
-        }
-    }
+// const createInitialState = (
+//     type: string,
+//     orgId: string,
+//     defaultEntity: Entity | null
+// ): OrderFormData => {
+//     // Try to get saved state from localStorage
+//     const savedState = localStorage.getItem(`order-${orgId}-${type}`);
+//     if (savedState) {
+//         try {
+//             const parsed = JSON.parse(savedState);
+//             return {
+//                 entity: defaultEntity || parsed.entity || null,
+//                 products: parsed.products || [
+//                     { productId: "", variantId: "", rate: 0, quantity: 1 },
+//                 ],
+//                 discount: parsed.discount || 0,
+//                 charges: parsed.charges || [],
+//                 payments: parsed.payments || [],
+//             };
+//         } catch (error) {
+//             console.error("Failed to parse saved state:", error);
+//         }
+//     }
 
-    return {
-        entity: defaultEntity,
-        products: [{ productId: "", variantId: "", rate: 0, quantity: 1 }],
-        discount: 0,
-        charges: [],
-        payments: [],
-    };
-};
+//     return {
+//         entity: defaultEntity,
+//         products: [{ productId: "", variantId: "", rate: 0, quantity: 1 }],
+//         discount: 0,
+//         charges: [],
+//         payments: [],
+//     };
+// };
 
 const AccountSelectionDialog = ({
     accounts,
@@ -202,15 +202,25 @@ export default function BuyProductForm({
     defaultEntity = null,
 }: BuyProductFormProps) {
     const { orgId } = useOrg();
-    const [formData, setFormData] = useState<OrderFormData>(() =>
-        createInitialState(type, orgId, defaultEntity)
-    );
+    // const [formData, setFormData] = useState<OrderFormData>(() =>
+    //     createInitialState(type, orgId, defaultEntity)
+    // );
+    const { buyCart, updateBuyCart, sellCart, updateSellCart } = useOrg();
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [isAccountSelectionActive, setIsAccountSelectionActive] =
         useState(false);
     const [selectedAccount, setSelectedAccount] = useState<Account | null>(
         null
+    );
+    // Use the correct cart and updater based on type
+    const formData = useMemo(
+        () => (type === "BUY" ? buyCart : sellCart),
+        [type, buyCart, sellCart]
+    );
+    const setFormData = useMemo(
+        () => (type === "BUY" ? updateBuyCart : updateSellCart),
+        [type, updateBuyCart, updateSellCart]
     );
 
     // Toast hook for notifications
@@ -220,17 +230,20 @@ export default function BuyProductForm({
     // Update state when defaultEntity changes, but only if no entity is currently selected
     useEffect(() => {
         if (defaultEntity && !formData.entity) {
-            setFormData((prev) => ({ ...prev, entity: defaultEntity }));
+            setFormData({
+                ...formData,
+                entity: defaultEntity,
+            });
         }
     }, [defaultEntity]);
 
     // Save to localStorage whenever formData changes
-    useEffect(() => {
-        localStorage.setItem(
-            `order-${orgId}-${type}`,
-            JSON.stringify(formData)
-        );
-    }, [formData, type]);
+    // useEffect(() => {
+    //     localStorage.setItem(
+    //         `order-${orgId}-${type}`,
+    //         JSON.stringify(formData)
+    //     );
+    // }, [formData, type]);
 
     // Memoized calculations
     const calculations = useMemo(() => {
@@ -277,7 +290,10 @@ export default function BuyProductForm({
 
     // State update functions
     const updateFormData = (updates: Partial<OrderFormData>) => {
-        setFormData((prev) => ({ ...prev, ...updates }));
+        setFormData({
+            ...formData,
+            ...updates,
+        });
         setError(null);
     };
 

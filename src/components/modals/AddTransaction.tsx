@@ -19,7 +19,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useOrg } from "@/providers/org-provider";
@@ -62,8 +68,10 @@ interface AddTransactionProps {
     onAddTransaction: (
         amount: number,
         description: string,
-        type: "BUY" | "SELL" | "MISC",
-        details: object
+        type: "BUY" | "SELL" | "MISC" | "TRANSFER",
+        details: object,
+        transferAccountId: string | null,
+        charge: number | null
     ) => Promise<void>;
 }
 
@@ -71,13 +79,19 @@ export function AddTransactionDialog({
     account,
     onAddTransaction,
 }: AddTransactionProps) {
-    const { orgId } = useOrg();
+    const { orgId, accounts } = useOrg();
     const [open, setOpen] = useState(false);
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
-    const [type, setType] = useState<"BUY" | "SELL" | "MISC">("BUY");
+    const [type, setType] = useState<"BUY" | "SELL" | "MISC" | "TRANSFER">(
+        "BUY"
+    );
     const [category, setCategory] = useState<TransactionCategory | "">("");
     const [entityId, setEntityId] = useState<string>("");
+    const [transferAccountId, setTransferAccountId] = useState<string | null>(
+        null
+    );
+    const [charge, setCharge] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [details, setDetails] = useState<TransactionDetails>({});
     const [entities, setEntities] = useState<Entity[]>([]);
@@ -101,21 +115,12 @@ export function AddTransactionDialog({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!account) return;
 
-        if (!amount || !description) {
+        if (!amount) {
             toast({
                 title: "Error",
                 description: "Please fill in amount and description",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        // Require category for expense/income transactions
-        if (type !== "MISC" && !category) {
-            toast({
-                title: "Error",
-                description: "Please select a category for this transaction",
                 variant: "destructive",
             });
             return;
@@ -144,6 +149,20 @@ export function AddTransactionDialog({
             });
             return;
         }
+        if (
+            type === "TRANSFER" &&
+            numericAmount + (charge || 0) > account?.balance
+        ) {
+            toast({
+                title: "Error",
+                description: `Transfer amount cannot exceed account balance of ${formatCurrency(
+                    account.balance,
+                    "USD"
+                )}`,
+                variant: "destructive",
+            });
+            return;
+        }
 
         setIsLoading(true);
 
@@ -153,7 +172,9 @@ export function AddTransactionDialog({
                 numericAmount,
                 description,
                 type,
-                details || {}
+                details || {},
+                transferAccountId,
+                charge
             );
 
             // If this is an expense or income transaction, also create an expense/income record
@@ -171,9 +192,15 @@ export function AddTransactionDialog({
                 };
 
                 try {
-                    await api.post(`/orgs/${orgId}/expenses-income`, expenseIncomeData);
+                    await api.post(
+                        `/orgs/${orgId}/expenses-income`,
+                        expenseIncomeData
+                    );
                 } catch (expenseIncomeError) {
-                    console.error("Failed to create expense/income record:", expenseIncomeError);
+                    console.error(
+                        "Failed to create expense/income record:",
+                        expenseIncomeError
+                    );
                     // Don't fail the whole transaction if expense/income creation fails
                 }
             }
@@ -217,7 +244,7 @@ export function AddTransactionDialog({
                     Add Transaction
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] max-h-[85vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Add Transaction</DialogTitle>
                     <DialogDescription>
@@ -316,21 +343,52 @@ export function AddTransactionDialog({
                                     >
                                         Expense (Debit)
                                     </Label>
+                                    <Label
+                                        htmlFor="transfer"
+                                        className={cn(
+                                            "cursor-pointer rounded-md px-3 py-1 text-sm",
+                                            type === "TRANSFER"
+                                                ? "bg-primary text-primary-foreground"
+                                                : "bg-muted"
+                                        )}
+                                        onClick={() => setType("TRANSFER")}
+                                    >
+                                        Transfer
+                                    </Label>
                                 </div>
                             </div>
                         </div>
 
                         {/* Category Selection - only show for expense/income transactions */}
-                        {type !== "MISC" && (
+                        {type !== "MISC" && type !== "TRANSFER" && (
                             <div className="grid gap-2">
                                 <Label htmlFor="category">Category</Label>
-                                <Select value={category} onValueChange={(value: string) => setCategory(value as TransactionCategory)}>
+                                <Select
+                                    value={category}
+                                    onValueChange={(value: string) =>
+                                        setCategory(
+                                            value as TransactionCategory
+                                        )
+                                    }
+                                >
                                     <SelectTrigger>
-                                        <SelectValue placeholder={`Select ${type === "BUY" ? "expense" : "income"} category`} />
+                                        <SelectValue
+                                            placeholder={`Select ${
+                                                type === "BUY"
+                                                    ? "expense"
+                                                    : "income"
+                                            } category`}
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {(type === "BUY" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES).map((cat) => (
-                                            <SelectItem key={cat.value} value={cat.value}>
+                                        {(type === "BUY"
+                                            ? EXPENSE_CATEGORIES
+                                            : INCOME_CATEGORIES
+                                        ).map((cat) => (
+                                            <SelectItem
+                                                key={cat.value}
+                                                value={cat.value}
+                                            >
                                                 {cat.label}
                                             </SelectItem>
                                         ))}
@@ -339,17 +397,77 @@ export function AddTransactionDialog({
                             </div>
                         )}
 
-                        {/* Entity Selection - only show for expense/income transactions */}
-                        {type !== "MISC" && (
+                        {type === "TRANSFER" && (
                             <div className="grid gap-2">
-                                <Label htmlFor="entity">Entity (Optional)</Label>
-                                <Select value={entityId} onValueChange={(value: string) => setEntityId(value)}>
+                                <Label htmlFor="transferFrom">
+                                    Transfer To
+                                </Label>
+                                <Select
+                                    value={transferAccountId || ""}
+                                    onValueChange={(value: string) =>
+                                        setTransferAccountId(value)
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select account" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {accounts
+                                            .filter(
+                                                (acc) => account.id !== acc.id
+                                            )
+                                            .map((account) => (
+                                                <SelectItem
+                                                    key={account.id}
+                                                    value={account.id}
+                                                >
+                                                    {account.name} -{" "}
+                                                    {account.type}
+                                                </SelectItem>
+                                            ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                        {/* charge */}
+                        {type === "TRANSFER" && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="transferCharge">
+                                    Transfer Charge
+                                </Label>
+                                <Input
+                                    id="transferCharge"
+                                    name="transferCharge"
+                                    placeholder="Enter transfer charge"
+                                    value={charge || ""}
+                                    onChange={(e) =>
+                                        setCharge(parseFloat(e.target.value))
+                                    }
+                                />
+                            </div>
+                        )}
+
+                        {/* Entity Selection - only show for expense/income transactions */}
+                        {type !== "MISC" && type !== "TRANSFER" && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="entity">
+                                    Entity (Optional)
+                                </Label>
+                                <Select
+                                    value={entityId}
+                                    onValueChange={(value: string) =>
+                                        setEntityId(value)
+                                    }
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select entity" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {entities.map((entity) => (
-                                            <SelectItem key={entity.id} value={entity.id}>
+                                            <SelectItem
+                                                key={entity.id}
+                                                value={entity.id}
+                                            >
                                                 {entity.name}
                                             </SelectItem>
                                         ))}

@@ -1,14 +1,132 @@
-import { Organization } from "@/data/types";
+import { Account, Entity, Organization, Product } from "@/data/types";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "@/utils/api";
-interface OrgContextData {
-    orgId: string;
-    organization: Organization | null;
-    refetch: () => void;
+
+interface OrderProduct {
+    productId: string;
+    variantId: string;
+    rate: number;
+    quantity: number;
 }
 
-const OrgContext = createContext<OrgContextData>({} as OrgContextData);
+interface OrderCharge {
+    id: string;
+    amount: number;
+    label: string;
+    isVat?: boolean;
+    type: "fixed" | "percentage";
+    percentage: number;
+    bearedByEntity: boolean;
+}
+
+interface OrderPayment {
+    amount: number;
+    accountId: string;
+    details: object;
+}
+interface Cart {
+    entity: Entity | null;
+    tax: number;
+    products: OrderProduct[];
+    discount: number;
+    charges: OrderCharge[];
+    payments: OrderPayment[];
+}
+interface OrgContextData {
+    orgId: string;
+    status: "idle" | "loading" | "error" | "success";
+    organization: Organization | null;
+    refetch: () => void;
+
+    products: Product[];
+    updateProduct: (productId: string, updatedData: Partial<Product>) => void;
+    refetchProductId: (productId: string) => void;
+    refetchProducts: () => void;
+
+    accounts: Account[];
+    updateAccount: (accountId: string, updatedData: Partial<Account>) => void;
+    refetchAccountId: (accountId: string) => void;
+    refetchAccounts: () => void;
+
+    buyCart: Cart;
+    updateBuyCart: (cart: Partial<Cart>) => void;
+    clearBuyCart: () => void;
+
+    sellCart: Cart;
+    updateSellCart: (cart: Partial<Cart>) => void;
+    clearSellCart: () => void;
+}
+
+const OrgContext = createContext<OrgContextData>({
+    orgId: "",
+    organization: null,
+    status: "idle",
+    refetch: () => {},
+    products: [],
+    updateProduct: () => {},
+    refetchProducts: () => {},
+    refetchProductId: () => {},
+    accounts: [],
+    updateAccount: () => {},
+    refetchAccountId: () => {},
+    refetchAccounts: () => {},
+    buyCart: {
+        entity: null,
+        tax: 0,
+        products: [],
+        discount: 0,
+        charges: [],
+        payments: [],
+    },
+    updateBuyCart: () => {},
+    clearBuyCart: () => {},
+    sellCart: {
+        entity: null,
+        tax: 0,
+        products: [],
+        discount: 0,
+        charges: [],
+        payments: [],
+    },
+    updateSellCart: () => {},
+    clearSellCart: () => {},
+});
+
+const createInitialState = (
+    type: string,
+    orgId: string,
+    defaultEntity: Entity | null
+): Cart => {
+    // Try to get saved state from localStorage
+    const savedState = localStorage.getItem(`CART-${orgId}-${type}`);
+    if (savedState) {
+        try {
+            const parsed = JSON.parse(savedState);
+            return {
+                entity: defaultEntity || parsed.entity || null,
+                products: parsed.products || [
+                    { productId: "", variantId: "", rate: 0, quantity: 1 },
+                ],
+                discount: parsed.discount || 0,
+                charges: parsed.charges || [],
+                payments: parsed.payments || [],
+                tax: parsed.tax || 0,
+            };
+        } catch (error) {
+            console.error("Failed to parse saved state:", error);
+        }
+    }
+
+    return {
+        entity: defaultEntity,
+        products: [{ productId: "", variantId: "", rate: 0, quantity: 1 }],
+        discount: 0,
+        charges: [],
+        payments: [],
+        tax: 0,
+    };
+};
 
 interface OrgProviderProps {
     children: React.ReactNode;
@@ -16,8 +134,107 @@ interface OrgProviderProps {
 
 export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
     const { orgId } = useParams<{ orgId: string }>() as { orgId: string };
-    const [status, setStatus] = useState<"loading" | "error" | "success">("loading");
+    const [status, setStatus] = useState<"loading" | "error" | "success">(
+        "loading"
+    );
     const [organization, setOrganization] = useState<Organization | null>(null);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [accounts, setAccounts] = useState<Account[]>([]);
+    const [buyCart, setBuyCart] = useState<Cart>(() =>
+        createInitialState("buy", orgId, null)
+    );
+    const [sellCart, setSellCart] = useState<Cart>(() =>
+        createInitialState("sell", orgId, null)
+    );
+
+    // Persist buyCart to localStorage
+    useEffect(() => {
+        if (orgId) {
+            localStorage.setItem(`CART-${orgId}-buy`, JSON.stringify(buyCart));
+        }
+    }, [buyCart, orgId]);
+
+    // Persist sellCart to localStorage
+    useEffect(() => {
+        if (orgId) {
+            localStorage.setItem(
+                `CART-${orgId}-sell`,
+                JSON.stringify(sellCart)
+            );
+        }
+    }, [sellCart, orgId]);
+
+    const refetchProducts = async () => {
+        try {
+            const data = await (await api.get(`/orgs/${orgId}/products`)).data;
+            setProducts(data);
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        }
+    };
+
+    const refetchProductId = async (productId: string) => {
+        try {
+            const data = await (
+                await api.get(`/orgs/${orgId}/products/${productId}`)
+            ).data;
+            setProducts((prev) => {
+                const exists = prev.some((p) => p.id === productId);
+                if (exists) {
+                    return prev.map((p) => (p.id === productId ? data : p));
+                } else {
+                    return [...prev, data];
+                }
+            });
+        } catch (error) {
+            console.error("Error fetching product:", error);
+        }
+    };
+
+    const updateProduct = (
+        productId: string,
+        updatedData: Partial<Product>
+    ) => {
+        setProducts((prev) =>
+            prev.map((p) => (p.id === productId ? { ...p, ...updatedData } : p))
+        );
+    };
+
+    const refetchAccounts = async () => {
+        try {
+            const data = await (await api.get(`/orgs/${orgId}/accounts`)).data;
+            setAccounts(data);
+        } catch (error) {
+            console.error("Error fetching accounts:", error);
+        }
+    };
+
+    const refetchAccountId = async (accountId: string) => {
+        try {
+            const data = await (
+                await api.get(`/orgs/${orgId}/accounts/${accountId}`)
+            ).data;
+            setAccounts((prev) => {
+                const exists = prev.some((a) => a.id === accountId);
+                if (exists) {
+                    return prev.map((a) => (a.id === accountId ? data : a));
+                } else {
+                    return [...prev, data];
+                }
+            });
+        } catch (error) {
+            console.error("Error fetching account:", error);
+        }
+    };
+
+    const updateAccount = (
+        accountId: string,
+        updatedData: Partial<Account>
+    ) => {
+        setAccounts((prev) =>
+            prev.map((a) => (a.id === accountId ? { ...a, ...updatedData } : a))
+        );
+    };
 
     const fetchOrganization = async (orgId: string) => {
         try {
@@ -35,6 +252,8 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
         const fetchData = async () => {
             if (orgId) {
                 await fetchOrganization(orgId);
+                await refetchProducts();
+                await refetchAccounts();
             }
         };
         fetchData();
@@ -46,8 +265,59 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
         }
     };
 
+    const updateBuyCart = (cart: Partial<Cart>) => {
+        setBuyCart((prev) => ({ ...prev, ...cart }));
+    };
+
+    const clearBuyCart = () => {
+        setBuyCart({
+            entity: null,
+            discount: 0,
+            tax: 0,
+            payments: [],
+            charges: [],
+            products: [],
+        });
+    };
+
+    const updateSellCart = (cart: Partial<Cart>) => {
+        setSellCart((prev) => ({ ...prev, ...cart }));
+    };
+
+    const clearSellCart = () => {
+        setSellCart({
+            entity: null,
+            discount: 0,
+            tax: 0,
+            payments: [],
+            charges: [],
+            products: [],
+        });
+    };
+
     return (
-        <OrgContext.Provider value={{ orgId, organization, refetch }}>
+        <OrgContext.Provider
+            value={{
+                orgId,
+                status,
+                organization,
+                refetch,
+                products,
+                updateProduct,
+                refetchProducts,
+                refetchProductId,
+                accounts,
+                updateAccount,
+                refetchAccountId,
+                refetchAccounts,
+                buyCart,
+                updateBuyCart,
+                clearBuyCart,
+                sellCart,
+                updateSellCart,
+                clearSellCart,
+            }}
+        >
             {children}
             {status === "loading" ? (
                 <div className="flex items-center justify-center h-screen w-screen bg-gray-100">
@@ -55,7 +325,9 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
                 </div>
             ) : status === "error" ? (
                 <div className="flex items-center justify-center h-screen w-screen bg-gray-100">
-                    <p className="text-red-500">Error fetching organization data</p>
+                    <p className="text-red-500">
+                        Error fetching organization data
+                    </p>
                 </div>
             ) : null}
         </OrgContext.Provider>
