@@ -100,7 +100,7 @@ export function ProductDetails({
                     <div className="col-span-1" />
                 </div>
 
-                <ScrollArea className="max-h-[400px] pr-4">
+                <ScrollArea className="pr-4">
                     <div className="space-y-3">
                         {addedProducts.map((item, index) => {
                             const product = getProductDetails(item.productId);

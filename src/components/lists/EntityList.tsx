@@ -12,7 +12,12 @@ interface EntityListProps {
     onEdit: (id: string, entity: Partial<Entity>) => Promise<void>;
 }
 
-export const EntityList = ({ entities, loading, onDelete, onEdit }: EntityListProps) => {
+export const EntityList = ({
+    entities,
+    loading,
+    onDelete,
+    onEdit,
+}: EntityListProps) => {
     const columns: ColumnDef<Entity>[] = [
         {
             accessorKey: "name",
@@ -55,7 +60,9 @@ export const EntityList = ({ entities, loading, onDelete, onEdit }: EntityListPr
             header: "Edit",
             cell: (props) => (
                 <AddEntity
-                    addEntity={(entity: Partial<Entity>) => onEdit(props.row.original.id, entity)}
+                    addEntity={(entity: Partial<Entity>) =>
+                        onEdit(props.row.original.id, entity)
+                    }
                     entity={props.row.original}
                     text="Edit"
                 />
@@ -67,5 +74,14 @@ export const EntityList = ({ entities, loading, onDelete, onEdit }: EntityListPr
         return <div>Loading...</div>;
     }
 
-    return <TableComponent columns={columns} data={entities} allowExport={false} />;
+    return (
+        <TableComponent
+            columns={columns}
+            data={entities}
+            allowExport={false}
+            showFooter
+            allowPagination
+            allowSearch
+        />
+    );
 };

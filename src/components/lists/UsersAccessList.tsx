@@ -19,7 +19,11 @@ interface UserInfo {
     permissions: string[];
 }
 
-const UserAccessList: React.FC<UserAccessListProps> = ({ access, removeUser, inviteUser }) => {
+const UserAccessList: React.FC<UserAccessListProps> = ({
+    access,
+    removeUser,
+    inviteUser,
+}) => {
     const [isLoading, setIsLoading] = useState(true);
     const userCols: ColumnDef<UserInfo>[] = [
         {
@@ -62,24 +66,27 @@ const UserAccessList: React.FC<UserAccessListProps> = ({ access, removeUser, inv
     ];
 
     const users = useMemo(() => {
-        return access.reduce<UserInfo[]>((acc, { userId, user, access: accessLevel }) => {
-            const existingUser = acc.find((u) => u.id === userId);
+        return access.reduce<UserInfo[]>(
+            (acc, { userId, user, access: accessLevel }) => {
+                const existingUser = acc.find((u) => u.id === userId);
 
-            if (existingUser) {
-                if (!existingUser.permissions.includes(accessLevel)) {
-                    existingUser.permissions.push(accessLevel);
+                if (existingUser) {
+                    if (!existingUser.permissions.includes(accessLevel)) {
+                        existingUser.permissions.push(accessLevel);
+                    }
+                } else {
+                    acc.push({
+                        id: userId,
+                        name: user?.name || "Unknown",
+                        email: user?.email || "N/A",
+                        permissions: [accessLevel],
+                    });
                 }
-            } else {
-                acc.push({
-                    id: userId,
-                    name: user?.name || "Unknown",
-                    email: user?.email || "N/A",
-                    permissions: [accessLevel],
-                });
-            }
 
-            return acc;
-        }, []);
+                return acc;
+            },
+            []
+        );
     }, [access]);
 
     useEffect(() => {
@@ -98,7 +105,9 @@ const UserAccessList: React.FC<UserAccessListProps> = ({ access, removeUser, inv
         <div className="bg-gray-50 rounded-2xl shadow-none">
             <Card className="border-none w-full shadow-none p-0">
                 <CardHeader className="flex flex-row justify-between items-center border-b pb-4">
-                    <h2 className="text-xl font-bold text-gray-800">User Access</h2>
+                    <h2 className="text-xl font-bold text-gray-800">
+                        User Access
+                    </h2>
                     <InviteUser onInvite={inviteUser} />
                 </CardHeader>
                 <CardContent className="pt-4">
@@ -108,9 +117,12 @@ const UserAccessList: React.FC<UserAccessListProps> = ({ access, removeUser, inv
                             data={users}
                             allowSelection={false}
                             showFooter={true}
+                            allowPagination
                         />
                     ) : (
-                        <div className="text-center text-gray-500">No users with access.</div>
+                        <div className="text-center text-gray-500">
+                            No users with access.
+                        </div>
                     )}
                 </CardContent>
             </Card>

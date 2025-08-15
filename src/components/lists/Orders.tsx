@@ -33,7 +33,9 @@ const columns: ColumnDef<Order>[] = [
         cell: (props) => {
             if (props.row.original.paymentStatus === "PAID") {
                 return (
-                    <span className="bg-green-500 text-white px-2 py-1 my-1 rounded-lg">PAID</span>
+                    <span className="bg-green-500 text-white px-2 py-1 my-1 rounded-lg">
+                        PAID
+                    </span>
                 );
             } else if (props.row.original.paymentStatus === "PENDING") {
                 return (
@@ -48,7 +50,11 @@ const columns: ColumnDef<Order>[] = [
                     </span>
                 );
             }
-            return <span className="bg-red-500 text-white px-2 py-1 my-1 rounded-lg">FAILED</span>;
+            return (
+                <span className="bg-red-500 text-white px-2 py-1 my-1 rounded-lg">
+                    FAILED
+                </span>
+            );
         },
     },
     {
@@ -64,10 +70,19 @@ const columns: ColumnDef<Order>[] = [
     {
         header: "Created At",
         accessorKey: "createdAt",
-        cell: (props) => new Date(props.row.original.createdAt).toLocaleDateString(),
+        cell: (props) =>
+            new Date(props.row.original.createdAt).toLocaleDateString(),
     },
 ];
 
 export const OrderList: React.FC<OrderListProps> = ({ orders }) => {
-    return <TableComponent columns={columns} data={orders} />;
+    return (
+        <TableComponent
+            columns={columns}
+            data={orders}
+            allowPagination
+            allowSearch
+            showFooter
+        />
+    );
 };
