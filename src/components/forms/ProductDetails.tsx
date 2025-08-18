@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import { Minus, Plus, X, Search, ChevronDown } from "lucide-react";
 import { Command } from "cmdk";
 import {
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { OrderItem, Product } from "@/data/types";
 // import CreateProductModal from "@/pages/admin/products/Create_product_modal";
@@ -82,13 +82,45 @@ export function ProductDetails({
         );
     }, [addedProducts]);
 
+    const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+
+    const handleGlobalSelect = (item: Product) => {
+        const newProduct: SelectedProduct = {
+            productId: item.id,
+            variantId: item.variants?.[0].id || "",
+            quantity: 1,
+            rate: item.variants?.[0].estimatedPrice || 0,
+        };
+
+        // Check if there's an empty slot to fill
+        const emptySlotIndex = addedProducts.findIndex((p) => !p.productId);
+
+        if (emptySlotIndex !== -1) {
+            // Fill the empty slot
+            updateProductAtIndex(emptySlotIndex, newProduct);
+        } else {
+            // Add new item
+            onUpdateProducts([...addedProducts, newProduct]);
+        }
+
+        setGlobalSearchOpen(false);
+    };
+
     return (
         <Card className="w-full border-0 shadow-none bg-gray-100">
-            <CardHeader className="bg-gradient-to-r from-slate-100 to-slate-200 rounded-t-xl">
-                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+            <div className="flex items-center justify-between pt-4 px-6">
+                <CardTitle className="text-lg font-semibold text-slate-800">
                     Item Details
                 </CardTitle>
-            </CardHeader>
+
+                {/* Global Search */}
+                <GlobalSearchPopover
+                    items={products}
+                    onSelect={handleGlobalSelect}
+                    open={globalSearchOpen}
+                    onOpenChange={setGlobalSearchOpen}
+                />
+            </div>
             <CardContent className="p-6 space-y-6">
                 <div className="grid grid-cols-12 gap-4 font-medium text-sm text-muted-foreground bg-slate-50 p-3 rounded-md">
                     <div className="col-span-1">#</div>
@@ -497,6 +529,91 @@ const SelectPopover: React.FC<SelectPopoverProps> = ({
                                     {item.label}
                                 </Command.Item>
                             ))}
+                    </Command.List>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    );
+};
+interface GlobalSearchPopoverProps {
+    items: Product[];
+    onSelect: (item: Product) => void;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}
+
+const GlobalSearchPopover: React.FC<GlobalSearchPopoverProps> = ({
+    items,
+    onSelect,
+    open,
+    onOpenChange,
+}) => {
+    const [search, setSearch] = useState("");
+
+    const filteredItems = items.filter(
+        (item) =>
+            item.name.toLowerCase().includes(search.toLowerCase()) ||
+            item.variants?.some((variant) =>
+                variant.name.toLowerCase().includes(search.toLowerCase())
+            ) ||
+            item.sku.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter" && filteredItems.length > 0) {
+            onSelect(filteredItems[0]);
+            setSearch("");
+        }
+    };
+
+    return (
+        <Popover open={open} onOpenChange={onOpenChange}>
+            <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                    <Search className="h-4 w-4" />
+                    Quick Add
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-96 p-0" align="end">
+                <Command>
+                    <div className="flex items-center px-3 border-b">
+                        <Search className="mr-2 h-4 w-4 text-slate-400" />
+                        <Input
+                            placeholder="Search products and variants..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className="border-none focus:ring-0 text-sm"
+                            autoFocus
+                        />
+                    </div>
+                    <Command.List className="max-h-64 overflow-y-auto">
+                        <Command.Empty className="py-6 text-center text-sm text-slate-500">
+                            No products found.
+                        </Command.Empty>
+                        {filteredItems.slice(0, 10).map((item) => (
+                            <Command.Item
+                                key={item.id}
+                                value={item.id}
+                                onSelect={() => {
+                                    onSelect(item);
+                                    setSearch("");
+                                }}
+                                className="px-3 py-2 cursor-pointer hover:bg-slate-100 border-b last:border-0"
+                            >
+                                <div className="flex justify-between items-center w-full">
+                                    <span className="text-sm truncate">
+                                        {item.name}
+                                    </span>
+                                    <span className="text-xs text-slate-500 ml-2 whitespace-nowrap">
+                                        Rs{" "}
+                                        {item.variants?.[0].estimatedPrice.toFixed(
+                                            2
+                                        )}
+                                    </span>
+                                </div>
+                            </Command.Item>
+                        ))}
                     </Command.List>
                 </Command>
             </PopoverContent>

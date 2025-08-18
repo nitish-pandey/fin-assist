@@ -10,6 +10,7 @@ import type { Organization } from "@/data/types";
 import { api } from "@/utils/api";
 import EditOrgModal from "@/components/modals/EditOrgInfo";
 import { useOrg } from "@/providers/org-provider";
+import { RemoveModal } from "@/components/modals/RemoveModal";
 
 export default function OrgInfoPage() {
     const { orgId, refetch, organization } = useOrg();
@@ -31,6 +32,11 @@ export default function OrgInfoPage() {
         } catch (error) {
             console.error("Failed to update organization:", error);
         }
+    };
+
+    const handleDeleteOrganization = async () => {
+        await api.delete(`/orgs/${orgId}`);
+        window.location.href = "/profile";
     };
 
     return (
@@ -72,10 +78,16 @@ export default function OrgInfoPage() {
                                 </div>
                             </div>
                         </div>
-                        <div className="md:ml-auto">
+                        <div className="md:ml-auto flex items-center gap-4">
                             <EditOrgModal
                                 orgData={organization}
                                 onSubmit={handleEditSubmit}
+                            />
+                            <RemoveModal
+                                title="Delete Organization"
+                                description="Are you sure you want to delete this organization?"
+                                onRemove={handleDeleteOrganization}
+                                text="Delete"
                             />
                         </div>
                     </div>

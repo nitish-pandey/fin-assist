@@ -13,9 +13,7 @@ import OrgInfoPage from "./pages/admin/basic/OrgInfo";
 import OrgCategories from "./pages/admin/products/Categories";
 import OrgProducts from "./pages/admin/products/Products";
 import EntityInfo from "./pages/admin/basic/Entity";
-import CreateAccountPage from "./pages/admin/accounts/CreateAccount";
 import ViewAccountPage from "./pages/admin/accounts/ViewAccount";
-import OrderViewPage from "./pages/admin/order/view";
 import SingleOrderPage from "./pages/admin/order/SingleOrderPage";
 import DashboardPage from "./pages/admin/basic/Dashboard";
 import AllTransactionPage from "./pages/admin/transactions/all";
@@ -106,10 +104,6 @@ export const routes: RouteObject[] = [
                         path: "accounts",
                         children: [
                             {
-                                element: <CreateAccountPage />,
-                                path: "create",
-                            },
-                            {
                                 element: <ViewAccountPage />,
                                 path: "view",
                             },
@@ -117,6 +111,7 @@ export const routes: RouteObject[] = [
                                 element: <BankAccounts />,
                                 path: "bank",
                             },
+
                             {
                                 element: <ChequeAccounts />,
                                 path: "cheques",
@@ -174,10 +169,6 @@ export const routes: RouteObject[] = [
                     {
                         path: "orders",
                         children: [
-                            {
-                                element: <OrderViewPage />,
-                                path: "view",
-                            },
                             {
                                 element: <SingleOrderPage />,
                                 path: ":orderId",
