@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
     ArrowLeft,
-    // Edit,
+    Edit,
     // Trash2,
     // Archive,
     // Copy,
@@ -45,6 +45,7 @@ import { api } from "@/utils/api";
 import { Product } from "@/data/types";
 import { RemoveModal } from "@/components/modals/RemoveModal";
 import { useToast } from "@/hooks/use-toast";
+import EditProductDialog from "@/components/modals/EditProductDialog";
 
 // Custom Publish Modal Component
 const PublishModal: React.FC<{
@@ -139,6 +140,7 @@ const SingleProductPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [publishLoading, setPublishLoading] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -197,6 +199,10 @@ const SingleProductPage = () => {
         } finally {
             setPublishLoading(false);
         }
+    };
+
+    const handleProductUpdate = (updatedProduct: Product) => {
+        setProduct(updatedProduct);
     };
 
     if (loading) {
@@ -297,6 +303,14 @@ const SingleProductPage = () => {
                 </div>
 
                 <div className="flex items-center space-x-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => setIsEditDialogOpen(true)}
+                        disabled={loading}
+                    >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Product
+                    </Button>
                     <PublishModal
                         isPublished={product.isPublished}
                         onToggle={handleTogglePublish}
@@ -428,12 +442,9 @@ const SingleProductPage = () => {
 
                     {/* Tabs for additional information */}
                     <Tabs defaultValue="variants" className="mt-6">
-                        <TabsList className="grid grid-cols-4">
+                        <TabsList className="grid grid-cols-3">
                             <TabsTrigger value="variants">
-                                Variants ({product.variants?.length || 0})
-                            </TabsTrigger>
-                            <TabsTrigger value="ledger">
-                                Variant Ledger
+                                Variants & Ledger ({product.variants?.length || 0})
                             </TabsTrigger>
                             <TabsTrigger value="inventory">
                                 Inventory
@@ -441,177 +452,22 @@ const SingleProductPage = () => {
                             <TabsTrigger value="history">History</TabsTrigger>
                         </TabsList>
 
-                        {/* Variants Tab */}
+                        {/* Variants & Ledger Tab */}
                         <TabsContent value="variants" className="mt-4">
                             <Card>
                                 <div className="p-6">
                                     {product.variants &&
                                     product.variants.length > 0 ? (
-                                        <div className="space-y-4">
+                                        <div className="space-y-6">
                                             <div className="flex justify-between items-center">
                                                 <h3 className="text-lg font-medium">
-                                                    Product Variants
+                                                    Product Variants & Transaction Ledger
                                                 </h3>
-                                                {/* <Button size="sm">
-                                                    <Plus className="mr-2 h-4 w-4" />
-                                                    Add Variant
-                                                </Button> */}
-                                                <div></div>
+                                                <div className="text-sm text-muted-foreground">
+                                                    Complete variant details with transaction history
+                                                </div>
                                             </div>
 
-                                            <div className="border rounded-md">
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead className="w-[50px]"></TableHead>
-                                                            <TableHead>
-                                                                Name
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                SKU
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                Buy Price
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                Sell Price
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                Stock
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                Orders
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                Last Activity
-                                                            </TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {product.variants.map(
-                                                            (variant) => (
-                                                                <React.Fragment
-                                                                    key={
-                                                                        variant.id
-                                                                    }
-                                                                >
-                                                                    <TableRow>
-                                                                        <TableCell></TableCell>
-                                                                        <TableCell className="font-medium">
-                                                                            {
-                                                                                variant.name
-                                                                            }
-                                                                        </TableCell>
-                                                                        <TableCell>
-                                                                            {
-                                                                                variant.sku
-                                                                            }
-                                                                        </TableCell>
-                                                                        <TableCell>
-                                                                            Rs{" "}
-                                                                            {variant.buyPrice.toFixed(
-                                                                                2
-                                                                            )}
-                                                                        </TableCell>
-                                                                        <TableCell>
-                                                                            Rs{" "}
-                                                                            {variant.estimatedPrice.toFixed(
-                                                                                2
-                                                                            )}
-                                                                        </TableCell>
-                                                                        <TableCell>
-                                                                            <Badge
-                                                                                variant={
-                                                                                    variant.stock <=
-                                                                                    lowStockThreshold
-                                                                                        ? "destructive"
-                                                                                        : "secondary"
-                                                                                }
-                                                                            >
-                                                                                {
-                                                                                    variant.stock
-                                                                                }
-                                                                            </Badge>
-                                                                        </TableCell>
-                                                                        <TableCell>
-                                                                            <Badge variant="outline">
-                                                                                {variant
-                                                                                    .items
-                                                                                    ?.length ||
-                                                                                    0}
-                                                                            </Badge>
-                                                                        </TableCell>
-                                                                        <TableCell className="text-sm text-muted-foreground">
-                                                                            {variant.items &&
-                                                                            variant
-                                                                                .items
-                                                                                .length >
-                                                                                0
-                                                                                ? formatDate(
-                                                                                      variant
-                                                                                          .items[
-                                                                                          variant
-                                                                                              .items
-                                                                                              .length -
-                                                                                              1
-                                                                                      ]
-                                                                                          .createdAt
-                                                                                  )
-                                                                                : "No activity"}
-                                                                        </TableCell>
-                                                                        {/* <TableCell className="text-right">
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            className="h-8 w-8 p-0"
-                                                                        >
-                                                                            <Edit className="h-4 w-4" />
-                                                                            <span className="sr-only">
-                                                                                Edit
-                                                                            </span>
-                                                                        </Button>
-                                                                    </TableCell> */}
-                                                                    </TableRow>
-                                                                </React.Fragment>
-                                                            )
-                                                        )}
-                                                    </TableBody>
-                                                </Table>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="text-center py-6">
-                                            <Package className="mx-auto h-12 w-12 text-muted-foreground" />
-                                            <h3 className="mt-4 text-lg font-medium">
-                                                No Variants
-                                            </h3>
-                                            <p className="mt-2 text-sm text-muted-foreground">
-                                                This product doesn't have any
-                                                variants.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </Card>
-                        </TabsContent>
-
-                        {/* Variant Ledger Tab */}
-                        <TabsContent value="ledger" className="mt-4">
-                            <Card>
-                                <div className="p-6">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-lg font-medium">
-                                            Variant Ledger
-                                        </h3>
-                                        <div className="text-sm text-muted-foreground">
-                                            Complete transaction history for all
-                                            variants
-                                        </div>
-                                    </div>
-
-                                    {product.variants &&
-                                    product.variants.length > 0 ? (
-                                        <div className="space-y-6">
                                             {product.variants.map((variant) => {
                                                 // Calculate running totals
                                                 const sortedItems =
@@ -683,356 +539,251 @@ const SingleProductPage = () => {
                                                           ) / sellItems.length
                                                         : 0;
 
+                                                const stockValue = variant.stock * variant.buyPrice;
+                                                const isLowStock = variant.stock <= lowStockThreshold;
+
                                                 return (
                                                     <div
                                                         key={variant.id}
                                                         className="border rounded-lg"
                                                     >
+                                                        {/* Variant Header with Basic Info */}
                                                         <div className="bg-muted/50 px-4 py-3 border-b">
                                                             <div className="flex items-center justify-between">
                                                                 <div>
-                                                                    <h4 className="font-medium">
-                                                                        {
-                                                                            variant.name
-                                                                        }
+                                                                    <h4 className="font-medium text-lg">
+                                                                        {variant.name}
                                                                     </h4>
-                                                                    <p className="text-sm text-muted-foreground">
-                                                                        SKU:{" "}
-                                                                        {
-                                                                            variant.sku
-                                                                        }{" "}
-                                                                        | Code:{" "}
-                                                                        {
-                                                                            variant.code
-                                                                        }
-                                                                    </p>
+                                                                    <div className="flex items-center gap-4 mt-1">
+                                                                        <p className="text-sm text-muted-foreground">
+                                                                            SKU: {variant.sku}
+                                                                        </p>
+                                                                        <p className="text-sm text-muted-foreground">
+                                                                            Code: {variant.code}
+                                                                        </p>
+                                                                        <Badge
+                                                                            variant={
+                                                                                isLowStock
+                                                                                    ? "destructive"
+                                                                                    : "secondary"
+                                                                            }
+                                                                        >
+                                                                            {isLowStock ? "Low Stock" : "In Stock"}
+                                                                        </Badge>
+                                                                    </div>
                                                                 </div>
                                                                 <div className="text-right">
                                                                     <div className="text-sm font-medium">
-                                                                        Current
-                                                                        Stock:{" "}
-                                                                        <Badge variant="outline">
-                                                                            {
-                                                                                variant.stock
-                                                                            }
+                                                                        Current Stock: {" "}
+                                                                        <Badge variant="outline" className="text-base">
+                                                                            {variant.stock} units
                                                                         </Badge>
+                                                                    </div>
+                                                                    <div className="text-sm text-muted-foreground mt-1">
+                                                                        Value: {formatCurrency(stockValue)}
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
 
-                                                        {/* Summary Stats */}
+                                                        {/* Variant Details Section */}
                                                         <div className="p-4 border-b bg-background">
-                                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                                                <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
+                                                                    <div className="font-medium text-blue-800">Buy Price</div>
+                                                                    <div className="text-lg font-bold text-blue-900">
+                                                                        {formatCurrency(variant.buyPrice)}
+                                                                    </div>
+                                                                </div>
                                                                 <div className="bg-green-50 p-3 rounded-md border border-green-200">
-                                                                    <div className="font-medium text-green-800">
-                                                                        Total
-                                                                        Bought
-                                                                    </div>
+                                                                    <div className="font-medium text-green-800">Sell Price</div>
                                                                     <div className="text-lg font-bold text-green-900">
-                                                                        {
-                                                                            totalBought
-                                                                        }
+                                                                        {formatCurrency(variant.estimatedPrice)}
                                                                     </div>
-                                                                    {avgBuyPrice >
-                                                                        0 && (
+                                                                </div>
+                                                                <div className="bg-purple-50 p-3 rounded-md border border-purple-200">
+                                                                    <div className="font-medium text-purple-800">Total Orders</div>
+                                                                    <div className="text-lg font-bold text-purple-900">
+                                                                        {variant.items?.length || 0}
+                                                                    </div>
+                                                                    <div className="text-xs text-purple-600">Transactions</div>
+                                                                </div>
+                                                                <div className="bg-amber-50 p-3 rounded-md border border-amber-200">
+                                                                    <div className="font-medium text-amber-800">Last Activity</div>
+                                                                    <div className="text-sm font-bold text-amber-900">
+                                                                        {variant.items && variant.items.length > 0
+                                                                            ? formatDate(variant.items[variant.items.length - 1].createdAt)
+                                                                            : "No activity"}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Transaction Summary Stats */}
+                                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                                <div className="bg-green-50 p-3 rounded-md border border-green-200">
+                                                                    <div className="font-medium text-green-800">Total Bought</div>
+                                                                    <div className="text-lg font-bold text-green-900">
+                                                                        {totalBought}
+                                                                    </div>
+                                                                    {avgBuyPrice > 0 && (
                                                                         <div className="text-xs text-green-600">
-                                                                            Avg:{" "}
-                                                                            {formatCurrency(
-                                                                                avgBuyPrice
-                                                                            )}
+                                                                            Avg: {formatCurrency(avgBuyPrice)}
                                                                         </div>
                                                                     )}
                                                                 </div>
                                                                 <div className="bg-red-50 p-3 rounded-md border border-red-200">
-                                                                    <div className="font-medium text-red-800">
-                                                                        Total
-                                                                        Sold
-                                                                    </div>
+                                                                    <div className="font-medium text-red-800">Total Sold</div>
                                                                     <div className="text-lg font-bold text-red-900">
-                                                                        {
-                                                                            totalSold
-                                                                        }
+                                                                        {totalSold}
                                                                     </div>
-                                                                    {avgSellPrice >
-                                                                        0 && (
+                                                                    {avgSellPrice > 0 && (
                                                                         <div className="text-xs text-red-600">
-                                                                            Avg:{" "}
-                                                                            {formatCurrency(
-                                                                                avgSellPrice
-                                                                            )}
+                                                                            Avg: {formatCurrency(avgSellPrice)}
                                                                         </div>
                                                                     )}
                                                                 </div>
                                                                 <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
-                                                                    <div className="font-medium text-blue-800">
-                                                                        Net
-                                                                        Movement
-                                                                    </div>
+                                                                    <div className="font-medium text-blue-800">Net Movement</div>
                                                                     <div className="text-lg font-bold text-blue-900">
-                                                                        {totalBought -
-                                                                            totalSold}
+                                                                        {totalBought - totalSold}
                                                                     </div>
                                                                     <div className="text-xs text-blue-600">
-                                                                        {totalBought >
-                                                                        totalSold
+                                                                        {totalBought > totalSold
                                                                             ? "Surplus"
-                                                                            : totalBought <
-                                                                              totalSold
+                                                                            : totalBought < totalSold
                                                                             ? "Deficit"
                                                                             : "Balanced"}
                                                                     </div>
                                                                 </div>
-                                                                <div className="bg-purple-50 p-3 rounded-md border border-purple-200">
-                                                                    <div className="font-medium text-purple-800">
-                                                                        Total
-                                                                        Orders
+                                                                <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
+                                                                    <div className="font-medium text-gray-800">Stock Value</div>
+                                                                    <div className="text-lg font-bold text-gray-900">
+                                                                        {formatCurrency(stockValue)}
                                                                     </div>
-                                                                    <div className="text-lg font-bold text-purple-900">
-                                                                        {
-                                                                            sortedItems.length
-                                                                        }
-                                                                    </div>
-                                                                    <div className="text-xs text-purple-600">
-                                                                        Transactions
+                                                                    <div className="text-xs text-gray-600">
+                                                                        Current Worth
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
 
                                                         {/* Transaction Ledger */}
-                                                        {sortedItems.length >
-                                                        0 ? (
-                                                            <div className="overflow-x-auto">
-                                                                <Table>
-                                                                    <TableHeader>
-                                                                        <TableRow>
-                                                                            <TableHead>
-                                                                                Date
-                                                                            </TableHead>
-                                                                            <TableHead>
-                                                                                Order
-                                                                                #
-                                                                            </TableHead>
-                                                                            <TableHead>
-                                                                                Type
-                                                                            </TableHead>
-                                                                            <TableHead>
-                                                                                Quantity
-                                                                            </TableHead>
-                                                                            <TableHead>
-                                                                                Rate
-                                                                            </TableHead>
-                                                                            <TableHead>
-                                                                                Amount
-                                                                            </TableHead>
-                                                                            <TableHead>
-                                                                                Running
-                                                                                Stock
-                                                                            </TableHead>
-                                                                            <TableHead>
-                                                                                Status
-                                                                            </TableHead>
-                                                                            <TableHead>
-                                                                                Entity
-                                                                            </TableHead>
-                                                                        </TableRow>
-                                                                    </TableHeader>
-                                                                    <TableBody>
-                                                                        {sortedItems.map(
-                                                                            (
-                                                                                item,
-                                                                                index
-                                                                            ) => {
+                                                        <div className="p-4">
+                                                            <h5 className="font-medium mb-3">Transaction History</h5>
+                                                            {sortedItems.length > 0 ? (
+                                                                <div className="overflow-x-auto">
+                                                                    <Table>
+                                                                        <TableHeader>
+                                                                            <TableRow>
+                                                                                <TableHead>Date</TableHead>
+                                                                                <TableHead>Order #</TableHead>
+                                                                                <TableHead>Type</TableHead>
+                                                                                <TableHead>Quantity</TableHead>
+                                                                                <TableHead>Rate</TableHead>
+                                                                                <TableHead>Amount</TableHead>
+                                                                                <TableHead>Running Stock</TableHead>
+                                                                                <TableHead>Status</TableHead>
+                                                                                <TableHead>Entity</TableHead>
+                                                                            </TableRow>
+                                                                        </TableHeader>
+                                                                        <TableBody>
+                                                                            {sortedItems.map((item, index) => {
                                                                                 // Calculate running stock up to this point
-                                                                                const runningStock =
-                                                                                    sortedItems
-                                                                                        .slice(
-                                                                                            0,
-                                                                                            index +
-                                                                                                1
-                                                                                        )
-                                                                                        .reduce(
-                                                                                            (
-                                                                                                stock,
-                                                                                                currentItem
-                                                                                            ) => {
-                                                                                                if (
-                                                                                                    currentItem
-                                                                                                        .order
-                                                                                                        ?.type ===
-                                                                                                    "BUY"
-                                                                                                ) {
-                                                                                                    return (
-                                                                                                        stock +
-                                                                                                        currentItem.quantity
-                                                                                                    );
-                                                                                                } else if (
-                                                                                                    currentItem
-                                                                                                        .order
-                                                                                                        ?.type ===
-                                                                                                    "SELL"
-                                                                                                ) {
-                                                                                                    return (
-                                                                                                        stock -
-                                                                                                        currentItem.quantity
-                                                                                                    );
-                                                                                                }
-                                                                                                return stock;
-                                                                                            },
-                                                                                            0
-                                                                                        );
+                                                                                const runningStock = sortedItems
+                                                                                    .slice(0, index + 1)
+                                                                                    .reduce((stock, currentItem) => {
+                                                                                        if (currentItem.order?.type === "BUY") {
+                                                                                            return stock + currentItem.quantity;
+                                                                                        } else if (currentItem.order?.type === "SELL") {
+                                                                                            return stock - currentItem.quantity;
+                                                                                        }
+                                                                                        return stock;
+                                                                                    }, 0);
 
-                                                                                const totalAmount =
-                                                                                    item.quantity *
-                                                                                    item.price;
+                                                                                const totalAmount = item.quantity * item.price;
 
                                                                                 return (
-                                                                                    <TableRow
-                                                                                        key={
-                                                                                            item.id
-                                                                                        }
-                                                                                    >
-                                                                                        <TableCell>
-                                                                                            {formatDate(
-                                                                                                item.createdAt
-                                                                                            )}
+                                                                                    <TableRow key={item.id}>
+                                                                                        <TableCell className="text-sm">
+                                                                                            {formatDate(item.createdAt)}
                                                                                         </TableCell>
                                                                                         <TableCell className="font-mono text-xs">
-                                                                                            {item
-                                                                                                .order
-                                                                                                ?.orderNumber ||
-                                                                                                "N/A"}
+                                                                                            {item.order?.orderNumber || "N/A"}
                                                                                         </TableCell>
                                                                                         <TableCell>
                                                                                             <Badge
                                                                                                 variant={
-                                                                                                    item
-                                                                                                        .order
-                                                                                                        ?.type ===
-                                                                                                    "BUY"
+                                                                                                    item.order?.type === "BUY"
                                                                                                         ? "secondary"
-                                                                                                        : item
-                                                                                                              .order
-                                                                                                              ?.type ===
-                                                                                                          "SELL"
+                                                                                                        : item.order?.type === "SELL"
                                                                                                         ? "default"
                                                                                                         : "outline"
                                                                                                 }
                                                                                                 className={
-                                                                                                    item
-                                                                                                        .order
-                                                                                                        ?.type ===
-                                                                                                    "BUY"
+                                                                                                    item.order?.type === "BUY"
                                                                                                         ? "bg-green-100 text-green-800 border-green-300"
-                                                                                                        : item
-                                                                                                              .order
-                                                                                                              ?.type ===
-                                                                                                          "SELL"
+                                                                                                        : item.order?.type === "SELL"
                                                                                                         ? "bg-red-100 text-red-800 border-red-300"
                                                                                                         : ""
                                                                                                 }
                                                                                             >
-                                                                                                {item
-                                                                                                    .order
-                                                                                                    ?.type ||
-                                                                                                    "MISC"}
+                                                                                                {item.order?.type || "MISC"}
                                                                                             </Badge>
                                                                                         </TableCell>
                                                                                         <TableCell className="font-medium">
                                                                                             <span
                                                                                                 className={
-                                                                                                    item
-                                                                                                        .order
-                                                                                                        ?.type ===
-                                                                                                    "BUY"
+                                                                                                    item.order?.type === "BUY"
                                                                                                         ? "text-green-600"
-                                                                                                        : item
-                                                                                                              .order
-                                                                                                              ?.type ===
-                                                                                                          "SELL"
+                                                                                                        : item.order?.type === "SELL"
                                                                                                         ? "text-red-600"
                                                                                                         : ""
                                                                                                 }
                                                                                             >
-                                                                                                {item
-                                                                                                    .order
-                                                                                                    ?.type ===
-                                                                                                "BUY"
-                                                                                                    ? "+"
-                                                                                                    : "-"}
-                                                                                                {
-                                                                                                    item.quantity
-                                                                                                }
+                                                                                                {item.order?.type === "BUY" ? "+" : "-"}
+                                                                                                {item.quantity}
                                                                                             </span>
                                                                                         </TableCell>
-                                                                                        <TableCell>
-                                                                                            {formatCurrency(
-                                                                                                item.price
-                                                                                            )}
+                                                                                        <TableCell className="text-sm">
+                                                                                            {formatCurrency(item.price)}
                                                                                         </TableCell>
-                                                                                        <TableCell className="font-medium">
-                                                                                            {formatCurrency(
-                                                                                                totalAmount
-                                                                                            )}
+                                                                                        <TableCell className="font-medium text-sm">
+                                                                                            {formatCurrency(totalAmount)}
                                                                                         </TableCell>
                                                                                         <TableCell>
-                                                                                            <Badge
-                                                                                                variant="outline"
-                                                                                                className="font-mono"
-                                                                                            >
-                                                                                                {
-                                                                                                    runningStock
-                                                                                                }
+                                                                                            <Badge variant="outline" className="font-mono">
+                                                                                                {runningStock}
                                                                                             </Badge>
                                                                                         </TableCell>
                                                                                         <TableCell>
                                                                                             <Badge
                                                                                                 variant={
-                                                                                                    item
-                                                                                                        .order
-                                                                                                        ?.paymentStatus ===
-                                                                                                    "PAID"
+                                                                                                    item.order?.paymentStatus === "PAID"
                                                                                                         ? "default"
-                                                                                                        : item
-                                                                                                              .order
-                                                                                                              ?.paymentStatus ===
-                                                                                                          "PENDING"
+                                                                                                        : item.order?.paymentStatus === "PENDING"
                                                                                                         ? "secondary"
                                                                                                         : "destructive"
                                                                                                 }
                                                                                             >
-                                                                                                {item
-                                                                                                    .order
-                                                                                                    ?.paymentStatus ||
-                                                                                                    "N/A"}
+                                                                                                {item.order?.paymentStatus || "N/A"}
                                                                                             </Badge>
                                                                                         </TableCell>
                                                                                         <TableCell className="text-sm">
-                                                                                            {item
-                                                                                                .order
-                                                                                                ?.entity
-                                                                                                ?.name ||
-                                                                                                "N/A"}
+                                                                                            {item.order?.entity?.name || "N/A"}
                                                                                         </TableCell>
                                                                                     </TableRow>
                                                                                 );
-                                                                            }
-                                                                        )}
-                                                                    </TableBody>
-                                                                </Table>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="p-6 text-center text-muted-foreground">
-                                                                <Package className="mx-auto h-8 w-8 mb-2" />
-                                                                <p>
-                                                                    No
-                                                                    transactions
-                                                                    found for
-                                                                    this variant
-                                                                </p>
-                                                            </div>
-                                                        )}
+                                                                            })}
+                                                                        </TableBody>
+                                                                    </Table>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-center py-4 text-muted-foreground">
+                                                                    <Package className="mx-auto h-8 w-8 mb-2" />
+                                                                    <p>No transactions found for this variant</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 );
                                             })}
@@ -1044,8 +795,7 @@ const SingleProductPage = () => {
                                                 No Variants
                                             </h3>
                                             <p className="mt-2 text-sm text-muted-foreground">
-                                                This product doesn't have any
-                                                variants to show ledger for.
+                                                This product doesn't have any variants.
                                             </p>
                                         </div>
                                     )}
@@ -1355,6 +1105,15 @@ const SingleProductPage = () => {
                     </Tabs>
                 </div>
             </div>
+
+            {/* Edit Product Dialog */}
+            <EditProductDialog
+                product={product}
+                orgId={orgId}
+                isOpen={isEditDialogOpen}
+                onClose={() => setIsEditDialogOpen(false)}
+                onUpdate={handleProductUpdate}
+            />
         </div>
     );
 };
