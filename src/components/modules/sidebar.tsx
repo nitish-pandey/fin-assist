@@ -121,12 +121,12 @@ export default function Sidebar() {
                     path: getPathname("transactions/vat"),
                     icon: TransactionIcon,
                 },
-                {
-                    name: "Profit & Loss",
-                    path: getPathname("transactions/profit-loss"),
-                    icon: TransactionIcon,
-                },
             ],
+        },
+        {
+            name: "Profit & Loss",
+            path: getPathname("transactions/profit-loss"),
+            icon: TransactionIcon,
         },
         {
             name: "Expenses & Income",

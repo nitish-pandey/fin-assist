@@ -16,8 +16,12 @@ interface OptionsFormProps {
 }
 
 export function OptionsForm({ options, updateOptions }: OptionsFormProps) {
-    const [focusedOptionIndex, setFocusedOptionIndex] = useState<number | null>(null);
-    const [focusedValueIndices, setFocusedValueIndices] = useState<Record<number, number>>({});
+    const [focusedOptionIndex, setFocusedOptionIndex] = useState<number | null>(
+        null
+    );
+    const [focusedValueIndices, setFocusedValueIndices] = useState<
+        Record<number, number>
+    >({});
 
     // Focus the first option name input when component mounts or when a new option is added
     useEffect(() => {
@@ -44,7 +48,9 @@ export function OptionsForm({ options, updateOptions }: OptionsFormProps) {
 
         // Update focused option index
         if (focusedOptionIndex === index) {
-            setFocusedOptionIndex(index < newOptions.length ? index : newOptions.length - 1);
+            setFocusedOptionIndex(
+                index < newOptions.length ? index : newOptions.length - 1
+            );
         } else if (focusedOptionIndex !== null && focusedOptionIndex > index) {
             setFocusedOptionIndex(focusedOptionIndex - 1);
         }
@@ -81,7 +87,11 @@ export function OptionsForm({ options, updateOptions }: OptionsFormProps) {
         });
     };
 
-    const updateOptionValue = (optionIndex: number, valueIndex: number, value: string) => {
+    const updateOptionValue = (
+        optionIndex: number,
+        valueIndex: number,
+        value: string
+    ) => {
         const newOptions = [...options];
         newOptions[optionIndex].values[valueIndex].value = value;
         newOptions[optionIndex].values[valueIndex].slug = generateSlug(value);
@@ -99,7 +109,8 @@ export function OptionsForm({ options, updateOptions }: OptionsFormProps) {
             if (valueIndex < newOptions[optionIndex].values.length) {
                 newFocusedValueIndices[optionIndex] = valueIndex;
             } else if (newOptions[optionIndex].values.length > 0) {
-                newFocusedValueIndices[optionIndex] = newOptions[optionIndex].values.length - 1;
+                newFocusedValueIndices[optionIndex] =
+                    newOptions[optionIndex].values.length - 1;
             } else {
                 delete newFocusedValueIndices[optionIndex];
             }
@@ -116,7 +127,10 @@ export function OptionsForm({ options, updateOptions }: OptionsFormProps) {
     };
 
     // Handle keyboard navigation
-    const handleOptionKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, optionIndex: number) => {
+    const handleOptionKeyDown = (
+        e: React.KeyboardEvent<HTMLInputElement>,
+        optionIndex: number
+    ) => {
         if (e.key === "Enter") {
             e.preventDefault();
             // If option has no values, add one
@@ -141,7 +155,10 @@ export function OptionsForm({ options, updateOptions }: OptionsFormProps) {
             e.preventDefault();
             // Add a new value
             addOptionValue(optionIndex);
-        } else if (e.key === "Backspace" && options[optionIndex].values[valueIndex].value === "") {
+        } else if (
+            e.key === "Backspace" &&
+            options[optionIndex].values[valueIndex].value === ""
+        ) {
             e.preventDefault();
             removeOptionValue(optionIndex, valueIndex);
 
@@ -156,7 +173,12 @@ export function OptionsForm({ options, updateOptions }: OptionsFormProps) {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-semibold">Product Options</h2>
-                <Button onClick={addOption} size="sm" variant="outline" className="gap-1">
+                <Button
+                    onClick={addOption}
+                    size="sm"
+                    variant="outline"
+                    className="gap-1"
+                >
                     <Plus className="h-4 w-4" />
                     Add Option
                 </Button>
@@ -164,7 +186,9 @@ export function OptionsForm({ options, updateOptions }: OptionsFormProps) {
 
             {options.length === 0 ? (
                 <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                    <h3 className="text-lg font-medium">No options added yet</h3>
+                    <h3 className="text-lg font-medium">
+                        No options added yet
+                    </h3>
                     <p className="text-muted-foreground mb-4">
                         Add options like Size, Color, Material, etc.
                     </p>
@@ -190,7 +214,9 @@ export function OptionsForm({ options, updateOptions }: OptionsFormProps) {
                                 <CardContent className="pt-6">
                                     <div className="space-y-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor={`option-${optionIndex}`}>
+                                            <Label
+                                                htmlFor={`option-${optionIndex}`}
+                                            >
                                                 Option Name
                                             </Label>
                                             <Input
@@ -202,10 +228,16 @@ export function OptionsForm({ options, updateOptions }: OptionsFormProps) {
                                                     })
                                                 }
                                                 onKeyDown={(e) =>
-                                                    handleOptionKeyDown(e, optionIndex)
+                                                    handleOptionKeyDown(
+                                                        e,
+                                                        optionIndex
+                                                    )
                                                 }
                                                 placeholder="e.g. Size, Color, Material"
-                                                autoFocus={focusedOptionIndex === optionIndex}
+                                                autoFocus={
+                                                    focusedOptionIndex ===
+                                                    optionIndex
+                                                }
                                             />
                                         </div>
 
@@ -213,7 +245,11 @@ export function OptionsForm({ options, updateOptions }: OptionsFormProps) {
                                             <div className="flex justify-between items-center">
                                                 <Label>Option Values</Label>
                                                 <Button
-                                                    onClick={() => addOptionValue(optionIndex)}
+                                                    onClick={() =>
+                                                        addOptionValue(
+                                                            optionIndex
+                                                        )
+                                                    }
                                                     size="sm"
                                                     variant="outline"
                                                     className="h-7 px-2 text-xs"
@@ -225,54 +261,66 @@ export function OptionsForm({ options, updateOptions }: OptionsFormProps) {
 
                                             {option.values.length === 0 ? (
                                                 <div className="text-sm text-muted-foreground py-2 border border-dashed rounded-md p-3 text-center">
-                                                    No values added yet. Add values like Small,
-                                                    Medium, Large.
+                                                    No values added yet. Add
+                                                    values like Small, Medium,
+                                                    Large.
                                                 </div>
                                             ) : (
                                                 <div className="space-y-2">
-                                                    {option.values.map((value, valueIndex) => (
-                                                        <div
-                                                            key={valueIndex}
-                                                            className="flex items-center gap-2"
-                                                        >
-                                                            <Input
-                                                                value={value.value}
-                                                                onChange={(e) =>
-                                                                    updateOptionValue(
-                                                                        optionIndex,
-                                                                        valueIndex,
-                                                                        e.target.value
-                                                                    )
-                                                                }
-                                                                onKeyDown={(e) =>
-                                                                    handleValueKeyDown(
-                                                                        e,
-                                                                        optionIndex,
-                                                                        valueIndex
-                                                                    )
-                                                                }
-                                                                placeholder="e.g. Small, Red, Cotton"
-                                                                autoFocus={
-                                                                    focusedValueIndices[
-                                                                        optionIndex
-                                                                    ] === valueIndex
-                                                                }
-                                                            />
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() =>
-                                                                    removeOptionValue(
-                                                                        optionIndex,
-                                                                        valueIndex
-                                                                    )
-                                                                }
-                                                                className="h-8 w-8"
+                                                    {option.values.map(
+                                                        (value, valueIndex) => (
+                                                            <div
+                                                                key={valueIndex}
+                                                                className="flex items-center gap-2"
                                                             >
-                                                                <X className="h-4 w-4" />
-                                                            </Button>
-                                                        </div>
-                                                    ))}
+                                                                <Input
+                                                                    value={
+                                                                        value.value
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) =>
+                                                                        updateOptionValue(
+                                                                            optionIndex,
+                                                                            valueIndex,
+                                                                            e
+                                                                                .target
+                                                                                .value
+                                                                        )
+                                                                    }
+                                                                    onKeyDown={(
+                                                                        e
+                                                                    ) =>
+                                                                        handleValueKeyDown(
+                                                                            e,
+                                                                            optionIndex,
+                                                                            valueIndex
+                                                                        )
+                                                                    }
+                                                                    placeholder="e.g. Small, Red, Cotton"
+                                                                    autoFocus={
+                                                                        focusedValueIndices[
+                                                                            optionIndex
+                                                                        ] ===
+                                                                        valueIndex
+                                                                    }
+                                                                />
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() =>
+                                                                        removeOptionValue(
+                                                                            optionIndex,
+                                                                            valueIndex
+                                                                        )
+                                                                    }
+                                                                    className="h-8 w-8"
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        )
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

@@ -5,14 +5,14 @@ import { Link, useNavigate } from "react-router-dom";
 import {
     ArrowLeft,
     Edit,
-    // Trash2,
+    Trash2,
     // Archive,
     // Copy,
     // MoreHorizontal,
     AlertCircle,
     Package,
     Tag,
-    // Plus,
+    Plus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -42,10 +42,12 @@ import {
 import { useOrg } from "@/providers/org-provider";
 import { useParams } from "react-router-dom";
 import { api } from "@/utils/api";
-import { Product } from "@/data/types";
+import { Product, ProductVariant } from "@/data/types";
 import { RemoveModal } from "@/components/modals/RemoveModal";
 import { useToast } from "@/hooks/use-toast";
 import EditProductDialog from "@/components/modals/EditProductDialog";
+import EditVariantDialog from "@/components/modals/EditVariantDialog";
+import AddVariantDialog from "@/components/modals/AddVariantDialog";
 
 // Custom Publish Modal Component
 const PublishModal: React.FC<{
@@ -135,12 +137,19 @@ const SingleProductPage = () => {
     };
 
     const orgId = useOrg().orgId;
+    const { toast } = useToast();
 
     const [product, setProduct] = useState<Product | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [publishLoading, setPublishLoading] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(
+        null
+    );
+    const [isEditVariantDialogOpen, setIsEditVariantDialogOpen] =
+        useState(false);
+    const [isAddVariantDialogOpen, setIsAddVariantDialogOpen] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -167,7 +176,6 @@ const SingleProductPage = () => {
         try {
             await api.delete(`orgs/${orgId}/products/${product.id}`);
             // Redirect or show success message
-            console.log("Product deleted successfully");
             navigate(`/org/${orgId}/products`);
         } catch (error) {
             console.error("Error deleting product:", error);
@@ -187,11 +195,6 @@ const SingleProductPage = () => {
                 }
             );
             setProduct(response.data.data);
-            console.log(
-                `Product ${
-                    product.isPublished ? "unpublished" : "published"
-                } successfully`
-            );
         } catch (error) {
             console.error("Error updating product:", error);
             setError("Failed to update product. Please try again.");
@@ -203,6 +206,74 @@ const SingleProductPage = () => {
 
     const handleProductUpdate = (updatedProduct: Product) => {
         setProduct(updatedProduct);
+    };
+
+    const handleEditVariant = (variant: ProductVariant) => {
+        setEditingVariant(variant);
+        setIsEditVariantDialogOpen(true);
+    };
+
+    const handleDeleteVariant = async (variantId: string) => {
+        if (!product) return;
+
+        try {
+            await api.delete(
+                `/orgs/${orgId}/products/${product.id}/variants/${variantId}`
+            );
+
+            // Update the product state to remove the deleted variant
+            const updatedProduct = {
+                ...product,
+                variants:
+                    product.variants?.filter((v) => v.id !== variantId) || [],
+            };
+            setProduct(updatedProduct);
+
+            toast({
+                title: "Success",
+                description: "Variant deleted successfully.",
+            });
+        } catch (error) {
+            console.error("Error deleting variant:", error);
+            toast({
+                title: "Error",
+                description: "Failed to delete variant. Please try again.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleVariantUpdate = async (updatedVariant: ProductVariant) => {
+        if (!product) return;
+
+        // Update the product state with the updated variant
+        const updatedProduct = {
+            ...product,
+            variants:
+                product.variants?.map((v) =>
+                    v.id === updatedVariant.id
+                        ? {
+                              ...updatedVariant,
+                              items: v.items, // Preserve the items array
+                          }
+                        : v
+                ) || [],
+        };
+        setProduct(updatedProduct);
+        setIsEditVariantDialogOpen(false);
+        setEditingVariant(null);
+    };
+
+    const handleVariantAdd = async (newVariant: ProductVariant) => {
+        if (!product) return;
+
+        // Add the new variant to the product state
+        const updatedProduct = {
+            ...product,
+            variants: [...(product.variants || []), newVariant],
+        };
+        setProduct(updatedProduct);
+        setIsAddVariantDialogOpen(false);
     };
 
     if (loading) {
@@ -444,12 +515,12 @@ const SingleProductPage = () => {
                     <Tabs defaultValue="variants" className="mt-6">
                         <TabsList className="grid grid-cols-3">
                             <TabsTrigger value="variants">
-                                Variants & Ledger ({product.variants?.length || 0})
+                                Variants & Ledger (
+                                {product.variants?.length || 0})
                             </TabsTrigger>
                             <TabsTrigger value="inventory">
                                 Inventory
                             </TabsTrigger>
-                            <TabsTrigger value="history">History</TabsTrigger>
                         </TabsList>
 
                         {/* Variants & Ledger Tab */}
@@ -460,12 +531,34 @@ const SingleProductPage = () => {
                                     product.variants.length > 0 ? (
                                         <div className="space-y-6">
                                             <div className="flex justify-between items-center">
-                                                <h3 className="text-lg font-medium">
-                                                    Product Variants & Transaction Ledger
-                                                </h3>
-                                                <div className="text-sm text-muted-foreground">
-                                                    Complete variant details with transaction history
+                                                <div>
+                                                    <h3 className="text-lg font-medium">
+                                                        Product Variants &
+                                                        Transaction Ledger
+                                                    </h3>
+                                                    <div className="text-sm text-muted-foreground">
+                                                        Complete variant details
+                                                        with transaction history
+                                                    </div>
                                                 </div>
+                                                {/* Only show Add Variant button if product has options */}
+                                                {(product as any)?.options &&
+                                                    (product as any).options
+                                                        .length > 0 && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() =>
+                                                                setIsAddVariantDialogOpen(
+                                                                    true
+                                                                )
+                                                            }
+                                                            className="gap-2"
+                                                        >
+                                                            <Plus className="h-4 w-4" />
+                                                            Add Variant
+                                                        </Button>
+                                                    )}
                                             </div>
 
                                             {product.variants.map((variant) => {
@@ -539,8 +632,12 @@ const SingleProductPage = () => {
                                                           ) / sellItems.length
                                                         : 0;
 
-                                                const stockValue = variant.stock * variant.buyPrice;
-                                                const isLowStock = variant.stock <= lowStockThreshold;
+                                                const stockValue =
+                                                    variant.stock *
+                                                    variant.buyPrice;
+                                                const isLowStock =
+                                                    variant.stock <=
+                                                    lowStockThreshold;
 
                                                 return (
                                                     <div
@@ -549,17 +646,25 @@ const SingleProductPage = () => {
                                                     >
                                                         {/* Variant Header with Basic Info */}
                                                         <div className="bg-muted/50 px-4 py-3 border-b">
-                                                            <div className="flex items-center justify-between">
-                                                                <div>
+                                                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                                                                <div className="flex-1">
                                                                     <h4 className="font-medium text-lg">
-                                                                        {variant.name}
+                                                                        {
+                                                                            variant.name
+                                                                        }
                                                                     </h4>
-                                                                    <div className="flex items-center gap-4 mt-1">
+                                                                    <div className="flex flex-wrap items-center gap-4 mt-1">
                                                                         <p className="text-sm text-muted-foreground">
-                                                                            SKU: {variant.sku}
+                                                                            SKU:{" "}
+                                                                            {
+                                                                                variant.sku
+                                                                            }
                                                                         </p>
                                                                         <p className="text-sm text-muted-foreground">
-                                                                            Code: {variant.code}
+                                                                            Code:{" "}
+                                                                            {
+                                                                                variant.code
+                                                                            }
                                                                         </p>
                                                                         <Badge
                                                                             variant={
@@ -568,19 +673,112 @@ const SingleProductPage = () => {
                                                                                     : "secondary"
                                                                             }
                                                                         >
-                                                                            {isLowStock ? "Low Stock" : "In Stock"}
+                                                                            {isLowStock
+                                                                                ? "Low Stock"
+                                                                                : "In Stock"}
                                                                         </Badge>
                                                                     </div>
                                                                 </div>
-                                                                <div className="text-right">
-                                                                    <div className="text-sm font-medium">
-                                                                        Current Stock: {" "}
-                                                                        <Badge variant="outline" className="text-base">
-                                                                            {variant.stock} units
-                                                                        </Badge>
+                                                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                                                    <div className="text-left sm:text-right">
+                                                                        <div className="text-sm font-medium">
+                                                                            Current
+                                                                            Stock:{" "}
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className="text-base"
+                                                                            >
+                                                                                {
+                                                                                    variant.stock
+                                                                                }{" "}
+                                                                                units
+                                                                            </Badge>
+                                                                        </div>
+                                                                        <div className="text-sm text-muted-foreground mt-1">
+                                                                            Value:{" "}
+                                                                            {formatCurrency(
+                                                                                stockValue
+                                                                            )}
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="text-sm text-muted-foreground mt-1">
-                                                                        Value: {formatCurrency(stockValue)}
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            onClick={() =>
+                                                                                handleEditVariant(
+                                                                                    variant
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <Edit className="h-4 w-4 mr-1" />
+                                                                            Edit
+                                                                        </Button>
+                                                                        <Dialog>
+                                                                            <DialogTrigger
+                                                                                asChild
+                                                                            >
+                                                                                <Button
+                                                                                    variant="outline"
+                                                                                    size="sm"
+                                                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                                >
+                                                                                    <Trash2 className="h-4 w-4 mr-1" />
+                                                                                    Delete
+                                                                                </Button>
+                                                                            </DialogTrigger>
+                                                                            <DialogContent>
+                                                                                <DialogTitle>
+                                                                                    Delete
+                                                                                    Variant
+                                                                                </DialogTitle>
+                                                                                <DialogDescription>
+                                                                                    Are
+                                                                                    you
+                                                                                    sure
+                                                                                    you
+                                                                                    want
+                                                                                    to
+                                                                                    delete
+                                                                                    the
+                                                                                    variant
+                                                                                    "
+                                                                                    {
+                                                                                        variant.name
+                                                                                    }
+                                                                                    "?
+                                                                                    This
+                                                                                    action
+                                                                                    cannot
+                                                                                    be
+                                                                                    undone.
+                                                                                </DialogDescription>
+                                                                                <DialogFooter className="flex justify-end gap-2">
+                                                                                    <DialogClose
+                                                                                        asChild
+                                                                                    >
+                                                                                        <Button variant="secondary">
+                                                                                            Cancel
+                                                                                        </Button>
+                                                                                    </DialogClose>
+                                                                                    <DialogClose
+                                                                                        asChild
+                                                                                    >
+                                                                                        <Button
+                                                                                            variant="destructive"
+                                                                                            onClick={() =>
+                                                                                                handleDeleteVariant(
+                                                                                                    variant.id
+                                                                                                )
+                                                                                            }
+                                                                                        >
+                                                                                            <Trash2 className="h-4 w-4 mr-1" />
+                                                                                            Delete
+                                                                                        </Button>
+                                                                                    </DialogClose>
+                                                                                </DialogFooter>
+                                                                            </DialogContent>
+                                                                        </Dialog>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -590,29 +788,63 @@ const SingleProductPage = () => {
                                                         <div className="p-4 border-b bg-background">
                                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                                                                 <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
-                                                                    <div className="font-medium text-blue-800">Buy Price</div>
+                                                                    <div className="font-medium text-blue-800">
+                                                                        Buy
+                                                                        Price
+                                                                    </div>
                                                                     <div className="text-lg font-bold text-blue-900">
-                                                                        {formatCurrency(variant.buyPrice)}
+                                                                        {formatCurrency(
+                                                                            variant.buyPrice
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                                 <div className="bg-green-50 p-3 rounded-md border border-green-200">
-                                                                    <div className="font-medium text-green-800">Sell Price</div>
+                                                                    <div className="font-medium text-green-800">
+                                                                        Sell
+                                                                        Price
+                                                                    </div>
                                                                     <div className="text-lg font-bold text-green-900">
-                                                                        {formatCurrency(variant.estimatedPrice)}
+                                                                        {formatCurrency(
+                                                                            variant.estimatedPrice
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                                 <div className="bg-purple-50 p-3 rounded-md border border-purple-200">
-                                                                    <div className="font-medium text-purple-800">Total Orders</div>
-                                                                    <div className="text-lg font-bold text-purple-900">
-                                                                        {variant.items?.length || 0}
+                                                                    <div className="font-medium text-purple-800">
+                                                                        Total
+                                                                        Orders
                                                                     </div>
-                                                                    <div className="text-xs text-purple-600">Transactions</div>
+                                                                    <div className="text-lg font-bold text-purple-900">
+                                                                        {variant
+                                                                            .items
+                                                                            ?.length ||
+                                                                            0}
+                                                                    </div>
+                                                                    <div className="text-xs text-purple-600">
+                                                                        Transactions
+                                                                    </div>
                                                                 </div>
                                                                 <div className="bg-amber-50 p-3 rounded-md border border-amber-200">
-                                                                    <div className="font-medium text-amber-800">Last Activity</div>
+                                                                    <div className="font-medium text-amber-800">
+                                                                        Last
+                                                                        Activity
+                                                                    </div>
                                                                     <div className="text-sm font-bold text-amber-900">
-                                                                        {variant.items && variant.items.length > 0
-                                                                            ? formatDate(variant.items[variant.items.length - 1].createdAt)
+                                                                        {variant.items &&
+                                                                        variant
+                                                                            .items
+                                                                            .length >
+                                                                            0
+                                                                            ? formatDate(
+                                                                                  variant
+                                                                                      .items[
+                                                                                      variant
+                                                                                          .items
+                                                                                          .length -
+                                                                                          1
+                                                                                  ]
+                                                                                      .createdAt
+                                                                              )
                                                                             : "No activity"}
                                                                     </div>
                                                                 </div>
@@ -621,47 +853,77 @@ const SingleProductPage = () => {
                                                             {/* Transaction Summary Stats */}
                                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                                                 <div className="bg-green-50 p-3 rounded-md border border-green-200">
-                                                                    <div className="font-medium text-green-800">Total Bought</div>
-                                                                    <div className="text-lg font-bold text-green-900">
-                                                                        {totalBought}
+                                                                    <div className="font-medium text-green-800">
+                                                                        Total
+                                                                        Bought
                                                                     </div>
-                                                                    {avgBuyPrice > 0 && (
+                                                                    <div className="text-lg font-bold text-green-900">
+                                                                        {
+                                                                            totalBought
+                                                                        }
+                                                                    </div>
+                                                                    {avgBuyPrice >
+                                                                        0 && (
                                                                         <div className="text-xs text-green-600">
-                                                                            Avg: {formatCurrency(avgBuyPrice)}
+                                                                            Avg:{" "}
+                                                                            {formatCurrency(
+                                                                                avgBuyPrice
+                                                                            )}
                                                                         </div>
                                                                     )}
                                                                 </div>
                                                                 <div className="bg-red-50 p-3 rounded-md border border-red-200">
-                                                                    <div className="font-medium text-red-800">Total Sold</div>
-                                                                    <div className="text-lg font-bold text-red-900">
-                                                                        {totalSold}
+                                                                    <div className="font-medium text-red-800">
+                                                                        Total
+                                                                        Sold
                                                                     </div>
-                                                                    {avgSellPrice > 0 && (
+                                                                    <div className="text-lg font-bold text-red-900">
+                                                                        {
+                                                                            totalSold
+                                                                        }
+                                                                    </div>
+                                                                    {avgSellPrice >
+                                                                        0 && (
                                                                         <div className="text-xs text-red-600">
-                                                                            Avg: {formatCurrency(avgSellPrice)}
+                                                                            Avg:{" "}
+                                                                            {formatCurrency(
+                                                                                avgSellPrice
+                                                                            )}
                                                                         </div>
                                                                     )}
                                                                 </div>
                                                                 <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
-                                                                    <div className="font-medium text-blue-800">Net Movement</div>
+                                                                    <div className="font-medium text-blue-800">
+                                                                        Net
+                                                                        Movement
+                                                                    </div>
                                                                     <div className="text-lg font-bold text-blue-900">
-                                                                        {totalBought - totalSold}
+                                                                        {totalBought -
+                                                                            totalSold}
                                                                     </div>
                                                                     <div className="text-xs text-blue-600">
-                                                                        {totalBought > totalSold
+                                                                        {totalBought >
+                                                                        totalSold
                                                                             ? "Surplus"
-                                                                            : totalBought < totalSold
+                                                                            : totalBought <
+                                                                              totalSold
                                                                             ? "Deficit"
                                                                             : "Balanced"}
                                                                     </div>
                                                                 </div>
                                                                 <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
-                                                                    <div className="font-medium text-gray-800">Stock Value</div>
+                                                                    <div className="font-medium text-gray-800">
+                                                                        Stock
+                                                                        Value
+                                                                    </div>
                                                                     <div className="text-lg font-bold text-gray-900">
-                                                                        {formatCurrency(stockValue)}
+                                                                        {formatCurrency(
+                                                                            stockValue
+                                                                        )}
                                                                     </div>
                                                                     <div className="text-xs text-gray-600">
-                                                                        Current Worth
+                                                                        Current
+                                                                        Worth
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -669,118 +931,241 @@ const SingleProductPage = () => {
 
                                                         {/* Transaction Ledger */}
                                                         <div className="p-4">
-                                                            <h5 className="font-medium mb-3">Transaction History</h5>
-                                                            {sortedItems.length > 0 ? (
+                                                            <h5 className="font-medium mb-3">
+                                                                Transaction
+                                                                History
+                                                            </h5>
+                                                            {sortedItems.length >
+                                                            0 ? (
                                                                 <div className="overflow-x-auto">
                                                                     <Table>
                                                                         <TableHeader>
                                                                             <TableRow>
-                                                                                <TableHead>Date</TableHead>
-                                                                                <TableHead>Order #</TableHead>
-                                                                                <TableHead>Type</TableHead>
-                                                                                <TableHead>Quantity</TableHead>
-                                                                                <TableHead>Rate</TableHead>
-                                                                                <TableHead>Amount</TableHead>
-                                                                                <TableHead>Running Stock</TableHead>
-                                                                                <TableHead>Status</TableHead>
-                                                                                <TableHead>Entity</TableHead>
+                                                                                <TableHead>
+                                                                                    Date
+                                                                                </TableHead>
+                                                                                <TableHead>
+                                                                                    Order
+                                                                                    #
+                                                                                </TableHead>
+                                                                                <TableHead>
+                                                                                    Type
+                                                                                </TableHead>
+                                                                                <TableHead>
+                                                                                    Quantity
+                                                                                </TableHead>
+                                                                                <TableHead>
+                                                                                    Rate
+                                                                                </TableHead>
+                                                                                <TableHead>
+                                                                                    Amount
+                                                                                </TableHead>
+                                                                                <TableHead>
+                                                                                    Running
+                                                                                    Stock
+                                                                                </TableHead>
+                                                                                <TableHead>
+                                                                                    Status
+                                                                                </TableHead>
+                                                                                <TableHead>
+                                                                                    Entity
+                                                                                </TableHead>
                                                                             </TableRow>
                                                                         </TableHeader>
                                                                         <TableBody>
-                                                                            {sortedItems.map((item, index) => {
-                                                                                // Calculate running stock up to this point
-                                                                                const runningStock = sortedItems
-                                                                                    .slice(0, index + 1)
-                                                                                    .reduce((stock, currentItem) => {
-                                                                                        if (currentItem.order?.type === "BUY") {
-                                                                                            return stock + currentItem.quantity;
-                                                                                        } else if (currentItem.order?.type === "SELL") {
-                                                                                            return stock - currentItem.quantity;
-                                                                                        }
-                                                                                        return stock;
-                                                                                    }, 0);
+                                                                            {sortedItems.map(
+                                                                                (
+                                                                                    item,
+                                                                                    index
+                                                                                ) => {
+                                                                                    // Calculate running stock up to this point
+                                                                                    const runningStock =
+                                                                                        sortedItems
+                                                                                            .slice(
+                                                                                                0,
+                                                                                                index +
+                                                                                                    1
+                                                                                            )
+                                                                                            .reduce(
+                                                                                                (
+                                                                                                    stock,
+                                                                                                    currentItem
+                                                                                                ) => {
+                                                                                                    if (
+                                                                                                        currentItem
+                                                                                                            .order
+                                                                                                            ?.type ===
+                                                                                                        "BUY"
+                                                                                                    ) {
+                                                                                                        return (
+                                                                                                            stock +
+                                                                                                            currentItem.quantity
+                                                                                                        );
+                                                                                                    } else if (
+                                                                                                        currentItem
+                                                                                                            .order
+                                                                                                            ?.type ===
+                                                                                                        "SELL"
+                                                                                                    ) {
+                                                                                                        return (
+                                                                                                            stock -
+                                                                                                            currentItem.quantity
+                                                                                                        );
+                                                                                                    }
+                                                                                                    return stock;
+                                                                                                },
+                                                                                                0
+                                                                                            );
 
-                                                                                const totalAmount = item.quantity * item.price;
+                                                                                    const totalAmount =
+                                                                                        item.quantity *
+                                                                                        item.price;
 
-                                                                                return (
-                                                                                    <TableRow key={item.id}>
-                                                                                        <TableCell className="text-sm">
-                                                                                            {formatDate(item.createdAt)}
-                                                                                        </TableCell>
-                                                                                        <TableCell className="font-mono text-xs">
-                                                                                            {item.order?.orderNumber || "N/A"}
-                                                                                        </TableCell>
-                                                                                        <TableCell>
-                                                                                            <Badge
-                                                                                                variant={
-                                                                                                    item.order?.type === "BUY"
-                                                                                                        ? "secondary"
-                                                                                                        : item.order?.type === "SELL"
-                                                                                                        ? "default"
-                                                                                                        : "outline"
-                                                                                                }
-                                                                                                className={
-                                                                                                    item.order?.type === "BUY"
-                                                                                                        ? "bg-green-100 text-green-800 border-green-300"
-                                                                                                        : item.order?.type === "SELL"
-                                                                                                        ? "bg-red-100 text-red-800 border-red-300"
-                                                                                                        : ""
-                                                                                                }
-                                                                                            >
-                                                                                                {item.order?.type || "MISC"}
-                                                                                            </Badge>
-                                                                                        </TableCell>
-                                                                                        <TableCell className="font-medium">
-                                                                                            <span
-                                                                                                className={
-                                                                                                    item.order?.type === "BUY"
-                                                                                                        ? "text-green-600"
-                                                                                                        : item.order?.type === "SELL"
-                                                                                                        ? "text-red-600"
-                                                                                                        : ""
-                                                                                                }
-                                                                                            >
-                                                                                                {item.order?.type === "BUY" ? "+" : "-"}
-                                                                                                {item.quantity}
-                                                                                            </span>
-                                                                                        </TableCell>
-                                                                                        <TableCell className="text-sm">
-                                                                                            {formatCurrency(item.price)}
-                                                                                        </TableCell>
-                                                                                        <TableCell className="font-medium text-sm">
-                                                                                            {formatCurrency(totalAmount)}
-                                                                                        </TableCell>
-                                                                                        <TableCell>
-                                                                                            <Badge variant="outline" className="font-mono">
-                                                                                                {runningStock}
-                                                                                            </Badge>
-                                                                                        </TableCell>
-                                                                                        <TableCell>
-                                                                                            <Badge
-                                                                                                variant={
-                                                                                                    item.order?.paymentStatus === "PAID"
-                                                                                                        ? "default"
-                                                                                                        : item.order?.paymentStatus === "PENDING"
-                                                                                                        ? "secondary"
-                                                                                                        : "destructive"
-                                                                                                }
-                                                                                            >
-                                                                                                {item.order?.paymentStatus || "N/A"}
-                                                                                            </Badge>
-                                                                                        </TableCell>
-                                                                                        <TableCell className="text-sm">
-                                                                                            {item.order?.entity?.name || "N/A"}
-                                                                                        </TableCell>
-                                                                                    </TableRow>
-                                                                                );
-                                                                            })}
+                                                                                    return (
+                                                                                        <TableRow
+                                                                                            key={
+                                                                                                item.id
+                                                                                            }
+                                                                                        >
+                                                                                            <TableCell className="text-sm">
+                                                                                                {formatDate(
+                                                                                                    item.createdAt
+                                                                                                )}
+                                                                                            </TableCell>
+                                                                                            <TableCell className="font-mono text-xs">
+                                                                                                {item
+                                                                                                    .order
+                                                                                                    ?.orderNumber ||
+                                                                                                    "N/A"}
+                                                                                            </TableCell>
+                                                                                            <TableCell>
+                                                                                                <Badge
+                                                                                                    variant={
+                                                                                                        item
+                                                                                                            .order
+                                                                                                            ?.type ===
+                                                                                                        "BUY"
+                                                                                                            ? "secondary"
+                                                                                                            : item
+                                                                                                                  .order
+                                                                                                                  ?.type ===
+                                                                                                              "SELL"
+                                                                                                            ? "default"
+                                                                                                            : "outline"
+                                                                                                    }
+                                                                                                    className={
+                                                                                                        item
+                                                                                                            .order
+                                                                                                            ?.type ===
+                                                                                                        "BUY"
+                                                                                                            ? "bg-green-100 text-green-800 border-green-300"
+                                                                                                            : item
+                                                                                                                  .order
+                                                                                                                  ?.type ===
+                                                                                                              "SELL"
+                                                                                                            ? "bg-red-100 text-red-800 border-red-300"
+                                                                                                            : ""
+                                                                                                    }
+                                                                                                >
+                                                                                                    {item
+                                                                                                        .order
+                                                                                                        ?.type ||
+                                                                                                        "MISC"}
+                                                                                                </Badge>
+                                                                                            </TableCell>
+                                                                                            <TableCell className="font-medium">
+                                                                                                <span
+                                                                                                    className={
+                                                                                                        item
+                                                                                                            .order
+                                                                                                            ?.type ===
+                                                                                                        "BUY"
+                                                                                                            ? "text-green-600"
+                                                                                                            : item
+                                                                                                                  .order
+                                                                                                                  ?.type ===
+                                                                                                              "SELL"
+                                                                                                            ? "text-red-600"
+                                                                                                            : ""
+                                                                                                    }
+                                                                                                >
+                                                                                                    {item
+                                                                                                        .order
+                                                                                                        ?.type ===
+                                                                                                    "BUY"
+                                                                                                        ? "+"
+                                                                                                        : "-"}
+                                                                                                    {
+                                                                                                        item.quantity
+                                                                                                    }
+                                                                                                </span>
+                                                                                            </TableCell>
+                                                                                            <TableCell className="text-sm">
+                                                                                                {formatCurrency(
+                                                                                                    item.price
+                                                                                                )}
+                                                                                            </TableCell>
+                                                                                            <TableCell className="font-medium text-sm">
+                                                                                                {formatCurrency(
+                                                                                                    totalAmount
+                                                                                                )}
+                                                                                            </TableCell>
+                                                                                            <TableCell>
+                                                                                                <Badge
+                                                                                                    variant="outline"
+                                                                                                    className="font-mono"
+                                                                                                >
+                                                                                                    {
+                                                                                                        runningStock
+                                                                                                    }
+                                                                                                </Badge>
+                                                                                            </TableCell>
+                                                                                            <TableCell>
+                                                                                                <Badge
+                                                                                                    variant={
+                                                                                                        item
+                                                                                                            .order
+                                                                                                            ?.paymentStatus ===
+                                                                                                        "PAID"
+                                                                                                            ? "default"
+                                                                                                            : item
+                                                                                                                  .order
+                                                                                                                  ?.paymentStatus ===
+                                                                                                              "PENDING"
+                                                                                                            ? "secondary"
+                                                                                                            : "destructive"
+                                                                                                    }
+                                                                                                >
+                                                                                                    {item
+                                                                                                        .order
+                                                                                                        ?.paymentStatus ||
+                                                                                                        "N/A"}
+                                                                                                </Badge>
+                                                                                            </TableCell>
+                                                                                            <TableCell className="text-sm">
+                                                                                                {item
+                                                                                                    .order
+                                                                                                    ?.entity
+                                                                                                    ?.name ||
+                                                                                                    "N/A"}
+                                                                                            </TableCell>
+                                                                                        </TableRow>
+                                                                                    );
+                                                                                }
+                                                                            )}
                                                                         </TableBody>
                                                                     </Table>
                                                                 </div>
                                                             ) : (
                                                                 <div className="text-center py-4 text-muted-foreground">
                                                                     <Package className="mx-auto h-8 w-8 mb-2" />
-                                                                    <p>No transactions found for this variant</p>
+                                                                    <p>
+                                                                        No
+                                                                        transactions
+                                                                        found
+                                                                        for this
+                                                                        variant
+                                                                    </p>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -795,7 +1180,8 @@ const SingleProductPage = () => {
                                                 No Variants
                                             </h3>
                                             <p className="mt-2 text-sm text-muted-foreground">
-                                                This product doesn't have any variants.
+                                                This product doesn't have any
+                                                variants.
                                             </p>
                                         </div>
                                     )}
@@ -1082,26 +1468,6 @@ const SingleProductPage = () => {
                                 </div>
                             </Card>
                         </TabsContent>
-
-                        {/* History Tab */}
-                        <TabsContent value="history" className="mt-4">
-                            <Card>
-                                <div className="p-6">
-                                    <h3 className="text-lg font-medium mb-6">
-                                        Product History
-                                    </h3>
-
-                                    <div className="relative pl-6 border-l border-border">
-                                        <p className="text-center text-muted-foreground">
-                                            Created on{" "}
-                                            {formatDate(product.createdAt)} with{" "}
-                                            {product?.variants?.length || 0}{" "}
-                                            variant(s).
-                                        </p>
-                                    </div>
-                                </div>
-                            </Card>
-                        </TabsContent>
                     </Tabs>
                 </div>
             </div>
@@ -1113,6 +1479,28 @@ const SingleProductPage = () => {
                 isOpen={isEditDialogOpen}
                 onClose={() => setIsEditDialogOpen(false)}
                 onUpdate={handleProductUpdate}
+            />
+
+            {/* Edit Variant Dialog */}
+            <EditVariantDialog
+                variant={editingVariant}
+                productId={productId}
+                orgId={orgId}
+                isOpen={isEditVariantDialogOpen}
+                onClose={() => {
+                    setIsEditVariantDialogOpen(false);
+                    setEditingVariant(null);
+                }}
+                onUpdate={handleVariantUpdate}
+            />
+
+            {/* Add Variant Dialog */}
+            <AddVariantDialog
+                product={product}
+                orgId={orgId}
+                isOpen={isAddVariantDialogOpen}
+                onClose={() => setIsAddVariantDialogOpen(false)}
+                onUpdate={handleVariantAdd}
             />
         </div>
     );

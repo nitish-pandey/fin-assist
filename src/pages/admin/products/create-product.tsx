@@ -160,8 +160,8 @@ export default function ProductForm() {
                 setIsGeneratingVariants(true);
                 const timer = setTimeout(() => {
                     const generatedVariants = generateVariants(
-                        product.sku,
                         product.name,
+                        product.sku,
                         product.options || [],
                         product.buyPrice,
                         product.sellPrice,
@@ -222,7 +222,6 @@ export default function ProductForm() {
         try {
             // Simulate API call
             // await new Promise((resolve) => setTimeout(resolve, 1000));
-            console.log("Product Details:", product);
             const response = await api.post(`/orgs/${orgId}/products`, product);
 
             // Navigate to success page with product details
@@ -280,6 +279,12 @@ export default function ProductForm() {
                                     updateProduct({ variants })
                                 }
                                 isLoading={isGeneratingVariants}
+                                options={product.options}
+                                productName={product.name}
+                                productSKU={product.sku}
+                                buyPrice={product.buyPrice}
+                                sellPrice={product.sellPrice}
+                                stock={product.stock}
                             />
                         )}
 

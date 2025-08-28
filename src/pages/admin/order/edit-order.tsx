@@ -163,7 +163,6 @@ const EditOrderPage = () => {
                 `/orgs/${orgId}/orders/${orderId}`,
                 data
             );
-            console.log("Order updated successfully:", order);
             navigate(`/org/${orgId}/orders/${order.data.id}`);
         } catch (err) {
             console.error("Error updating order:", err);

@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Entity, Product, Account, Order } from "@/data/types";
-import { ProductDetails } from "./ProductDetails";
+import { ProductDetails, validateProductQuantities } from "./ProductDetails";
 import { useToast } from "@/hooks/use-toast";
 import EntitySelector from "../modules/entity-selector";
 import PaymentSelector from "../modules/payment-selector";
@@ -288,6 +288,29 @@ export default function BuyProductForm({
         formData.payments,
     ]);
 
+    useEffect(() => {
+        if (defaultEntity && type === "SELL") {
+            const defaultPayments = accounts.find(
+                (acc) => acc.type === "CASH_COUNTER"
+            )
+                ? [
+                      {
+                          amount: calculations.grandTotal,
+                          accountId:
+                              accounts.find(
+                                  (acc) => acc.type === "CASH_COUNTER"
+                              )?.id || "",
+                          details: {},
+                      },
+                  ]
+                : [];
+            setFormData({
+                ...formData,
+                payments: defaultPayments,
+            });
+        }
+    }, [type, defaultEntity, calculations.grandTotal]);
+
     // State update functions
     const updateFormData = (updates: Partial<OrderFormData>) => {
         setFormData({
@@ -362,6 +385,20 @@ export default function BuyProductForm({
             return "Select Entity for unpaid order.";
         }
 
+        // Add stock validation for sell orders
+        if (type === "SELL") {
+            const stockValidation = validateProductQuantities(
+                type,
+                products,
+                formData.products
+            );
+            if (!stockValidation.isValid) {
+                return `Stock validation failed: ${stockValidation.errors.join(
+                    ", "
+                )}`;
+            }
+        }
+
         return null;
     };
     const handleSubmit = async (e: React.FormEvent) => {
@@ -389,6 +426,7 @@ export default function BuyProductForm({
             // Determine payments - use cash counter for default entities, otherwise use selected payments
             const finalPayments =
                 formData.entity?.isDefault &&
+                type === "SELL" &&
                 accounts.find((acc) => acc.type === "CASH_COUNTER")
                     ? [
                           {
@@ -413,7 +451,6 @@ export default function BuyProductForm({
                 payments: finalPayments,
             };
 
-            console.log("Submitting order data:", submitData);
             const createdOrder = await onSubmit(submitData);
             if (
                 createdOrder &&
@@ -480,15 +517,13 @@ export default function BuyProductForm({
                     setCharge={handleUpdateCharges}
                 />
 
-                {!formData.entity?.isDefault && (
-                    <PaymentSelector
-                        selectedPayments={formData.payments}
-                        setSelectedPayments={handleUpdatePayments}
-                        accounts={accounts}
-                        grandTotal={calculations.grandTotal}
-                        type={type}
-                    />
-                )}
+                <PaymentSelector
+                    selectedPayments={formData.payments}
+                    setSelectedPayments={handleUpdatePayments}
+                    accounts={accounts}
+                    grandTotal={calculations.grandTotal}
+                    type={type}
+                />
 
                 {/* Display calculation summary */}
                 <div className="bg-gray-50 p-4 rounded-lg">

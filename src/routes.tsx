@@ -41,11 +41,16 @@ import ProfitLossPage from "./pages/admin/order/profit-loss";
 import ExpensesPage from "./pages/admin/expenses/ExpensesPage";
 import IncomePage from "./pages/admin/income/IncomePage";
 import RecurringTransactionsPage from "./pages/admin/recurring/RecurringTransactionsPage";
+import FinAssistHomepage from "./pages/HomePage";
 
 export const routes: RouteObject[] = [
     {
         element: <App />,
         children: [
+            {
+                path: "/",
+                element: <FinAssistHomepage />,
+            },
             {
                 path: "auth",
                 element: <AuthLayout />,

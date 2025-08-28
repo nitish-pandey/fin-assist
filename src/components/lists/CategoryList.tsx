@@ -61,8 +61,8 @@ const CategoryList: React.FC<CategoryListProps> = ({
     };
     const columns: ColumnDef<Category>[] = [
         {
-            accessorKey: "id",
-            header: "ID",
+            accessorKey: "name",
+            header: "Name",
             cell: (props) => (
                 <Button
                     variant="link"
@@ -70,13 +70,9 @@ const CategoryList: React.FC<CategoryListProps> = ({
                     className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800"
                 >
                     <Eye className="w-4 h-4 mr-1" />
-                    {props.row.original.id.slice(0, 8)}...
+                    {props.row.original.name.slice(0, 40)}
                 </Button>
             ),
-        },
-        {
-            accessorKey: "name",
-            header: "Name",
         },
         {
             accessorKey: "description",

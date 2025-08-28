@@ -42,7 +42,6 @@ export const SellOrderPage = () => {
     const onCreateOrder = async (data: object) => {
         try {
             const order = await api.post(`/orgs/${orgId}/orders`, data);
-            console.log("Order created successfully:", order);
             return order.data;
         } catch (err) {
             console.error("Error creating order:", err);

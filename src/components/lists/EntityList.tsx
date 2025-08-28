@@ -45,27 +45,22 @@ export const EntityList = ({
         },
         {
             accessorKey: "id",
-            header: "Delete",
+            header: "Actions",
             cell: (props) => (
-                <RemoveModal
-                    title="Remove Entity"
-                    description="Are you sure you want to remove this entity?"
-                    onRemove={() => onDelete(props.row.original.id)}
-                />
-            ),
-            enableSorting: false,
-        },
-        {
-            accessorKey: "id",
-            header: "Edit",
-            cell: (props) => (
-                <AddEntity
-                    addEntity={(entity: Partial<Entity>) =>
-                        onEdit(props.row.original.id, entity)
-                    }
-                    entity={props.row.original}
-                    text="Edit"
-                />
+                <div className="flex space-x-2">
+                    <RemoveModal
+                        title="Remove Entity"
+                        description="Are you sure you want to remove this entity?"
+                        onRemove={() => onDelete(props.row.original.id)}
+                    />
+                    <AddEntity
+                        addEntity={(entity: Partial<Entity>) =>
+                            onEdit(props.row.original.id, entity)
+                        }
+                        entity={props.row.original}
+                        text="Edit"
+                    />
+                </div>
             ),
             enableSorting: false,
         },

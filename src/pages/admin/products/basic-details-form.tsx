@@ -62,11 +62,11 @@ export function BasicDetailsForm({
         defaultValues: {
             name: product.name,
             description: product.description,
-            buyPrice: product.buyPrice || 0,
-            sellPrice: product.sellPrice || 0,
-            stock: product.stock || 0,
-            sku: product.sku || "",
-            categoryId: product.categoryId || "",
+            buyPrice: product.buyPrice,
+            sellPrice: product.sellPrice,
+            stock: product.stock,
+            sku: product.sku,
+            categoryId: product.categoryId,
         },
     });
 
@@ -273,8 +273,6 @@ export function BasicDetailsForm({
                                     <FormControl>
                                         <Input
                                             type="number"
-                                            min="0"
-                                            step="0.01"
                                             placeholder="0.00"
                                             {...field}
                                         />
@@ -297,8 +295,6 @@ export function BasicDetailsForm({
                                     <FormControl>
                                         <Input
                                             type="number"
-                                            min="0"
-                                            step="0.01"
                                             placeholder="0.00"
                                             {...field}
                                         />
@@ -322,8 +318,6 @@ export function BasicDetailsForm({
                                     <FormControl>
                                         <Input
                                             type="number"
-                                            min="0"
-                                            step="1"
                                             placeholder="0"
                                             {...field}
                                         />

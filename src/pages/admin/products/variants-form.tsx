@@ -2,6 +2,7 @@
 import type React from "react";
 
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
     Table,
     TableBody,
@@ -10,13 +11,19 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import type { ProductVariant } from "./types";
-import { Loader2 } from "lucide-react";
+import type { ProductVariant, ProductOptions } from "./types";
+import { Loader2, Trash2 } from "lucide-react";
 
 interface VariantsFormProps {
     variants: ProductVariant[];
     updateVariants: (variants: ProductVariant[]) => void;
     isLoading: boolean;
+    options?: ProductOptions[];
+    productName?: string;
+    productSKU?: string;
+    buyPrice?: number;
+    sellPrice?: number;
+    stock?: number;
 }
 
 export function VariantsForm({
@@ -31,6 +38,12 @@ export function VariantsForm({
                   (key) => key !== "undefined"
               )
             : [];
+
+    // Remove a variant
+    const removeVariant = (index: number) => {
+        const newVariants = variants.filter((_, i) => i !== index);
+        updateVariants(newVariants);
+    };
 
     const updateVariant = (
         index: number,
@@ -119,6 +132,9 @@ export function VariantsForm({
                                         <TableHead>Buy Price</TableHead>
                                         <TableHead>Sell Price</TableHead>
                                         <TableHead>Stock</TableHead>
+                                        <TableHead className="w-20">
+                                            Actions
+                                        </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -228,6 +244,19 @@ export function VariantsForm({
                                                     step="1"
                                                     className="h-8 bg-transparent"
                                                 />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        removeVariant(index)
+                                                    }
+                                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                    title="Remove variant"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
                                             </TableCell>
                                         </TableRow>
                                     ))}

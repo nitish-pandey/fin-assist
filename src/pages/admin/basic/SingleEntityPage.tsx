@@ -24,7 +24,6 @@ const SingleEntityPage = () => {
                 const accountsResponse = await api(`/orgs/${orgId}/accounts`);
                 setAccounts(accountsResponse.data);
                 setEntity(response.data);
-                console.log("Entity fetched successfully:", response.data);
                 setError(null);
             } catch (err) {
                 console.error("Error fetching entity:", err);

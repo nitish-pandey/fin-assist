@@ -17,7 +17,6 @@ const EntityInfo = () => {
             setLoading(true);
             api.get(`/orgs/${orgId}/entities`)
                 .then((res) => {
-                    console.log("Fetched entities:", res.data);
                     setEntities(res.data ?? []);
                 })
                 .catch((error) => {

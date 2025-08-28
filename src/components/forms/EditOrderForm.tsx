@@ -205,7 +205,6 @@ EditOrderFormProps) {
         }
         setLoading(true);
         try {
-            console.log(data);
             await onSubmit(data);
 
             setEditOrderState({

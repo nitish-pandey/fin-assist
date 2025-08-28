@@ -33,7 +33,6 @@ const ResetPassword = () => {
 
     const onSubmit = async (data: ResetPasswordData) => {
         setIsSubmitting(true);
-        console.log("Resetting password with token:", data, token);
         try {
             await api.post("/users/reset-password", {
                 newPassword: data.password,
@@ -43,13 +42,14 @@ const ResetPassword = () => {
             setSuccess(true);
             toast({
                 title: "Password reset successful",
-                description: "Your password has been reset successfully. You can now log in.",
+                description:
+                    "Your password has been reset successfully. You can now log in.",
             });
-
         } catch (error: any) {
             toast({
                 title: "Reset failed",
-                description: error.message || "Something went wrong. Please try again.",
+                description:
+                    error.message || "Something went wrong. Please try again.",
                 variant: "destructive",
             });
         } finally {
@@ -59,7 +59,11 @@ const ResetPassword = () => {
 
     const renderError = (message?: string) =>
         message && (
-            <p className="text-red-500 text-xs font-medium mt-1" role="alert" aria-live="polite">
+            <p
+                className="text-red-500 text-xs font-medium mt-1"
+                role="alert"
+                aria-live="polite"
+            >
                 {message}
             </p>
         );
@@ -72,8 +76,8 @@ const ResetPassword = () => {
                         Invalid or missing token
                     </h2>
                     <p className="text-gray-700 text-sm font-light">
-                        The reset password link is invalid or has expired. Please request a new one
-                        from the{" "}
+                        The reset password link is invalid or has expired.
+                        Please request a new one from the{" "}
                         <Link
                             to="/auth/forgot-password"
                             className="text-blue-700 underline font-medium"
@@ -89,8 +93,8 @@ const ResetPassword = () => {
                         Password reset successful
                     </h2>
                     <p className="text-gray-700 text-sm font-light mb-4">
-                        You can now log in with your new password. If you have any issues, please
-                        contact support.
+                        You can now log in with your new password. If you have
+                        any issues, please contact support.
                     </p>
                     <Link
                         to="/auth/login"
@@ -101,15 +105,24 @@ const ResetPassword = () => {
                 </div>
             ) : (
                 <>
-                    <h2 className="text-3xl font-semibold mb-2">Reset your password</h2>
+                    <h2 className="text-3xl font-semibold mb-2">
+                        Reset your password
+                    </h2>
                     <p className="text-gray-700 mb-6 text-sm font-light">
-                        Enter your new password and confirm it below. Make sure to choose a strong
-                        password that you haven't used before.
+                        Enter your new password and confirm it below. Make sure
+                        to choose a strong password that you haven't used
+                        before.
                     </p>
 
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <form
+                        onSubmit={handleSubmit(onSubmit)}
+                        className="space-y-4"
+                    >
                         <div>
-                            <label htmlFor="password" className="block text-sm text-gray-600 mb-1">
+                            <label
+                                htmlFor="password"
+                                className="block text-sm text-gray-600 mb-1"
+                            >
                                 New password
                             </label>
                             <input
@@ -119,7 +132,8 @@ const ResetPassword = () => {
                                     required: "Password is required",
                                     minLength: {
                                         value: 6,
-                                        message: "Password must be at least 6 characters",
+                                        message:
+                                            "Password must be at least 6 characters",
                                     },
                                 })}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -141,7 +155,8 @@ const ResetPassword = () => {
                                 {...register("confirmPassword", {
                                     required: "Please confirm your password",
                                     validate: (value) =>
-                                        value === watch("password") || "Passwords do not match",
+                                        value === watch("password") ||
+                                        "Passwords do not match",
                                 })}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
                                 disabled={isSubmitting}
@@ -153,7 +168,9 @@ const ResetPassword = () => {
                             type="submit"
                             disabled={isSubmitting}
                             className={`w-full bg-teal-800 text-white py-2 rounded-md transition-colors ${
-                                isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-teal-900"
+                                isSubmitting
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : "hover:bg-teal-900"
                             }`}
                         >
                             {isSubmitting ? "Resetting..." : "Reset Password"}
@@ -161,7 +178,10 @@ const ResetPassword = () => {
 
                         <p className="text-center text-sm font-medium text-gray-600">
                             Know your password?{" "}
-                            <Link to="/auth/login" className="text-blue-800 hover:underline">
+                            <Link
+                                to="/auth/login"
+                                className="text-blue-800 hover:underline"
+                            >
                                 Log in
                             </Link>
                         </p>

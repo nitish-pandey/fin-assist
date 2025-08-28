@@ -24,7 +24,6 @@ export default function BankODAccounts() {
             const filteredAccounts = data.filter(
                 (acc) => acc.type === "BANK_OD"
             );
-            console.log(filteredAccounts);
             setAccounts(filteredAccounts);
             if (filteredAccounts.length > 0) {
                 setSelectedAccount(filteredAccounts[0]);

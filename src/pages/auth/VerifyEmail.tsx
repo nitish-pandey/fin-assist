@@ -63,14 +63,11 @@ const VerificationPage = () => {
                     token: verificationToken,
                 });
 
-                console.log("API Response:", response.data);
-
                 // Handle successful response - be more lenient with success detection
                 if (
                     response.data &&
                     (response.data.success === true || response.status === 200)
                 ) {
-                    console.log("Verification successful");
                     setState((prev) => ({
                         ...prev,
                         status: "success",
@@ -90,9 +87,6 @@ const VerificationPage = () => {
 
                 // If we get here, assume success if there's no explicit error
                 if (response.status >= 200 && response.status < 300) {
-                    console.log(
-                        "Verification assumed successful based on status code"
-                    );
                     setState((prev) => ({
                         ...prev,
                         status: "success",

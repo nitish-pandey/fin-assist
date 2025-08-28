@@ -1,9 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { Account } from "@/data/types";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogTrigger, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogTrigger,
+    DialogContent,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+    Select,
+    SelectTrigger,
+    SelectContent,
+    SelectItem,
+} from "@/components/ui/select";
 import { api } from "@/utils/api";
 
 interface AddTransactionProps {
@@ -60,7 +70,6 @@ const AddTransaction: React.FC<AddTransactionProps> = ({
             setError("Amount exceeds remaining balance");
             return;
         }
-        console.log({ amount, selectedAccount, orderId });
         // Handle form submission (e.g., API call)
         api.post(`/orgs/${orgId}/orders/${orderId}/transactions`, {
             amount,
@@ -95,14 +104,15 @@ const AddTransaction: React.FC<AddTransactionProps> = ({
                         disabled={loading}
                     >
                         <SelectTrigger>
-                            {accounts.find((acc) => acc.id === selectedAccount)?.name ||
-                                "Select an account"}{" "}
+                            {accounts.find((acc) => acc.id === selectedAccount)
+                                ?.name || "Select an account"}{" "}
                             - Rs {accountBalance.toFixed(2)} ({accountType})
                         </SelectTrigger>
                         <SelectContent>
                             {accounts.map((account) => (
                                 <SelectItem key={account.id} value={account.id}>
-                                    {account.name} - Rs {account.balance.toFixed(2)} ({account.type}
+                                    {account.name} - Rs{" "}
+                                    {account.balance.toFixed(2)} ({account.type}
                                     )
                                 </SelectItem>
                             ))}

@@ -387,11 +387,6 @@ const OrderItems = ({ items }: { items: OrderItem[] }) => {
                                 <TableCell className="font-medium">
                                     <div>
                                         <div>{item.name}</div>
-                                        {item.description && (
-                                            <div className="text-xs text-muted-foreground mt-1">
-                                                {item.description}
-                                            </div>
-                                        )}
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-right">
