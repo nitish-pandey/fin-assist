@@ -12,6 +12,7 @@ import { X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader } from "../ui/dialog";
 import { api } from "@/utils/api";
 import { useOrg } from "@/providers/org-provider";
+import { Switch } from "../ui/switch";
 // import BillUpload from "../modules/bill-upload";
 
 interface OrderProduct {
@@ -96,46 +97,9 @@ const calculateTotalPaid = (payments: OrderPayment[]): number => {
     return payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
 };
 
-const calculateRemainingAmount = (
-    grandTotal: number,
-    totalPaid: number
-): number => {
+const calculateRemainingAmount = (grandTotal: number, totalPaid: number): number => {
     return Math.max(grandTotal - totalPaid, 0);
 };
-
-// Initial state factory
-// const createInitialState = (
-//     type: string,
-//     orgId: string,
-//     defaultEntity: Entity | null
-// ): OrderFormData => {
-//     // Try to get saved state from localStorage
-//     const savedState = localStorage.getItem(`order-${orgId}-${type}`);
-//     if (savedState) {
-//         try {
-//             const parsed = JSON.parse(savedState);
-//             return {
-//                 entity: defaultEntity || parsed.entity || null,
-//                 products: parsed.products || [
-//                     { productId: "", variantId: "", rate: 0, quantity: 1 },
-//                 ],
-//                 discount: parsed.discount || 0,
-//                 charges: parsed.charges || [],
-//                 payments: parsed.payments || [],
-//             };
-//         } catch (error) {
-//             console.error("Failed to parse saved state:", error);
-//         }
-//     }
-
-//     return {
-//         entity: defaultEntity,
-//         products: [{ productId: "", variantId: "", rate: 0, quantity: 1 }],
-//         discount: 0,
-//         charges: [],
-//         payments: [],
-//     };
-// };
 
 const AccountSelectionDialog = ({
     accounts,
@@ -164,18 +128,10 @@ const AccountSelectionDialog = ({
                                 className="flex items-center p-3 rounded-md border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
                             >
                                 <div className="flex-1">
-                                    <h3 className="font-medium">
-                                        {account.name}
-                                    </h3>
-                                    <p className="text-sm text-muted-foreground">
-                                        {account.type}
-                                    </p>
+                                    <h3 className="font-medium">{account.name}</h3>
+                                    <p className="text-sm text-muted-foreground">{account.type}</p>
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="ml-2"
-                                >
+                                <Button variant="ghost" size="sm" className="ml-2">
                                     Select
                                 </Button>
                             </li>
@@ -208,11 +164,10 @@ export default function BuyProductForm({
     const { buyCart, updateBuyCart, sellCart, updateSellCart } = useOrg();
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [isAccountSelectionActive, setIsAccountSelectionActive] =
-        useState(false);
-    const [selectedAccount, setSelectedAccount] = useState<Account | null>(
-        null
-    );
+    const [isAccountSelectionActive, setIsAccountSelectionActive] = useState(false);
+    const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+    const [isPublic, setIsPublic] = useState(false);
+    const [currentStep, setCurrentStep] = useState<"details" | "payment">("details");
     // Use the correct cart and updater based on type
     const formData = useMemo(
         () => (type === "BUY" ? buyCart : sellCart),
@@ -235,7 +190,7 @@ export default function BuyProductForm({
                 entity: defaultEntity,
             });
         }
-    }, [defaultEntity]);
+    }, [defaultEntity, formData.entity, setFormData]);
 
     // Save to localStorage whenever formData changes
     // useEffect(() => {
@@ -248,16 +203,8 @@ export default function BuyProductForm({
     // Memoized calculations
     const calculations = useMemo(() => {
         const subTotal = calculateSubTotal(formData.products);
-        const chargeAmount = calculateChargeAmount(
-            subTotal,
-            formData.discount,
-            formData.charges
-        );
-        const grandTotal = calculateGrandTotal(
-            subTotal,
-            formData.discount,
-            formData.charges
-        );
+        const chargeAmount = calculateChargeAmount(subTotal, formData.discount, formData.charges);
+        const grandTotal = calculateGrandTotal(subTotal, formData.discount, formData.charges);
         const totalPaid = calculateTotalPaid(formData.payments);
         const remainingAmount = calculateRemainingAmount(grandTotal, totalPaid);
 
@@ -281,25 +228,15 @@ export default function BuyProductForm({
             remainingAmount,
             vendorCharges,
         };
-    }, [
-        formData.products,
-        formData.discount,
-        formData.charges,
-        formData.payments,
-    ]);
+    }, [formData.products, formData.discount, formData.charges, formData.payments]);
 
     useEffect(() => {
         if (defaultEntity && type === "SELL") {
-            const defaultPayments = accounts.find(
-                (acc) => acc.type === "CASH_COUNTER"
-            )
+            const defaultPayments = accounts.find((acc) => acc.type === "CASH_COUNTER")
                 ? [
                       {
                           amount: calculations.grandTotal,
-                          accountId:
-                              accounts.find(
-                                  (acc) => acc.type === "CASH_COUNTER"
-                              )?.id || "",
+                          accountId: accounts.find((acc) => acc.type === "CASH_COUNTER")?.id || "",
                           details: {},
                       },
                   ]
@@ -381,30 +318,38 @@ export default function BuyProductForm({
             return "Please add at least one product.";
         }
 
-        if (!formData.entity && calculations.remainingAmount > 0) {
-            return "Select Entity for unpaid order.";
-        }
-
         // Add stock validation for sell orders
         if (type === "SELL") {
-            const stockValidation = validateProductQuantities(
-                type,
-                products,
-                formData.products
-            );
+            const stockValidation = validateProductQuantities(type, products, formData.products);
             if (!stockValidation.isValid) {
-                return `Stock validation failed: ${stockValidation.errors.join(
-                    ", "
-                )}`;
+                return `Stock validation failed: ${stockValidation.errors.join(", ")}`;
             }
         }
 
         return null;
     };
+
+    const validatePaymentForm = (): string | null => {
+        if (!formData.entity && calculations.remainingAmount > 0) {
+            return "Select Entity for unpaid order.";
+        }
+
+        return null;
+    };
+
+    const handleContinueToPayment = () => {
+        const validationError = validateForm();
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+        setCurrentStep("payment");
+        setError(null);
+    };
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const validationError = validateForm();
+        const validationError = validatePaymentForm();
         if (validationError) {
             setError(validationError);
             return;
@@ -432,9 +377,7 @@ export default function BuyProductForm({
                           {
                               amount: calculations.grandTotal,
                               accountId:
-                                  accounts.find(
-                                      (acc) => acc.type === "CASH_COUNTER"
-                                  )?.id || "",
+                                  accounts.find((acc) => acc.type === "CASH_COUNTER")?.id || "",
                               details: {},
                           },
                       ]
@@ -452,23 +395,17 @@ export default function BuyProductForm({
             };
 
             const createdOrder = await onSubmit(submitData);
-            if (
-                createdOrder &&
-                selectedAccount &&
-                calculations.vendorCharges > 0
-            ) {
-                await api.post(
-                    `/orgs/${orgId}/accounts/${selectedAccount.id}/transactions`,
-                    {
-                        amount: calculations.vendorCharges,
-                        type: "BUY",
-                        description: `Vendor Charges-NBC from order - ${createdOrder.id}`,
-                        orderId: createdOrder.id,
-                    }
-                );
+            if (createdOrder && selectedAccount && calculations.vendorCharges > 0) {
+                await api.post(`/orgs/${orgId}/accounts/${selectedAccount.id}/transactions`, {
+                    amount: calculations.vendorCharges,
+                    type: "BUY",
+                    description: `Vendor Charges-NBC from order - ${createdOrder.id}`,
+                    orderId: createdOrder.id,
+                });
             }
 
             resetForm();
+            setCurrentStep("details");
             toast({
                 title: "Order created successfully",
                 description: "Your order has been created.",
@@ -487,124 +424,227 @@ export default function BuyProductForm({
 
     return (
         <div className="p-6 bg-white">
-            <h2 className="text-2xl font-semibold">{type} Product</h2>
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-4">
+                    <h2 className="text-2xl font-semibold">{type} Product</h2>
+                    <div className="flex items-center space-x-2">
+                        <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                                currentStep === "details"
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-gray-300 text-gray-600"
+                            }`}
+                        >
+                            1
+                        </div>
+                        <div className="w-8 h-1 bg-gray-300"></div>
+                        <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                                currentStep === "payment"
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-gray-300 text-gray-600"
+                            }`}
+                        >
+                            2
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                    {type === "SELL" && (
+                        <>
+                            <Switch
+                                id="public-switch"
+                                checked={isPublic}
+                                onCheckedChange={(checked) => setIsPublic(checked)}
+                            />
+                            <label htmlFor="public-switch" className="text-sm">
+                                {isPublic ? "Public Sale" : "Private Sale"}
+                            </label>
+                        </>
+                    )}
+                </div>
+            </div>
             <p className="text-muted-foreground mb-8">
-                Add product to {type.toLowerCase()} and select{" "}
-                {type === "BUY" ? "vendor" : "customer"}.
+                {currentStep === "details"
+                    ? `Add product to ${type.toLowerCase()} and select ${
+                          type === "BUY" ? "vendor" : "customer"
+                      }.`
+                    : `Complete payment details for your ${type.toLowerCase()} order.`}
             </p>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
-                <EntitySelector
-                    entities={entities}
-                    onAddEntity={handleAddEntity}
-                    selectedEntity={formData.entity}
-                    onSelectEntity={handleSelectEntity}
-                    type={type === "BUY" ? "vendor" : "merchant"}
-                />
+            {currentStep === "details" ? (
+                // Step 1: Order Details
+                <form
+                    className="space-y-4"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        handleContinueToPayment();
+                    }}
+                >
+                    <EntitySelector
+                        entities={entities}
+                        onAddEntity={handleAddEntity}
+                        selectedEntity={formData.entity}
+                        onSelectEntity={handleSelectEntity}
+                        type={type === "BUY" ? "vendor" : "merchant"}
+                    />
 
-                <ProductDetails
-                    type={type}
-                    products={products}
-                    onUpdateProducts={handleUpdateProducts}
-                    addedProducts={formData.products}
-                />
+                    <ProductDetails
+                        type={type}
+                        isPublic={isPublic}
+                        products={products}
+                        onUpdateProducts={handleUpdateProducts}
+                        addedProducts={formData.products}
+                    />
 
-                <CalculationSelector
-                    subTotal={calculations.subTotal}
-                    discount={formData.discount}
-                    setDiscount={handleUpdateDiscount}
-                    charges={formData.charges}
-                    setCharge={handleUpdateCharges}
-                />
+                    <CalculationSelector
+                        subTotal={calculations.subTotal}
+                        discount={formData.discount}
+                        setDiscount={handleUpdateDiscount}
+                        charges={formData.charges}
+                        setCharge={handleUpdateCharges}
+                    />
 
-                <PaymentSelector
-                    selectedPayments={formData.payments}
-                    setSelectedPayments={handleUpdatePayments}
-                    accounts={accounts}
-                    grandTotal={calculations.grandTotal}
-                    type={type}
-                />
+                    {/* Display calculation summary */}
+                    {/* <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex justify-between items-center text-sm mb-2">
+                            <span>Subtotal:</span>
+                            <span>₹{calculations.subTotal.toFixed(2)}</span>
+                        </div>
+                        {formData.discount > 0 && (
+                            <div className="flex justify-between items-center text-sm mb-2 text-green-600">
+                                <span>Discount:</span>
+                                <span>-₹{formData.discount.toFixed(2)}</span>
+                            </div>
+                        )}
+                        {calculations.chargeAmount > 0 && (
+                            <div className="flex justify-between items-center text-sm mb-2 text-orange-600">
+                                <span>Charges:</span>
+                                <span>+₹{calculations.chargeAmount.toFixed(2)}</span>
+                            </div>
+                        )}
+                        {calculations.vendorCharges > 0 && (
+                            <div className="flex justify-between items-center text-sm mb-2 text-purple-600">
+                                <span>Vendor Charges:</span>
+                                <span>+₹{calculations.vendorCharges.toFixed(2)}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between items-center font-semibold border-t pt-2">
+                            <span>Grand Total:</span>
+                            <span>₹{calculations.grandTotal.toFixed(2)}</span>
+                        </div>
+                    </div> */}
 
-                {/* Display calculation summary */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex justify-between items-center text-sm mb-2">
-                        <span>Subtotal:</span>
-                        <span>₹{calculations.subTotal.toFixed(2)}</span>
-                    </div>
-                    {formData.discount > 0 && (
-                        <div className="flex justify-between items-center text-sm mb-2 text-green-600">
-                            <span>Discount:</span>
-                            <span>-₹{formData.discount.toFixed(2)}</span>
+                    {error && (
+                        <div className="p-3 border border-red-500 bg-red-50 text-red-600 rounded relative">
+                            {error}
+                            <button
+                                type="button"
+                                className="absolute top-2 right-2 text-red-600 hover:text-red-800"
+                                onClick={() => setError(null)}
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
                         </div>
                     )}
-                    {calculations.chargeAmount > 0 && (
-                        <div className="flex justify-between items-center text-sm mb-2 text-orange-600">
-                            <span>Charges:</span>
-                            <span>
-                                +₹{calculations.chargeAmount.toFixed(2)}
-                            </span>
-                        </div>
-                    )}
-                    {calculations.vendorCharges > 0 && (
-                        <div className="flex justify-between items-center text-sm mb-2 text-purple-600">
-                            <span>Vendor Charges:</span>
-                            <span>
-                                +₹{calculations.vendorCharges.toFixed(2)}
-                            </span>
-                        </div>
-                    )}
-                    <div className="flex justify-between items-center font-semibold border-t pt-2">
-                        <span>Grand Total:</span>
-                        <span>₹{calculations.grandTotal.toFixed(2)}</span>
-                    </div>
-                    {calculations.totalPaid > 0 && (
-                        <div className="flex justify-between items-center text-sm mt-2 text-blue-600">
-                            <span>Total Paid:</span>
-                            <span>₹{calculations.totalPaid.toFixed(2)}</span>
-                        </div>
-                    )}
-                    {calculations.remainingAmount > 0 && (
-                        <div className="flex justify-between items-center text-sm mt-1 text-red-600 font-medium">
-                            <span>Remaining:</span>
-                            <span>
-                                ₹{calculations.remainingAmount.toFixed(2)}
-                            </span>
-                        </div>
-                    )}
-                </div>
 
-                {error && (
-                    <div className="p-3 border border-red-500 bg-red-50 text-red-600 rounded relative">
-                        {error}
-                        <button
+                    <div className="flex items-center justify-between">
+                        <Button
                             type="button"
-                            className="absolute top-2 right-2 text-red-600 hover:text-red-800"
-                            onClick={() => setError(null)}
+                            variant="outline"
+                            onClick={resetForm}
+                            className="text-sm text-gray-500 hover:text-gray-700"
                         >
-                            <X className="w-4 h-4" />
-                        </button>
+                            Clear Form
+                        </Button>
+
+                        <Button type="submit" className="py-6 text-lg">
+                            Continue to Payment
+                        </Button>
                     </div>
-                )}
+                </form>
+            ) : (
+                // Step 2: Payment
+                <form className="space-y-4" onSubmit={handleSubmit}>
+                    <PaymentSelector
+                        selectedPayments={formData.payments}
+                        setSelectedPayments={handleUpdatePayments}
+                        accounts={accounts}
+                        grandTotal={calculations.grandTotal}
+                        type={type}
+                    />
 
-                <div className="flex items-center justify-between">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={resetForm}
-                        className="text-sm text-gray-500 hover:text-gray-700"
-                    >
-                        Clear Form
-                    </Button>
+                    {/* Display calculation summary */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex justify-between items-center text-sm mb-2">
+                            <span>Subtotal:</span>
+                            <span>₹{calculations.subTotal.toFixed(2)}</span>
+                        </div>
+                        {formData.discount > 0 && (
+                            <div className="flex justify-between items-center text-sm mb-2 text-green-600">
+                                <span>Discount:</span>
+                                <span>-₹{formData.discount.toFixed(2)}</span>
+                            </div>
+                        )}
+                        {calculations.chargeAmount > 0 && (
+                            <div className="flex justify-between items-center text-sm mb-2 text-orange-600">
+                                <span>Charges:</span>
+                                <span>+₹{calculations.chargeAmount.toFixed(2)}</span>
+                            </div>
+                        )}
+                        {calculations.vendorCharges > 0 && (
+                            <div className="flex justify-between items-center text-sm mb-2 text-purple-600">
+                                <span>Vendor Charges:</span>
+                                <span>+₹{calculations.vendorCharges.toFixed(2)}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between items-center font-semibold border-t pt-2">
+                            <span>Grand Total:</span>
+                            <span>₹{calculations.grandTotal.toFixed(2)}</span>
+                        </div>
+                        {calculations.totalPaid > 0 && (
+                            <div className="flex justify-between items-center text-sm mt-2 text-blue-600">
+                                <span>Total Paid:</span>
+                                <span>₹{calculations.totalPaid.toFixed(2)}</span>
+                            </div>
+                        )}
+                        {calculations.remainingAmount > 0 && (
+                            <div className="flex justify-between items-center text-sm mt-1 text-red-600 font-medium">
+                                <span>Remaining:</span>
+                                <span>₹{calculations.remainingAmount.toFixed(2)}</span>
+                            </div>
+                        )}
+                    </div>
 
-                    <Button
-                        type="submit"
-                        className="py-6 text-lg"
-                        disabled={loading}
-                    >
-                        {loading ? "Processing..." : `Create ${type} Order`}
-                    </Button>
-                </div>
-            </form>
+                    {error && (
+                        <div className="p-3 border border-red-500 bg-red-50 text-red-600 rounded relative">
+                            {error}
+                            <button
+                                type="button"
+                                className="absolute top-2 right-2 text-red-600 hover:text-red-800"
+                                onClick={() => setError(null)}
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setCurrentStep("details")}
+                            className="text-sm text-gray-500 hover:text-gray-700"
+                        >
+                            Back to Details
+                        </Button>
+
+                        <Button type="submit" className="py-6 text-lg" disabled={loading}>
+                            {loading ? "Processing..." : `Create ${type} Order`}
+                        </Button>
+                    </div>
+                </form>
+            )}
             {isAccountSelectionActive && (
                 <AccountSelectionDialog
                     accounts={accounts}

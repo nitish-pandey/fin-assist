@@ -11,6 +11,7 @@ import { api } from "@/utils/api";
 import EditOrgModal from "@/components/modals/EditOrgInfo";
 import { useOrg } from "@/providers/org-provider";
 import { RemoveModal } from "@/components/modals/RemoveModal";
+import { FaAddressBook } from "react-icons/fa";
 
 export default function OrgInfoPage() {
     const { orgId, refetch, organization } = useOrg();
@@ -67,9 +68,7 @@ export default function OrgInfoPage() {
                                 <div className="flex flex-col gap-1 text-sm text-gray-600">
                                     <div className="flex items-center gap-2">
                                         <Globe className="h-4 w-4" />
-                                        <span>
-                                            {organization.domain || "No domain"}
-                                        </span>
+                                        <span>{organization.domain || "No domain"}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Clock className="h-4 w-4" />
@@ -79,10 +78,7 @@ export default function OrgInfoPage() {
                             </div>
                         </div>
                         <div className="md:ml-auto flex items-center gap-4">
-                            <EditOrgModal
-                                orgData={organization}
-                                onSubmit={handleEditSubmit}
-                            />
+                            <EditOrgModal orgData={organization} onSubmit={handleEditSubmit} />
                             <RemoveModal
                                 title="Delete Organization"
                                 description="Are you sure you want to delete this organization?"
@@ -111,8 +107,14 @@ export default function OrgInfoPage() {
                                     iconColor="text-blue-600"
                                 />
                                 <InfoField
+                                    icon={FaAddressBook}
+                                    label="Address"
+                                    value={organization.description}
+                                    iconColor="text-teal-600"
+                                />
+                                <InfoField
                                     icon={Mail}
-                                    label="Contact Email"
+                                    label="Contact"
                                     value={organization.contact}
                                     iconColor="text-emerald-600"
                                 />
@@ -122,17 +124,6 @@ export default function OrgInfoPage() {
                                     value={organization.domain}
                                     iconColor="text-purple-600"
                                 />
-
-                                {organization.description && (
-                                    <div className="pt-4 border-t border-gray-100">
-                                        <p className="text-sm font-medium text-gray-700 mb-2">
-                                            Description
-                                        </p>
-                                        <p className="text-gray-600 leading-relaxed">
-                                            {organization.description}
-                                        </p>
-                                    </div>
-                                )}
                             </CardContent>
                         </Card>
                     </div>
@@ -165,9 +156,7 @@ export default function OrgInfoPage() {
                             <CardContent className="space-y-4">
                                 <div className="space-y-3">
                                     <div>
-                                        <p className="text-sm font-medium text-gray-700">
-                                            Created
-                                        </p>
+                                        <p className="text-sm font-medium text-gray-700">Created</p>
                                         <p className="text-sm text-gray-600">
                                             {formatDate(organization.createdAt)}
                                         </p>
@@ -209,9 +198,7 @@ const InfoField = ({
         <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-gray-700">{label}</p>
             <p className="text-sm text-gray-900 mt-0.5 break-words">
-                {value || (
-                    <span className="text-gray-400 italic">Not provided</span>
-                )}
+                {value || <span className="text-gray-400 italic">Not provided</span>}
             </p>
         </div>
     </div>
@@ -316,19 +303,13 @@ const formatTimeAgo = (dateString?: string): string => {
     try {
         const date = new Date(dateString);
         const now = new Date();
-        const diffInSeconds = Math.floor(
-            (now.getTime() - date.getTime()) / 1000
-        );
+        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
         if (diffInSeconds < 60) return "just now";
-        if (diffInSeconds < 3600)
-            return `${Math.floor(diffInSeconds / 60)}m ago`;
-        if (diffInSeconds < 86400)
-            return `${Math.floor(diffInSeconds / 3600)}h ago`;
-        if (diffInSeconds < 2592000)
-            return `${Math.floor(diffInSeconds / 86400)}d ago`;
-        if (diffInSeconds < 31536000)
-            return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
 
         return `${Math.floor(diffInSeconds / 31536000)}y ago`;
     } catch {

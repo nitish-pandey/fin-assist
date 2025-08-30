@@ -1,19 +1,9 @@
 "use client";
 
-import React, {
-    useMemo,
-    useCallback,
-    useState,
-    useRef,
-    useEffect,
-} from "react";
+import React, { useMemo, useCallback, useState, useRef, useEffect } from "react";
 import { Minus, Plus, X, Search, ChevronDown } from "lucide-react";
 import { Command } from "cmdk";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
@@ -32,6 +22,7 @@ interface SelectedProduct {
 
 interface ProductDetailsProps {
     type: "BUY" | "SELL";
+    isPublic?: boolean;
     products: Product[];
     addedProducts: SelectedProduct[];
     onUpdateProducts: (products: SelectedProduct[]) => void;
@@ -67,11 +58,9 @@ export const validateProductQuantities = (
         if (variant && item.quantity > variant.stock) {
             const product = products.find((p) => p.id === item.productId);
             errors.push(
-                `Item ${index + 1}: ${product?.name || "Unknown"} - ${
-                    variant.name
-                } quantity (${item.quantity}) exceeds available stock (${
-                    variant.stock
-                })`
+                `Item ${index + 1}: ${product?.name || "Unknown"} - ${variant.name} quantity (${
+                    item.quantity
+                }) exceeds available stock (${variant.stock})`
             );
         }
     });
@@ -84,6 +73,7 @@ export const validateProductQuantities = (
 
 export function ProductDetails({
     type,
+    isPublic = false,
     products,
     addedProducts,
     onUpdateProducts,
@@ -115,9 +105,7 @@ export function ProductDetails({
 
     const handleRemoveProduct = (index: number) => {
         if (addedProducts.length === 1) {
-            onUpdateProducts([
-                { productId: "", variantId: "", quantity: 1, rate: 0 },
-            ]);
+            onUpdateProducts([{ productId: "", variantId: "", quantity: 1, rate: 0 }]);
         } else {
             onUpdateProducts(addedProducts.filter((_, i) => i !== index));
         }
@@ -128,18 +116,13 @@ export function ProductDetails({
         products.flatMap((p) => p.variants)?.find((v) => v && v.id === id);
 
     const totalAmount = useMemo(() => {
-        return addedProducts.reduce(
-            (total, item) => total + item.quantity * item.rate,
-            0
-        );
+        return addedProducts.reduce((total, item) => total + item.quantity * item.rate, 0);
     }, [addedProducts]);
 
     const handleGlobalSelect = (item: Product, variant?: ProductVariant) => {
         const selectedVariant = variant || item.variants?.[0];
         const price =
-            type === "BUY"
-                ? selectedVariant?.buyPrice || 0
-                : selectedVariant?.estimatedPrice || 0;
+            type === "BUY" ? selectedVariant?.buyPrice || 0 : selectedVariant?.estimatedPrice || 0;
 
         const newProduct: SelectedProduct = {
             productId: item.id,
@@ -163,16 +146,10 @@ export function ProductDetails({
     return (
         <Card className="w-full border-0 shadow-none bg-gray-100">
             <div className="flex items-center gap-6 pt-4 px-6">
-                <CardTitle className="text-lg font-semibold text-slate-800">
-                    Item Details
-                </CardTitle>
+                <CardTitle className="text-lg font-semibold text-slate-800">Item Details</CardTitle>
 
                 {/* Global Search */}
-                <GlobalSearchPopover
-                    items={products}
-                    type={type}
-                    onSelect={handleGlobalSelect}
-                />
+                <GlobalSearchPopover items={products} type={type} onSelect={handleGlobalSelect} />
             </div>
 
             {/* Validation Errors for Sell Orders */}
@@ -216,9 +193,7 @@ export function ProductDetails({
                                     key={index}
                                     className="grid grid-cols-12 gap-4 items-center bg-white p-3 rounded-lg border"
                                 >
-                                    <div className="col-span-1 font-medium">
-                                        {index + 1}
-                                    </div>
+                                    <div className="col-span-1 font-medium">{index + 1}</div>
 
                                     {/* Product */}
                                     <div className="col-span-2">
@@ -229,23 +204,17 @@ export function ProductDetails({
                                             }))}
                                             selectedId={item.productId || ""}
                                             onSelect={(id) => {
-                                                const selectedProduct =
-                                                    products.find(
-                                                        (p) => p.id === id
-                                                    );
-                                                const firstVariant =
-                                                    selectedProduct
-                                                        ?.variants?.[0];
+                                                const selectedProduct = products.find(
+                                                    (p) => p.id === id
+                                                );
+                                                const firstVariant = selectedProduct?.variants?.[0];
                                                 const price =
                                                     type === "BUY"
-                                                        ? firstVariant?.buyPrice ||
-                                                          0
-                                                        : firstVariant?.estimatedPrice ||
-                                                          0;
+                                                        ? firstVariant?.buyPrice || 0
+                                                        : firstVariant?.estimatedPrice || 0;
                                                 updateProductAtIndex(index, {
                                                     productId: id,
-                                                    variantId:
-                                                        firstVariant?.id || "",
+                                                    variantId: firstVariant?.id || "",
                                                     rate: price,
                                                 });
                                             }}
@@ -257,49 +226,40 @@ export function ProductDetails({
                                     <div className="col-span-3">
                                         {product ? (
                                             <SelectPopover
-                                                items={(
-                                                    product.variants ?? []
-                                                ).map((v) => {
+                                                items={(product.variants ?? []).map((v) => {
                                                     const price =
                                                         type === "BUY"
                                                             ? v.buyPrice
                                                             : v.estimatedPrice;
                                                     return {
                                                         id: v.id,
-                                                        label: `${
-                                                            v.name
-                                                        } : Rs ${price.toFixed(
-                                                            2
-                                                        )}${
-                                                            type === "SELL"
-                                                                ? ` (Stock: ${v.stock})`
-                                                                : ""
-                                                        }`,
+                                                        label: isPublic
+                                                            ? `${v.name}${
+                                                                  type === "SELL"
+                                                                      ? ` (Stock: ${v.stock})`
+                                                                      : ""
+                                                              }`
+                                                            : `${v.name} : Rs ${price.toFixed(2)}${
+                                                                  type === "SELL"
+                                                                      ? ` (Stock: ${v.stock})`
+                                                                      : ""
+                                                              }`,
                                                     };
                                                 })}
-                                                selectedId={
-                                                    item.variantId || ""
-                                                }
+                                                selectedId={item.variantId || ""}
                                                 onSelect={(variantId) => {
-                                                    const variant =
-                                                        product.variants?.find(
-                                                            (v) =>
-                                                                v.id ===
-                                                                variantId
-                                                        );
+                                                    const variant = product.variants?.find(
+                                                        (v) => v.id === variantId
+                                                    );
                                                     if (variant) {
                                                         const price =
                                                             type === "BUY"
                                                                 ? variant.buyPrice
                                                                 : variant.estimatedPrice;
-                                                        updateProductAtIndex(
-                                                            index,
-                                                            {
-                                                                variantId:
-                                                                    variant.id,
-                                                                rate: price,
-                                                            }
-                                                        );
+                                                        updateProductAtIndex(index, {
+                                                            variantId: variant.id,
+                                                            rate: price,
+                                                        });
                                                     }
                                                 }}
                                                 placeholder="Select variant"
@@ -319,16 +279,9 @@ export function ProductDetails({
                                                 type="button"
                                                 variant="outline"
                                                 onClick={() =>
-                                                    updateProductAtIndex(
-                                                        index,
-                                                        {
-                                                            quantity: Math.max(
-                                                                1,
-                                                                item.quantity -
-                                                                    1
-                                                            ),
-                                                        }
-                                                    )
+                                                    updateProductAtIndex(index, {
+                                                        quantity: Math.max(1, item.quantity - 1),
+                                                    })
                                                 }
                                                 disabled={!item.variantId}
                                                 className="h-8 w-8"
@@ -345,50 +298,33 @@ export function ProductDetails({
                                                 }
                                                 value={item.quantity}
                                                 onChange={(e) => {
-                                                    const newQuantity =
-                                                        parseInt(
-                                                            e.target.value
-                                                        );
-                                                    updateProductAtIndex(
-                                                        index,
-                                                        {
-                                                            quantity:
-                                                                newQuantity,
-                                                        }
-                                                    );
+                                                    const newQuantity = parseInt(e.target.value);
+                                                    updateProductAtIndex(index, {
+                                                        quantity: newQuantity,
+                                                    });
                                                 }}
                                                 onBlur={(e) => {
                                                     let newQuantity = Math.max(
                                                         1,
-                                                        parseInt(
-                                                            e.target.value
-                                                        ) || 1
+                                                        parseInt(e.target.value) || 1
                                                     );
 
                                                     // For sell orders, also enforce stock limit
-                                                    if (
-                                                        type === "SELL" &&
-                                                        variant
-                                                    ) {
+                                                    if (type === "SELL" && variant) {
                                                         newQuantity = Math.min(
                                                             newQuantity,
                                                             variant.stock
                                                         );
                                                     }
 
-                                                    updateProductAtIndex(
-                                                        index,
-                                                        {
-                                                            quantity:
-                                                                newQuantity,
-                                                        }
-                                                    );
+                                                    updateProductAtIndex(index, {
+                                                        quantity: newQuantity,
+                                                    });
                                                 }}
                                                 className={`w-28 h-8 text-center ${
                                                     type === "SELL" &&
                                                     variant &&
-                                                    item.quantity >
-                                                        variant.stock
+                                                    item.quantity > variant.stock
                                                         ? "border-red-500 bg-red-50"
                                                         : ""
                                                 }`}
@@ -398,31 +334,24 @@ export function ProductDetails({
                                                 type="button"
                                                 variant="outline"
                                                 onClick={() => {
-                                                    const newQuantity =
-                                                        item.quantity + 1;
+                                                    const newQuantity = item.quantity + 1;
                                                     // Check stock limit for sell orders
                                                     if (
                                                         type === "SELL" &&
                                                         variant &&
-                                                        newQuantity >
-                                                            variant.stock
+                                                        newQuantity > variant.stock
                                                     ) {
                                                         return; // Don't allow increment beyond stock
                                                     }
-                                                    updateProductAtIndex(
-                                                        index,
-                                                        {
-                                                            quantity:
-                                                                newQuantity,
-                                                        }
-                                                    );
+                                                    updateProductAtIndex(index, {
+                                                        quantity: newQuantity,
+                                                    });
                                                 }}
                                                 disabled={
                                                     !item.variantId ||
                                                     (type === "SELL" &&
                                                         variant &&
-                                                        item.quantity >=
-                                                            variant.stock)
+                                                        item.quantity >= variant.stock)
                                                 }
                                                 className="h-8 w-8"
                                             >
@@ -434,8 +363,7 @@ export function ProductDetails({
                                             variant &&
                                             item.quantity > variant.stock && (
                                                 <div className="text-xs text-red-500 mt-1 text-center">
-                                                    Exceeds stock (
-                                                    {variant.stock})
+                                                    Exceeds stock ({variant.stock})
                                                 </div>
                                             )}
                                     </div>
@@ -447,17 +375,12 @@ export function ProductDetails({
                                             value={item.rate}
                                             onChange={(e) =>
                                                 updateProductAtIndex(index, {
-                                                    rate: parseFloat(
-                                                        e.target.value
-                                                    ),
+                                                    rate: parseFloat(e.target.value),
                                                 })
                                             }
                                             onBlur={(e) =>
                                                 updateProductAtIndex(index, {
-                                                    rate:
-                                                        parseFloat(
-                                                            e.target.value
-                                                        ) || 0,
+                                                    rate: parseFloat(e.target.value) || 0,
                                                 })
                                             }
                                             className="text-right h-9"
@@ -476,9 +399,7 @@ export function ProductDetails({
                                             size="icon"
                                             type="button"
                                             variant="ghost"
-                                            onClick={() =>
-                                                handleRemoveProduct(index)
-                                            }
+                                            onClick={() => handleRemoveProduct(index)}
                                             className="h-8 w-8 text-slate-500 hover:text-red-500"
                                         >
                                             <X className="h-4 w-4" />
@@ -545,9 +466,7 @@ const SelectPopover: React.FC<SelectPopoverProps> = ({
                     aria-expanded={open}
                     className="w-full justify-between truncate"
                 >
-                    {selectedItem && selectedId
-                        ? selectedItem.label
-                        : placeholder || "Select..."}
+                    {selectedItem && selectedId ? selectedItem.label : placeholder || "Select..."}
                     <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
             </PopoverTrigger>
@@ -568,9 +487,7 @@ const SelectPopover: React.FC<SelectPopoverProps> = ({
                         </Command.Empty>
                         {items
                             .filter((item) =>
-                                item.label
-                                    .toLowerCase()
-                                    .includes(search.toLowerCase())
+                                item.label.toLowerCase().includes(search.toLowerCase())
                             )
                             .map((item) => (
                                 <Command.Item
@@ -582,9 +499,7 @@ const SelectPopover: React.FC<SelectPopoverProps> = ({
                                         setSearch("");
                                     }}
                                     className={`px-4 py-2 cursor-pointer hover:bg-slate-100 ${
-                                        item.id === selectedId
-                                            ? "bg-slate-200"
-                                            : ""
+                                        item.id === selectedId ? "bg-slate-200" : ""
                                     }`}
                                 >
                                     {item.label}
@@ -648,13 +563,9 @@ function GlobalSearchPopover({
                 ) || [];
 
             // If product has only one variant, show as product
-            if (
-                product.variants?.length === 1 &&
-                (productMatches || variantMatches.length > 0)
-            ) {
+            if (product.variants?.length === 1 && (productMatches || variantMatches.length > 0)) {
                 const variant = product.variants[0];
-                const price =
-                    type === "BUY" ? variant.buyPrice : variant.estimatedPrice;
+                const price = type === "BUY" ? variant.buyPrice : variant.estimatedPrice;
                 results.push({
                     type: "product",
                     product,
@@ -668,10 +579,7 @@ function GlobalSearchPopover({
             else if (product.variants && product.variants.length > 1) {
                 // Show matching variants
                 variantMatches.forEach((variant) => {
-                    const price =
-                        type === "BUY"
-                            ? variant.buyPrice
-                            : variant.estimatedPrice;
+                    const price = type === "BUY" ? variant.buyPrice : variant.estimatedPrice;
                     results.push({
                         type: "variant",
                         product,
@@ -685,10 +593,7 @@ function GlobalSearchPopover({
                 // If product name matches but no variants match, show all variants
                 if (productMatches && variantMatches.length === 0) {
                     product.variants.forEach((variant) => {
-                        const price =
-                            type === "BUY"
-                                ? variant.buyPrice
-                                : variant.estimatedPrice;
+                        const price = type === "BUY" ? variant.buyPrice : variant.estimatedPrice;
                         results.push({
                             type: "variant",
                             product,
@@ -744,15 +649,11 @@ function GlobalSearchPopover({
         switch (e.key) {
             case "ArrowDown":
                 e.preventDefault();
-                setHighlightedIndex((prev) =>
-                    prev < searchResults.length - 1 ? prev + 1 : 0
-                );
+                setHighlightedIndex((prev) => (prev < searchResults.length - 1 ? prev + 1 : 0));
                 break;
             case "ArrowUp":
                 e.preventDefault();
-                setHighlightedIndex((prev) =>
-                    prev > 0 ? prev - 1 : searchResults.length - 1
-                );
+                setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : searchResults.length - 1));
                 break;
             case "Enter":
                 e.preventDefault();
@@ -829,13 +730,11 @@ function GlobalSearchPopover({
                                             <span className="font-medium text-sm truncate">
                                                 {result.displayName}
                                             </span>
-                                            {type === "SELL" &&
-                                                result.variant && (
-                                                    <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded whitespace-nowrap">
-                                                        Stock:{" "}
-                                                        {result.variant.stock}
-                                                    </span>
-                                                )}
+                                            {type === "SELL" && result.variant && (
+                                                <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded whitespace-nowrap">
+                                                    Stock: {result.variant.stock}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                     <span className="text-xs text-slate-500 ml-3 whitespace-nowrap font-medium">
