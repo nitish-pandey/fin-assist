@@ -20,6 +20,7 @@ export interface Organization {
     pan?: string | null;
     vat?: string | null;
     vatStatus?: "always" | "never" | "conditional" | null;
+    depreciationRate: number | null;
     domain?: string | null;
     createdAt?: string;
     updatedAt?: string;
@@ -48,12 +49,7 @@ export interface Invite {
     organization?: Organization;
 }
 
-export type ACCOUNT_TYPE =
-    | "BANK"
-    | "BANK_OD"
-    | "CASH_COUNTER"
-    | "CHEQUE"
-    | "MISC";
+export type ACCOUNT_TYPE = "BANK" | "BANK_OD" | "CASH_COUNTER" | "CHEQUE" | "MISC";
 
 export interface AccountDetails {
     accountNumber: string;
@@ -142,12 +138,7 @@ export interface Product {
     category?: Category | null;
 }
 
-export type PaymentStatus =
-    | "PAID"
-    | "PENDING"
-    | "FAILED"
-    | "CANCELLED"
-    | "PARTIAL";
+export type PaymentStatus = "PAID" | "PENDING" | "FAILED" | "CANCELLED" | "PARTIAL";
 
 export interface Order {
     id: string;
@@ -214,14 +205,7 @@ export interface Transaction {
     organizationId: string;
     accountId: string;
     orderId: string | null;
-    type:
-        | "BUY"
-        | "SELL"
-        | "MISC"
-        | "TRANSFER"
-        | "REFUND"
-        | "CHEQUE"
-        | "CASH_COUNTER";
+    type: "BUY" | "SELL" | "MISC" | "TRANSFER" | "REFUND" | "CHEQUE" | "CASH_COUNTER";
 
     createdAt: string;
     updatedAt: string;

@@ -119,6 +119,16 @@ export default function OrgInfoPage() {
                                     iconColor="text-emerald-600"
                                 />
                                 <InfoField
+                                    icon={Mail}
+                                    label="Depreciation Rate"
+                                    value={
+                                        organization.depreciationRate
+                                            ? `${organization.depreciationRate}%`
+                                            : null
+                                    }
+                                    iconColor="text-emerald-600"
+                                />
+                                <InfoField
                                     icon={Globe}
                                     label="Domain"
                                     value={organization.domain}

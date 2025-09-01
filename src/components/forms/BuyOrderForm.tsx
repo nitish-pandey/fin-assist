@@ -167,7 +167,7 @@ export default function BuyProductForm({
     const [isAccountSelectionActive, setIsAccountSelectionActive] = useState(false);
     const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
     const [isPublic, setIsPublic] = useState(false);
-    const [currentStep, setCurrentStep] = useState<"details" | "payment">("details");
+    const [currentStep, setCurrentStep] = useState<"details" | "payment" | "summary">("details");
     // Use the correct cart and updater based on type
     const formData = useMemo(
         () => (type === "BUY" ? buyCart : sellCart),
@@ -199,6 +199,17 @@ export default function BuyProductForm({
     //         JSON.stringify(formData)
     //     );
     // }, [formData, type]);
+
+    // Helper function to get product and variant details for display
+    const getProductDetails = (productId: string, variantId: string) => {
+        const product = products.find((p) => p.id === productId);
+        const variant = product?.variants?.find((v) => v.id === variantId);
+        return {
+            productName: product?.name || "Unknown Product",
+            variantName: variant?.name || "Unknown Variant",
+            unit: variant?.stock || "Unit",
+        };
+    };
 
     // Memoized calculations
     const calculations = useMemo(() => {
@@ -346,12 +357,21 @@ export default function BuyProductForm({
         setCurrentStep("payment");
         setError(null);
     };
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
 
+    const handleContinueToSummary = () => {
         const validationError = validatePaymentForm();
         if (validationError) {
             setError(validationError);
+            return;
+        }
+        setCurrentStep("summary");
+        setError(null);
+    };
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // If we're not on the summary step, just continue to next step
+        if (currentStep !== "summary") {
             return;
         }
 
@@ -447,6 +467,16 @@ export default function BuyProductForm({
                         >
                             2
                         </div>
+                        <div className="w-8 h-1 bg-gray-300"></div>
+                        <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                                currentStep === "summary"
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-gray-300 text-gray-600"
+                            }`}
+                        >
+                            3
+                        </div>
                     </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -469,7 +499,9 @@ export default function BuyProductForm({
                     ? `Add product to ${type.toLowerCase()} and select ${
                           type === "BUY" ? "vendor" : "customer"
                       }.`
-                    : `Complete payment details for your ${type.toLowerCase()} order.`}
+                    : currentStep === "payment"
+                    ? `Complete payment details for your ${type.toLowerCase()} order.`
+                    : `Review and confirm your ${type.toLowerCase()} order details.`}
             </p>
 
             {currentStep === "details" ? (
@@ -563,9 +595,15 @@ export default function BuyProductForm({
                         </Button>
                     </div>
                 </form>
-            ) : (
+            ) : currentStep === "payment" ? (
                 // Step 2: Payment
-                <form className="space-y-4" onSubmit={handleSubmit}>
+                <form
+                    className="space-y-4"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        handleContinueToSummary();
+                    }}
+                >
                     <PaymentSelector
                         selectedPayments={formData.payments}
                         setSelectedPayments={handleUpdatePayments}
@@ -639,11 +677,220 @@ export default function BuyProductForm({
                             Back to Details
                         </Button>
 
-                        <Button type="submit" className="py-6 text-lg" disabled={loading}>
-                            {loading ? "Processing..." : `Create ${type} Order`}
+                        <Button type="submit" className="py-6 text-lg">
+                            Continue to Summary
                         </Button>
                     </div>
                 </form>
+            ) : (
+                // Step 3: Summary & Confirmation
+                <div className="space-y-6">
+                    {/* Bill-like Summary */}
+                    <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                        {/* Header */}
+                        <div className="text-center border-b pb-4 mb-6">
+                            <h3 className="text-xl font-bold">{type} ORDER SUMMARY</h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                {new Date().toLocaleDateString("en-IN", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                })}
+                            </p>
+                        </div>
+
+                        {/* Entity Details */}
+                        <div className="mb-6">
+                            <h4 className="font-semibold text-gray-700 mb-2">
+                                {type === "BUY" ? "Vendor Details" : "Customer Details"}
+                            </h4>
+                            <div className="bg-gray-50 p-3 rounded">
+                                <p className="font-medium">{formData.entity?.name || "N/A"}</p>
+                                {formData.entity?.phone && (
+                                    <p className="text-sm text-gray-600">
+                                        Phone: {formData.entity.phone}
+                                    </p>
+                                )}
+                                {formData.entity?.email && (
+                                    <p className="text-sm text-gray-600">
+                                        Email: {formData.entity.email}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Products Table */}
+                        <div className="mb-6">
+                            <h4 className="font-semibold text-gray-700 mb-3">Products</h4>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-gray-200">
+                                            <th className="text-left py-2 font-medium text-gray-700">
+                                                Item
+                                            </th>
+                                            <th className="text-right py-2 font-medium text-gray-700">
+                                                Qty
+                                            </th>
+                                            <th className="text-right py-2 font-medium text-gray-700">
+                                                Rate
+                                            </th>
+                                            <th className="text-right py-2 font-medium text-gray-700">
+                                                Amount
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {formData.products
+                                            .filter((p) => p.productId !== "" && p.variantId !== "")
+                                            .map((product, index) => {
+                                                const details = getProductDetails(
+                                                    product.productId,
+                                                    product.variantId
+                                                );
+                                                const amount = product.rate * product.quantity;
+                                                return (
+                                                    <tr
+                                                        key={index}
+                                                        className="border-b border-gray-100"
+                                                    >
+                                                        <td className="py-2">
+                                                            <div>
+                                                                <p className="font-medium">
+                                                                    {details.productName}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500">
+                                                                    {details.variantName}
+                                                                </p>
+                                                            </div>
+                                                        </td>
+                                                        <td className="text-right py-2">
+                                                            {product.quantity} {details.unit}
+                                                        </td>
+                                                        <td className="text-right py-2">
+                                                            ₹{product.rate.toFixed(2)}
+                                                        </td>
+                                                        <td className="text-right py-2 font-medium">
+                                                            ₹{amount.toFixed(2)}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Calculation Summary */}
+                        <div className="border-t pt-4">
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span>Subtotal:</span>
+                                    <span>₹{calculations.subTotal.toFixed(2)}</span>
+                                </div>
+                                {formData.discount > 0 && (
+                                    <div className="flex justify-between text-green-600">
+                                        <span>Discount:</span>
+                                        <span>-₹{formData.discount.toFixed(2)}</span>
+                                    </div>
+                                )}
+                                {calculations.chargeAmount > 0 && (
+                                    <div className="flex justify-between text-orange-600">
+                                        <span>Charges:</span>
+                                        <span>+₹{calculations.chargeAmount.toFixed(2)}</span>
+                                    </div>
+                                )}
+                                {calculations.vendorCharges > 0 && (
+                                    <div className="flex justify-between text-purple-600">
+                                        <span>Vendor Charges:</span>
+                                        <span>+₹{calculations.vendorCharges.toFixed(2)}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                                    <span>Grand Total:</span>
+                                    <span>₹{calculations.grandTotal.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Payment Details */}
+                        {formData.payments.length > 0 && (
+                            <div className="mt-6 border-t pt-4">
+                                <h4 className="font-semibold text-gray-700 mb-3">
+                                    Payment Details
+                                </h4>
+                                <div className="space-y-2">
+                                    {formData.payments.map((payment, index) => {
+                                        const account = accounts.find(
+                                            (acc) => acc.id === payment.accountId
+                                        );
+                                        return (
+                                            <div
+                                                key={index}
+                                                className="flex justify-between bg-gray-50 p-2 rounded"
+                                            >
+                                                <span className="text-sm">
+                                                    {account?.name || "Unknown Account"} (
+                                                    {account?.type || "Unknown"})
+                                                </span>
+                                                <span className="font-medium">
+                                                    ₹{payment.amount.toFixed(2)}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                    <div className="flex justify-between font-semibold pt-2 border-t">
+                                        <span>Total Paid:</span>
+                                        <span className="text-blue-600">
+                                            ₹{calculations.totalPaid.toFixed(2)}
+                                        </span>
+                                    </div>
+                                    {calculations.remainingAmount > 0 && (
+                                        <div className="flex justify-between font-semibold text-red-600">
+                                            <span>Remaining Amount:</span>
+                                            <span>₹{calculations.remainingAmount.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {error && (
+                        <div className="p-3 border border-red-500 bg-red-50 text-red-600 rounded relative">
+                            {error}
+                            <button
+                                type="button"
+                                className="absolute top-2 right-2 text-red-600 hover:text-red-800"
+                                onClick={() => setError(null)}
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-between">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setCurrentStep("payment")}
+                            className="text-sm text-gray-500 hover:text-gray-700"
+                        >
+                            Back to Payment
+                        </Button>
+
+                        <Button
+                            onClick={handleSubmit}
+                            className="py-6 text-lg bg-green-600 hover:bg-green-700"
+                            disabled={loading}
+                        >
+                            {loading ? "Processing..." : `Confirm & Create ${type} Order`}
+                        </Button>
+                    </div>
+                </div>
             )}
             {isAccountSelectionActive && (
                 <AccountSelectionDialog
@@ -651,11 +898,10 @@ export default function BuyProductForm({
                     onSelect={(account) => {
                         setSelectedAccount(account);
                         setIsAccountSelectionActive(false);
-                        // Create a synthetic event object
-                        const syntheticEvent = {
+                        // Create a synthetic event object and directly call handleSubmit
+                        handleSubmit({
                             preventDefault: () => {},
-                        } as React.FormEvent;
-                        handleSubmit(syntheticEvent);
+                        } as React.FormEvent);
                     }}
                     onClose={() => setIsAccountSelectionActive(false)}
                 />
