@@ -69,8 +69,6 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
             setValue("name", variant.name);
             setValue("description", variant.description || "");
             setValue("buyPrice", variant.buyPrice);
-            setValue("estimatedPrice", variant.estimatedPrice);
-            setValue("stock", variant.stock);
             setValue("code", variant.code);
             setValue("sku", variant.sku);
         } else {
@@ -145,16 +143,13 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
                                     required: "Variant name is required",
                                     minLength: {
                                         value: 2,
-                                        message:
-                                            "Variant name must be at least 2 characters",
+                                        message: "Variant name must be at least 2 characters",
                                     },
                                 })}
                                 disabled={isLoading}
                             />
                             {errors.name && (
-                                <p className="text-red-500 text-sm">
-                                    {errors.name.message}
-                                </p>
+                                <p className="text-red-500 text-sm">{errors.name.message}</p>
                             )}
                         </div>
 
@@ -169,9 +164,7 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
                                 disabled={isLoading}
                             />
                             {errors.code && (
-                                <p className="text-red-500 text-sm">
-                                    {errors.code.message}
-                                </p>
+                                <p className="text-red-500 text-sm">{errors.code.message}</p>
                             )}
                         </div>
                     </div>
@@ -186,11 +179,7 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
                             })}
                             disabled={isLoading}
                         />
-                        {errors.sku && (
-                            <p className="text-red-500 text-sm">
-                                {errors.sku.message}
-                            </p>
-                        )}
+                        {errors.sku && <p className="text-red-500 text-sm">{errors.sku.message}</p>}
                     </div>
 
                     <div className="space-y-2">
@@ -223,62 +212,9 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
                                 disabled={isLoading}
                             />
                             {errors.buyPrice && (
-                                <p className="text-red-500 text-sm">
-                                    {errors.buyPrice.message}
-                                </p>
+                                <p className="text-red-500 text-sm">{errors.buyPrice.message}</p>
                             )}
                         </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="estimatedPrice">
-                                Selling Price
-                            </Label>
-                            <Input
-                                id="estimatedPrice"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="0.00"
-                                {...register("estimatedPrice", {
-                                    required: "Selling price is required",
-                                    min: {
-                                        value: 0,
-                                        message:
-                                            "Selling price must be positive",
-                                    },
-                                })}
-                                disabled={isLoading}
-                            />
-                            {errors.estimatedPrice && (
-                                <p className="text-red-500 text-sm">
-                                    {errors.estimatedPrice.message}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="stock">Stock Quantity</Label>
-                        <Input
-                            id="stock"
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            {...register("stock", {
-                                required: "Stock quantity is required",
-                                min: {
-                                    value: 0,
-                                    message:
-                                        "Stock quantity must be non-negative",
-                                },
-                            })}
-                            disabled={isLoading}
-                        />
-                        {errors.stock && (
-                            <p className="text-red-500 text-sm">
-                                {errors.stock.message}
-                            </p>
-                        )}
                     </div>
 
                     <DialogFooter>

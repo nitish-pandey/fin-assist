@@ -30,12 +30,7 @@ const chequeColumns: ColumnDef<Transaction>[] = [
     },
 ];
 
-const AccountDetails = ({
-    account,
-    isLoading,
-    error,
-    type = "BANK",
-}: AccountDetailsProps) => {
+const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDetailsProps) => {
     const [localAccount, setLocalAccount] = useState<Account | null>(account);
     const paymentColumns: ColumnDef<Transaction>[] = [
         {
@@ -77,39 +72,22 @@ const AccountDetails = ({
                     typeof transaction.details === "object" &&
                     "transactionSubType" in transaction.details
                 ) {
-                    const subType = (transaction.details as any)
-                        .transactionSubType;
+                    const subType = (transaction.details as any).transactionSubType;
                     if (subType === "EXPENSE") {
-                        return (
-                            <span className="text-red-600 font-medium">
-                                Expense
-                            </span>
-                        );
+                        return <span className="text-red-600 font-medium">Expense</span>;
                     } else if (subType === "INCOME") {
-                        return (
-                            <span className="text-green-600 font-medium">
-                                Income
-                            </span>
-                        );
+                        return <span className="text-green-600 font-medium">Income</span>;
                     }
                 }
 
                 // Handle other transaction types
                 switch (type) {
                     case "BUY":
-                        return (
-                            <span className="text-red-600">Expense (Buy)</span>
-                        );
+                        return <span className="text-red-600">Expense (Buy)</span>;
                     case "SELL":
-                        return (
-                            <span className="text-green-600">
-                                Income (Sell)
-                            </span>
-                        );
+                        return <span className="text-green-600">Income (Sell)</span>;
                     case "MISC":
-                        return (
-                            <span className="text-gray-600">Miscellaneous</span>
-                        );
+                        return <span className="text-gray-600">Miscellaneous</span>;
                     default:
                         return <span>{type}</span>;
                 }
@@ -153,8 +131,7 @@ const AccountDetails = ({
                 {
                     amount,
                     type: "SELL",
-                    description:
-                        description + "-transfered from " + localAccount.name,
+                    description: description + "-transfered from " + localAccount.name,
                     details,
                 }
             );
@@ -195,12 +172,7 @@ const AccountDetails = ({
                 return {
                     ...prev,
                     balance:
-                        prev.balance +
-                        (type === "BUY"
-                            ? -amount
-                            : type === "SELL"
-                            ? amount
-                            : 0),
+                        prev.balance + (type === "BUY" ? -amount : type === "SELL" ? amount : 0),
                     transactions: [...(prev.transactions || []), created.data],
                 };
             });
@@ -210,38 +182,47 @@ const AccountDetails = ({
     return (
         <div className="mt-8">
             <div className="bg-gray-100 p-6 rounded-lg">
-                <h2 className="text-xl font-semibold text-gray-800">
-                    Account Details
-                </h2>
+                <h2 className="text-xl font-semibold text-gray-800">Account Details</h2>
                 <div className="flex items-center justify-between mt-4">
                     <div>
                         <p className="text-sm text-gray-500">Account Name</p>
-                        <p className="text-lg font-semibold text-gray-800">
-                            {localAccount.name}
-                        </p>
+                        <p className="text-lg font-semibold text-gray-800">{localAccount.name}</p>
                     </div>
                     <div>
                         <p className="text-sm text-gray-500">Balance</p>
                         <p className="text-lg font-semibold text-gray-800">
-                            {localAccount.balance}
+                            {localAccount.balance.toFixed(4)}
                         </p>
                     </div>
                     {type === "BANK" && (
                         <>
                             <div>
-                                <p className="text-sm text-gray-500">
-                                    Account Number
-                                </p>
+                                <p className="text-sm text-gray-500">Account Number</p>
                                 <p className="text-lg font-semibold text-gray-800">
                                     {localAccount.details.accountNumber}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">
-                                    Bank Name
-                                </p>
+                                <p className="text-sm text-gray-500">Bank Name</p>
                                 <p className="text-lg font-semibold text-gray-800">
                                     {localAccount.details.bankName}
+                                </p>
+                            </div>
+                            {/* interest rate and accumulated interest */}
+                            <div>
+                                <p className="text-sm text-gray-500">Interest Rate</p>
+                                <p className="text-lg font-semibold text-gray-800">
+                                    {localAccount.interestRate
+                                        ? `${localAccount.interestRate}%`
+                                        : "N/A"}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500">Accumulated Interest</p>
+                                <p className="text-lg font-semibold text-gray-800">
+                                    {localAccount.accumulatedInterest
+                                        ? localAccount.accumulatedInterest
+                                        : "N/A"}
                                 </p>
                             </div>
                         </>
@@ -252,18 +233,10 @@ const AccountDetails = ({
                 <Tabs defaultValue="all">
                     <TabsList className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-4">
-                            <TabsTrigger value="all">
-                                All Transactions
-                            </TabsTrigger>
-                            <TabsTrigger value="buy">
-                                Expenses & Purchases
-                            </TabsTrigger>
-                            <TabsTrigger value="sell">
-                                Income & Sales
-                            </TabsTrigger>
-                            <TabsTrigger value="others">
-                                Other Transactions
-                            </TabsTrigger>
+                            <TabsTrigger value="all">All Transactions</TabsTrigger>
+                            <TabsTrigger value="buy">Expenses & Purchases</TabsTrigger>
+                            <TabsTrigger value="sell">Income & Sales</TabsTrigger>
+                            <TabsTrigger value="others">Other Transactions</TabsTrigger>
                         </div>
                         <AddTransactionDialog
                             account={localAccount}
@@ -272,16 +245,12 @@ const AccountDetails = ({
                     </TabsList>
                     <TabsContent value="all" defaultChecked>
                         <div>
-                            {localAccount.transactions &&
-                            localAccount.transactions.length > 0 ? (
+                            {localAccount.transactions && localAccount.transactions.length > 0 ? (
                                 <TableComponent
                                     title="All Payments"
                                     columns={
                                         type === "CHEQUE"
-                                            ? [
-                                                  ...paymentColumns,
-                                                  ...chequeColumns,
-                                              ]
+                                            ? [...paymentColumns, ...chequeColumns]
                                             : paymentColumns
                                     }
                                     data={localAccount.transactions.sort(
@@ -293,54 +262,38 @@ const AccountDetails = ({
                                     allowPagination={true}
                                 />
                             ) : (
-                                <p className="bg-white rounded-lg p-2">
-                                    No payments found.
-                                </p>
+                                <p className="bg-white rounded-lg p-2">No payments found.</p>
                             )}
                         </div>
                     </TabsContent>
                     <TabsContent value="buy">
                         <div>
                             {localAccount.transactions &&
-                            localAccount.transactions.filter(
-                                (t) => t.orderId && t.type === "BUY"
-                            ).length > 0 ? (
+                            localAccount.transactions.filter((t) => t.orderId && t.type === "BUY")
+                                .length > 0 ? (
                                 <TableComponent
                                     title="Expenses & Purchase Payments"
                                     columns={
                                         type === "CHEQUE"
-                                            ? [
-                                                  ...paymentColumns,
-                                                  ...chequeColumns,
-                                              ]
+                                            ? [...paymentColumns, ...chequeColumns]
                                             : paymentColumns
                                     }
-                                    data={localAccount.transactions.filter(
-                                        (t) => {
-                                            // Include BUY transactions and MISC transactions with EXPENSE subtype
-                                            if (t.type === "BUY" && t.orderId)
-                                                return true;
-                                            if (
-                                                t.type === "MISC" &&
-                                                t.orderId === null &&
-                                                t.details &&
-                                                typeof t.details === "object" &&
-                                                "transactionSubType" in
-                                                    t.details &&
-                                                t.details.transactionSubType ===
-                                                    "EXPENSE"
-                                            )
-                                                return true;
-                                            if (
-                                                (t.type as string).endsWith(
-                                                    "(PURCHASE)"
-                                                ) &&
-                                                t.orderId
-                                            )
-                                                return true;
-                                            return false;
-                                        }
-                                    )}
+                                    data={localAccount.transactions.filter((t) => {
+                                        // Include BUY transactions and MISC transactions with EXPENSE subtype
+                                        if (t.type === "BUY" && t.orderId) return true;
+                                        if (
+                                            t.type === "MISC" &&
+                                            t.orderId === null &&
+                                            t.details &&
+                                            typeof t.details === "object" &&
+                                            "transactionSubType" in t.details &&
+                                            t.details.transactionSubType === "EXPENSE"
+                                        )
+                                            return true;
+                                        if ((t.type as string).endsWith("(PURCHASE)") && t.orderId)
+                                            return true;
+                                        return false;
+                                    })}
                                     showFooter={true}
                                     allowPagination={true}
                                 />
@@ -366,49 +319,32 @@ const AccountDetails = ({
                                     t.details.transactionSubType === "INCOME"
                                 )
                                     return true;
-                                if (
-                                    (t.type as string).endsWith("(SALE)") &&
-                                    t.orderId
-                                )
-                                    return true;
+                                if ((t.type as string).endsWith("(SALE)") && t.orderId) return true;
                                 return false;
                             }).length > 0 ? (
                                 <TableComponent
                                     title="Income & Sale Payments"
                                     columns={
                                         type === "CHEQUE"
-                                            ? [
-                                                  ...paymentColumns,
-                                                  ...chequeColumns,
-                                              ]
+                                            ? [...paymentColumns, ...chequeColumns]
                                             : paymentColumns
                                     }
-                                    data={localAccount.transactions.filter(
-                                        (t) => {
-                                            // Include SELL transactions and MISC transactions with INCOME subtype
-                                            if (t.type === "SELL" && t.orderId)
-                                                return true;
-                                            if (
-                                                t.type === "MISC" &&
-                                                t.orderId === null &&
-                                                t.details &&
-                                                typeof t.details === "object" &&
-                                                "transactionSubType" in
-                                                    t.details &&
-                                                t.details.transactionSubType ===
-                                                    "INCOME"
-                                            )
-                                                return true;
-                                            if (
-                                                (t.type as string).endsWith(
-                                                    "(SALE)"
-                                                ) &&
-                                                t.orderId
-                                            )
-                                                return true;
-                                            return false;
-                                        }
-                                    )}
+                                    data={localAccount.transactions.filter((t) => {
+                                        // Include SELL transactions and MISC transactions with INCOME subtype
+                                        if (t.type === "SELL" && t.orderId) return true;
+                                        if (
+                                            t.type === "MISC" &&
+                                            t.orderId === null &&
+                                            t.details &&
+                                            typeof t.details === "object" &&
+                                            "transactionSubType" in t.details &&
+                                            t.details.transactionSubType === "INCOME"
+                                        )
+                                            return true;
+                                        if ((t.type as string).endsWith("(SALE)") && t.orderId)
+                                            return true;
+                                        return false;
+                                    })}
                                     showFooter={true}
                                     allowPagination={true}
                                 />
@@ -422,8 +358,7 @@ const AccountDetails = ({
                     <TabsContent value="others">
                         <div>
                             {localAccount.transactions &&
-                            localAccount.transactions.filter((t) => !t.orderId)
-                                .length > 0 ? (
+                            localAccount.transactions.filter((t) => !t.orderId).length > 0 ? (
                                 <TableComponent
                                     title="Other Payments"
                                     allowSearch={false}
@@ -438,21 +373,14 @@ const AccountDetails = ({
                                     // ]}
                                     columns={
                                         type === "CHEQUE"
-                                            ? [
-                                                  ...paymentColumns,
-                                                  ...chequeColumns,
-                                              ]
+                                            ? [...paymentColumns, ...chequeColumns]
                                             : paymentColumns
                                     }
-                                    data={localAccount.transactions.filter(
-                                        (t) => !t.orderId
-                                    )}
+                                    data={localAccount.transactions.filter((t) => !t.orderId)}
                                     showFooter={true}
                                 />
                             ) : (
-                                <p className="bg-white rounded-lg p-2">
-                                    No other payments found.
-                                </p>
+                                <p className="bg-white rounded-lg p-2">No other payments found.</p>
                             )}
                         </div>
                     </TabsContent>

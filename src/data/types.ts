@@ -102,6 +102,17 @@ export interface Category {
     products?: Product[];
 }
 
+export interface StockFiFoQueue {
+    id: string;
+    productVariantId: string;
+    buyPrice: number;
+    estimatedPrice: number;
+    originalStock: number;
+    availableStock: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface ProductVariant {
     id: string;
     name: string;
@@ -109,8 +120,8 @@ export interface ProductVariant {
     productId: string;
 
     buyPrice: number;
-    estimatedPrice: number;
-    stock: number;
+    // estimatedPrice: number;
+    // stock: number;
 
     values: object;
     code: string;
@@ -120,6 +131,7 @@ export interface ProductVariant {
     updatedAt: string;
 
     items?: OrderItem[];
+    stock_fifo_queue?: StockFiFoQueue[];
 }
 
 export interface Product {

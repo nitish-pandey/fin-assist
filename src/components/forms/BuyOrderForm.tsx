@@ -207,7 +207,7 @@ export default function BuyProductForm({
         return {
             productName: product?.name || "Unknown Product",
             variantName: variant?.name || "Unknown Variant",
-            unit: variant?.stock || "Unit",
+            unit: "Unit",
         };
     };
 

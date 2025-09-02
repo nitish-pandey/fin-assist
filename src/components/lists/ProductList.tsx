@@ -9,11 +9,7 @@ interface ProductListProps {
     error: string;
 }
 
-export const ProductList = ({
-    products,
-    isLoading,
-    error,
-}: ProductListProps) => {
+export const ProductList = ({ products, isLoading, error }: ProductListProps) => {
     if (error) {
         return <div>{error}</div>;
     }
@@ -38,35 +34,6 @@ export const ProductList = ({
         {
             accessorKey: "description",
             header: "Description",
-        },
-        {
-            accessorKey: "variants",
-            header: "Inventory Value",
-            cell: (props) => {
-                return (
-                    <div className="text-center">
-                        {props.row.original.variants?.reduce(
-                            (acc, variant) =>
-                                acc + variant.stock * variant.buyPrice,
-                            0
-                        )}
-                    </div>
-                );
-            },
-        },
-        {
-            accessorKey: "stock",
-            header: "Stock",
-            cell: (props) => {
-                return (
-                    <div className="text-center">
-                        {props.row.original.variants?.reduce(
-                            (acc, variant) => acc + variant.stock,
-                            0
-                        )}
-                    </div>
-                );
-            },
         },
         {
             header: "SKU",
