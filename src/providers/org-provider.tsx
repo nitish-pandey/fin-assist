@@ -8,6 +8,7 @@ interface OrderProduct {
     variantId: string;
     rate: number;
     quantity: number;
+    description: string;
 }
 
 interface OrderCharge {
@@ -28,6 +29,7 @@ interface OrderPayment {
 interface Cart {
     entity: Entity | null;
     tax: number;
+    description: string;
     products: OrderProduct[];
     discount: number;
     charges: OrderCharge[];
@@ -74,6 +76,7 @@ const OrgContext = createContext<OrgContextData>({
     buyCart: {
         entity: null,
         tax: 0,
+        description: "",
         products: [],
         discount: 0,
         charges: [],
@@ -84,6 +87,7 @@ const OrgContext = createContext<OrgContextData>({
     sellCart: {
         entity: null,
         tax: 0,
+        description: "",
         products: [],
         discount: 0,
         charges: [],
@@ -93,11 +97,7 @@ const OrgContext = createContext<OrgContextData>({
     clearSellCart: () => {},
 });
 
-const createInitialState = (
-    type: string,
-    orgId: string,
-    defaultEntity: Entity | null
-): Cart => {
+const createInitialState = (type: string, orgId: string, defaultEntity: Entity | null): Cart => {
     // Try to get saved state from localStorage
     const savedState = localStorage.getItem(`CART-${orgId}-${type}`);
     if (savedState) {
@@ -108,6 +108,7 @@ const createInitialState = (
                 products: parsed.products || [
                     { productId: "", variantId: "", rate: 0, quantity: 1 },
                 ],
+                description: parsed.description || "",
                 discount: parsed.discount || 0,
                 charges: parsed.charges || [],
                 payments: parsed.payments || [],
@@ -120,7 +121,8 @@ const createInitialState = (
 
     return {
         entity: defaultEntity,
-        products: [{ productId: "", variantId: "", rate: 0, quantity: 1 }],
+        description: "",
+        products: [{ productId: "", variantId: "", rate: 0, quantity: 1, description: "" }],
         discount: 0,
         charges: [],
         payments: [],
@@ -134,18 +136,12 @@ interface OrgProviderProps {
 
 export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
     const { orgId } = useParams<{ orgId: string }>() as { orgId: string };
-    const [status, setStatus] = useState<"loading" | "error" | "success">(
-        "loading"
-    );
+    const [status, setStatus] = useState<"loading" | "error" | "success">("loading");
     const [organization, setOrganization] = useState<Organization | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [accounts, setAccounts] = useState<Account[]>([]);
-    const [buyCart, setBuyCart] = useState<Cart>(() =>
-        createInitialState("buy", orgId, null)
-    );
-    const [sellCart, setSellCart] = useState<Cart>(() =>
-        createInitialState("sell", orgId, null)
-    );
+    const [buyCart, setBuyCart] = useState<Cart>(() => createInitialState("buy", orgId, null));
+    const [sellCart, setSellCart] = useState<Cart>(() => createInitialState("sell", orgId, null));
 
     // Persist buyCart to localStorage
     useEffect(() => {
@@ -157,10 +153,7 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
     // Persist sellCart to localStorage
     useEffect(() => {
         if (orgId) {
-            localStorage.setItem(
-                `CART-${orgId}-sell`,
-                JSON.stringify(sellCart)
-            );
+            localStorage.setItem(`CART-${orgId}-sell`, JSON.stringify(sellCart));
         }
     }, [sellCart, orgId]);
 
@@ -175,9 +168,7 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
 
     const refetchProductId = async (productId: string) => {
         try {
-            const data = await (
-                await api.get(`/orgs/${orgId}/products/${productId}`)
-            ).data;
+            const data = await (await api.get(`/orgs/${orgId}/products/${productId}`)).data;
             setProducts((prev) => {
                 const exists = prev.some((p) => p.id === productId);
                 if (exists) {
@@ -191,13 +182,8 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
         }
     };
 
-    const updateProduct = (
-        productId: string,
-        updatedData: Partial<Product>
-    ) => {
-        setProducts((prev) =>
-            prev.map((p) => (p.id === productId ? { ...p, ...updatedData } : p))
-        );
+    const updateProduct = (productId: string, updatedData: Partial<Product>) => {
+        setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, ...updatedData } : p)));
     };
 
     const refetchAccounts = async () => {
@@ -211,9 +197,7 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
 
     const refetchAccountId = async (accountId: string) => {
         try {
-            const data = await (
-                await api.get(`/orgs/${orgId}/accounts/${accountId}`)
-            ).data;
+            const data = await (await api.get(`/orgs/${orgId}/accounts/${accountId}`)).data;
             setAccounts((prev) => {
                 const exists = prev.some((a) => a.id === accountId);
                 if (exists) {
@@ -227,13 +211,8 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
         }
     };
 
-    const updateAccount = (
-        accountId: string,
-        updatedData: Partial<Account>
-    ) => {
-        setAccounts((prev) =>
-            prev.map((a) => (a.id === accountId ? { ...a, ...updatedData } : a))
-        );
+    const updateAccount = (accountId: string, updatedData: Partial<Account>) => {
+        setAccounts((prev) => prev.map((a) => (a.id === accountId ? { ...a, ...updatedData } : a)));
     };
 
     const fetchOrganization = async (orgId: string) => {
@@ -273,6 +252,7 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
         setBuyCart({
             entity: null,
             discount: 0,
+            description: "",
             tax: 0,
             payments: [],
             charges: [],
@@ -288,6 +268,7 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
         setSellCart({
             entity: null,
             discount: 0,
+            description: "",
             tax: 0,
             payments: [],
             charges: [],
@@ -325,9 +306,7 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
                 </div>
             ) : status === "error" ? (
                 <div className="flex items-center justify-center h-screen w-screen bg-gray-100">
-                    <p className="text-red-500">
-                        Error fetching organization data
-                    </p>
+                    <p className="text-red-500">Error fetching organization data</p>
                 </div>
             ) : null}
         </OrgContext.Provider>

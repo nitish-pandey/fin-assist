@@ -63,11 +63,13 @@ export interface Account {
     balance: number;
     type: ACCOUNT_TYPE;
 
-    details: AccountDetails;
+    details?: AccountDetails;
 
     organizationId: string;
     createdAt: string;
     updatedAt: string;
+
+    limit?: number | null;
 
     interestRate?: number | null;
     accumulatedInterest?: number | null;

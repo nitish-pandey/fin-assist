@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Entity, Product, Account, Order } from "@/data/types";
 import { ProductDetails, validateProductQuantities } from "./ProductDetails";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ interface OrderProduct {
     variantId: string;
     rate: number;
     quantity: number;
+    description: string;
 }
 
 interface OrderCharge {
@@ -44,6 +46,7 @@ interface OrderFormData {
     discount: number;
     charges: OrderCharge[];
     payments: OrderPayment[];
+    description: string;
 }
 
 interface BuyProductFormProps {
@@ -311,10 +314,11 @@ export default function BuyProductForm({
     const resetForm = () => {
         const resetData: OrderFormData = {
             entity: null,
-            products: [{ productId: "", variantId: "", rate: 0, quantity: 1 }],
+            products: [{ productId: "", variantId: "", rate: 0, quantity: 1, description: "" }],
             discount: 0,
             charges: [],
             payments: [],
+            description: "",
         };
         setFormData(resetData);
         setError(null);
@@ -407,6 +411,7 @@ export default function BuyProductForm({
                 entityId: formData.entity?.id,
                 products: validProducts,
                 discount: formData.discount,
+                description: formData.description,
                 charges: formData.charges.filter(
                     (charge) => charge.amount > 0 && charge.bearedByEntity
                 ),
@@ -536,37 +541,6 @@ export default function BuyProductForm({
                         charges={formData.charges}
                         setCharge={handleUpdateCharges}
                     />
-
-                    {/* Display calculation summary */}
-                    {/* <div className="bg-gray-50 p-4 rounded-lg">
-                        <div className="flex justify-between items-center text-sm mb-2">
-                            <span>Subtotal:</span>
-                            <span>₹{calculations.subTotal.toFixed(2)}</span>
-                        </div>
-                        {formData.discount > 0 && (
-                            <div className="flex justify-between items-center text-sm mb-2 text-green-600">
-                                <span>Discount:</span>
-                                <span>-₹{formData.discount.toFixed(2)}</span>
-                            </div>
-                        )}
-                        {calculations.chargeAmount > 0 && (
-                            <div className="flex justify-between items-center text-sm mb-2 text-orange-600">
-                                <span>Charges:</span>
-                                <span>+₹{calculations.chargeAmount.toFixed(2)}</span>
-                            </div>
-                        )}
-                        {calculations.vendorCharges > 0 && (
-                            <div className="flex justify-between items-center text-sm mb-2 text-purple-600">
-                                <span>Vendor Charges:</span>
-                                <span>+₹{calculations.vendorCharges.toFixed(2)}</span>
-                            </div>
-                        )}
-                        <div className="flex justify-between items-center font-semibold border-t pt-2">
-                            <span>Grand Total:</span>
-                            <span>₹{calculations.grandTotal.toFixed(2)}</span>
-                        </div>
-                    </div> */}
-
                     {error && (
                         <div className="p-3 border border-red-500 bg-red-50 text-red-600 rounded relative">
                             {error}
@@ -611,6 +585,26 @@ export default function BuyProductForm({
                         grandTotal={calculations.grandTotal}
                         type={type}
                     />
+
+                    {/* Order Description */}
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="orderDescription"
+                            className="text-sm font-medium text-gray-700"
+                        >
+                            Order Description
+                        </label>
+                        <Textarea
+                            id="orderDescription"
+                            placeholder="Enter order description, notes, or special instructions..."
+                            value={formData.description}
+                            onChange={(e) =>
+                                setFormData({ ...formData, description: e.target.value })
+                            }
+                            rows={3}
+                            className="w-full"
+                        />
+                    </div>
 
                     {/* Display calculation summary */}
                     <div className="bg-gray-50 p-4 rounded-lg">
@@ -721,6 +715,20 @@ export default function BuyProductForm({
                             </div>
                         </div>
 
+                        {/* Order Description */}
+                        {formData.description && (
+                            <div className="mb-6">
+                                <h4 className="font-semibold text-gray-700 mb-2">
+                                    Order Description
+                                </h4>
+                                <div className="bg-gray-50 p-3 rounded">
+                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                        {formData.description}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Products Table */}
                         <div className="mb-6">
                             <h4 className="font-semibold text-gray-700 mb-3">Products</h4>
@@ -764,6 +772,11 @@ export default function BuyProductForm({
                                                                 <p className="text-xs text-gray-500">
                                                                     {details.variantName}
                                                                 </p>
+                                                                {product.description && (
+                                                                    <p className="text-xs text-gray-600 mt-1 italic">
+                                                                        {product.description}
+                                                                    </p>
+                                                                )}
                                                             </div>
                                                         </td>
                                                         <td className="text-right py-2">

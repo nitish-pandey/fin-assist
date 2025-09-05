@@ -24,6 +24,7 @@ interface SelectedProduct {
     variantId: string;
     quantity: number;
     rate: number;
+    description: string;
 }
 
 interface ProductDetailsProps {
@@ -134,13 +135,15 @@ export function ProductDetails({
     const handleAddEmptySlot = () => {
         onUpdateProducts([
             ...addedProducts,
-            { productId: "", variantId: "", quantity: 1, rate: 0 },
+            { productId: "", variantId: "", quantity: 1, rate: 0, description: "" },
         ]);
     };
 
     const handleRemoveProduct = (index: number) => {
         if (addedProducts.length === 1) {
-            onUpdateProducts([{ productId: "", variantId: "", quantity: 1, rate: 0 }]);
+            onUpdateProducts([
+                { productId: "", variantId: "", quantity: 1, rate: 0, description: "" },
+            ]);
         } else {
             onUpdateProducts(addedProducts.filter((_, i) => i !== index));
         }
@@ -157,6 +160,7 @@ export function ProductDetails({
             variantId: myVar.id,
             quantity: 1,
             rate: price,
+            description: "",
         };
 
         const emptySlotIndex = addedProducts.findIndex((p) => !p.productId);
@@ -194,14 +198,15 @@ export function ProductDetails({
             )}
 
             <CardContent className="p-6 space-y-6">
-                <div className="grid grid-cols-12 gap-4 font-medium text-sm text-muted-foreground bg-slate-50 p-3 rounded-md">
-                    <div className="col-span-1">#</div>
-                    <div className="col-span-2">Product</div>
-                    <div className="col-span-3">Variant</div>
-                    <div className="col-span-2">Quantity</div>
-                    <div className="col-span-2">Rate (Rs)</div>
-                    <div className="col-span-1">Amount</div>
-                    <div className="col-span-1" />
+                <div className="flex gap-4 font-medium text-sm text-muted-foreground bg-slate-50 p-3 rounded-md items-center">
+                    <div className="w-10">#</div>
+                    <div className="w-40">Product</div>
+                    <div className="min-w-28 max-w-80 w-full">Variant</div>
+                    <div className="w-24">Quantity</div>
+                    <div className="w-24">Rate (Rs)</div>
+                    <div className="w-28 text-right">Amount</div>
+                    <div className="w-40">Remarks</div>
+                    <div className="w-14" />
                 </div>
 
                 <ScrollArea className="pr-4 max-h-[50vh]">
@@ -263,6 +268,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
     index,
     item,
     type,
+    isPublic,
     products,
     product,
     variant,
@@ -316,9 +322,9 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
     };
 
     return (
-        <div className="grid grid-cols-12 gap-4 items-center bg-white p-3 rounded-lg border">
-            <div className="col-span-1 font-medium text-slate-600">{index + 1}</div>
-            <div className="col-span-2">
+        <div className="flex gap-4 items-center bg-white p-3 rounded-lg border">
+            <div className="col-span-1 w-10 font-medium text-slate-600">{index + 1}</div>
+            <div className="col-span-2 w-40">
                 <SelectPopover
                     items={products.map((p) => ({ id: p.id, label: p.name }))}
                     selectedId={item.productId}
@@ -326,17 +332,21 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
                     placeholder="Select product"
                 />
             </div>
-            <div className="col-span-3">
+            <div className="col-span-2 max-w-80">
                 {product ? (
                     <SelectPopover
                         items={(product.variants ?? []).map((v) => ({
                             id: v.id,
                             label: `${v.name}${
                                 type === "SELL"
-                                    ? ` (Stock: ${getVariantStock(
-                                          v
-                                      )}) - Estimate: ${getVariantEstimatedPrice(v, 1)} `
-                                    : "- Last Bought At: Rs " + v.buyPrice
+                                    ? ` (Stock: ${getVariantStock(v)})${
+                                          !isPublic
+                                              ? ` - Estimate: ${getVariantEstimatedPrice(v, 1)}`
+                                              : ""
+                                      }`
+                                    : !isPublic
+                                    ? "- Last Bought At: Rs " + v.buyPrice
+                                    : ""
                             }`,
                         }))}
                         selectedId={item.variantId}
@@ -347,7 +357,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
                     <span className="text-sm text-muted-foreground px-3">Select product first</span>
                 )}
             </div>
-            <div className="col-span-2">
+            <div className="col-span-2 w-24">
                 <div className="flex items-center gap-1">
                     <Button
                         size="icon"
@@ -368,7 +378,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
                             onUpdate(index, { quantity: parseInt(e.target.value) || 1 })
                         }
                         onBlur={(e) => handleQuantityChange(parseInt(e.target.value))}
-                        className={`w-16 h-8 text-center ${
+                        className={`w-14 h-8 text-center ${
                             hasStockError ? "border-red-500 bg-red-50" : ""
                         }`}
                         disabled={!item.variantId}
@@ -388,7 +398,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
                     <div className="text-xs text-red-500 mt-1 text-center">Exceeds stock</div>
                 )}
             </div>
-            <div className="col-span-2">
+            <div className="col-span-2 w-24">
                 <Input
                     type="number"
                     value={item.rate}
@@ -397,10 +407,20 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
                     // disabled={!item.variantId || type === "SELL"}
                 />
             </div>
-            <div className="col-span-1 text-right font-semibold text-slate-700 whitespace-nowrap">
+            <div className="col-span-1 w-28 text-right font-semibold text-slate-700 whitespace-nowrap">
                 {amount.toFixed(2)}
             </div>
-            <div className="col-span-1 flex justify-center items-center gap-2">
+            <div className="col-span-1 w-40">
+                <Input
+                    type="text"
+                    value={item.description}
+                    onChange={(e) => onUpdate(index, { description: e.target.value })}
+                    placeholder="Remarks"
+                    className="h-9"
+                    disabled={!item.variantId}
+                />
+            </div>
+            <div className="col-span-1 w-14 flex justify-center items-center gap-2">
                 <Button
                     size="icon"
                     type="button"

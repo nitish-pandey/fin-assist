@@ -11,8 +11,10 @@ import { ColumnDef } from "@tanstack/react-table";
 import { TableComponent } from "./Table";
 import { api } from "@/utils/api";
 import { AddTransactionDialog } from "../modals/AddTransaction";
+import { EditAccountModal } from "../modals/EditAccountModal";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const chequeColumns: ColumnDef<Transaction>[] = [
     {
@@ -32,6 +34,7 @@ const chequeColumns: ColumnDef<Transaction>[] = [
 
 const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDetailsProps) => {
     const [localAccount, setLocalAccount] = useState<Account | null>(account);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const paymentColumns: ColumnDef<Transaction>[] = [
         {
             header: "Description",
@@ -102,6 +105,21 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
     useEffect(() => {
         setLocalAccount(account);
     }, [account]);
+
+    const handleAccountUpdate = async () => {
+        // Refetch account data after update
+        if (account) {
+            try {
+                const response = await api.get(
+                    `/orgs/${account.organizationId}/accounts/${account.id}`
+                );
+                setLocalAccount(response.data);
+            } catch (error) {
+                console.error("Error fetching updated account:", error);
+            }
+        }
+    };
+
     if (isLoading) {
         return <div>Loading...</div>;
     }
@@ -182,7 +200,18 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
     return (
         <div className="mt-8">
             <div className="bg-gray-100 p-6 rounded-lg">
-                <h2 className="text-xl font-semibold text-gray-800">Account Details</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-800">Account Details</h2>
+                    {(localAccount.type === "BANK" || localAccount.type === "BANK_OD") && (
+                        <Button
+                            onClick={() => setIsEditModalOpen(true)}
+                            variant="outline"
+                            size="sm"
+                        >
+                            Edit Account
+                        </Button>
+                    )}
+                </div>
                 <div className="flex items-center justify-between mt-4">
                     <div>
                         <p className="text-sm text-gray-500">Account Name</p>
@@ -199,13 +228,13 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
                             <div>
                                 <p className="text-sm text-gray-500">Account Number</p>
                                 <p className="text-lg font-semibold text-gray-800">
-                                    {localAccount.details.accountNumber}
+                                    {localAccount.details?.accountNumber}
                                 </p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Bank Name</p>
                                 <p className="text-lg font-semibold text-gray-800">
-                                    {localAccount.details.bankName}
+                                    {localAccount.details?.bankName}
                                 </p>
                             </div>
                             {/* interest rate and accumulated interest */}
@@ -217,14 +246,23 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
                                         : "N/A"}
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Accumulated Interest</p>
-                                <p className="text-lg font-semibold text-gray-800">
-                                    {localAccount.accumulatedInterest
-                                        ? localAccount.accumulatedInterest
-                                        : "N/A"}
-                                </p>
-                            </div>
+                            {localAccount.type === "BANK_OD" ? (
+                                <div>
+                                    <p className="text-sm text-gray-500">Overdraft Limit</p>
+                                    <p className="text-lg font-semibold text-gray-800">
+                                        {localAccount.limit ? localAccount.limit.toFixed(2) : "N/A"}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div>
+                                    <p className="text-sm text-gray-500">Accumulated Interest</p>
+                                    <p className="text-lg font-semibold text-gray-800">
+                                        {localAccount.accumulatedInterest
+                                            ? localAccount.accumulatedInterest.toFixed(4)
+                                            : "N/A"}
+                                    </p>
+                                </div>
+                            )}
                         </>
                     )}
                 </div>
@@ -386,6 +424,13 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
                     </TabsContent>
                 </Tabs>
             </div>
+
+            <EditAccountModal
+                account={localAccount}
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                onSuccess={handleAccountUpdate}
+            />
         </div>
     );
 };

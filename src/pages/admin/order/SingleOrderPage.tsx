@@ -300,7 +300,8 @@ const OrderHeader = ({ order }: { order: Order }) => (
             </p>
         </CardHeader>
         <CardContent className="pt-4">
-            <div className="flex justify-end">
+            <div className="flex justify-between">
+                <p className="text-lg">{order.description || "No description provided"}</p>
                 <p className="text-xl font-semibold">Total: Nrs {order.totalAmount.toFixed(2)}</p>
             </div>
         </CardContent>
@@ -352,6 +353,7 @@ const OrderItems = ({ items }: { items: OrderItem[] }) => {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Product</TableHead>
+                            <TableHead>Description</TableHead>
                             <TableHead className="text-right">Quantity</TableHead>
                             <TableHead className="text-right">Price</TableHead>
                             <TableHead className="text-right">Subtotal</TableHead>
@@ -365,6 +367,7 @@ const OrderItems = ({ items }: { items: OrderItem[] }) => {
                                         <div>{item.name}</div>
                                     </div>
                                 </TableCell>
+                                <TableCell>{item.description || "N/A"}</TableCell>
                                 <TableCell className="text-right">{item.quantity}</TableCell>
                                 <TableCell className="text-right">
                                     Nrs {item.price.toFixed(2)}
@@ -460,10 +463,6 @@ const OrderSummary = ({ order }: { order: Order }) => {
                             <span className="text-muted-foreground">Discount:</span>
                             <span>-Nrs {order.discount.toFixed(2)}</span>
                         </div>
-                        {/* <div className="flex justify-between">
-                            <span className="text-muted-foreground">Tax:</span>
-                            <span>${order.tax.toFixed(2)}</span>
-                        </div> */}
                         {order.charges && order.charges.length > 0 && (
                             <>
                                 {order.charges.map((charge) => (

@@ -124,7 +124,7 @@ export default function EditOrgModal({ onSubmit, orgData }: EditOrgModalProps) {
                         ))}
                         {/* depreciation rate, number */}
                         <div className="space-y-2">
-                            <Label htmlFor="depreciationRate">Depreciation Rate (%)</Label>
+                            <Label htmlFor="depreciationRate">Inventory Increment Rate (%)</Label>
                             <Input
                                 id="depreciationRate"
                                 type="number"

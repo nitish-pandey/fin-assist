@@ -120,7 +120,7 @@ export default function OrgInfoPage() {
                                 />
                                 <InfoField
                                     icon={Mail}
-                                    label="Depreciation Rate"
+                                    label="Inventory Increment Rate"
                                     value={
                                         organization.depreciationRate
                                             ? `${organization.depreciationRate}%`

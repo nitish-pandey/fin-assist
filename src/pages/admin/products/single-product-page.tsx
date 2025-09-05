@@ -701,6 +701,9 @@ const SingleProductPage = () => {
                                                                         <TableHead>
                                                                             Order #
                                                                         </TableHead>
+                                                                        <TableHead>
+                                                                            Entity
+                                                                        </TableHead>
                                                                         <TableHead>Type</TableHead>
                                                                         <TableHead>
                                                                             Quantity
@@ -714,9 +717,6 @@ const SingleProductPage = () => {
                                                                         </TableHead>
                                                                         <TableHead>
                                                                             Status
-                                                                        </TableHead>
-                                                                        <TableHead>
-                                                                            Entity
                                                                         </TableHead>
                                                                     </TableRow>
                                                                 </TableHeader>
@@ -782,6 +782,18 @@ const SingleProductPage = () => {
                                                                                             {item
                                                                                                 .order
                                                                                                 ?.orderNumber ||
+                                                                                                "N/A"}
+                                                                                        </Link>
+                                                                                    </TableCell>
+                                                                                    <TableCell className="text-sm">
+                                                                                        <Link
+                                                                                            to={`/org/${product.organizationId}/entity/${item.order?.entityId}`}
+                                                                                            className="hover:underline"
+                                                                                        >
+                                                                                            {item
+                                                                                                .order
+                                                                                                ?.entity
+                                                                                                ?.name ||
                                                                                                 "N/A"}
                                                                                         </Link>
                                                                                     </TableCell>
@@ -888,12 +900,6 @@ const SingleProductPage = () => {
                                                                                                 ?.paymentStatus ||
                                                                                                 "N/A"}
                                                                                         </Badge>
-                                                                                    </TableCell>
-                                                                                    <TableCell className="text-sm">
-                                                                                        {item.order
-                                                                                            ?.entity
-                                                                                            ?.name ||
-                                                                                            "N/A"}
                                                                                     </TableCell>
                                                                                 </TableRow>
                                                                             );

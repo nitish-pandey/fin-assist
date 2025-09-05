@@ -11,9 +11,7 @@ export default function BankODAccounts() {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedAccount, setSelectedAccount] = useState<Account | null>(
-        null
-    );
+    const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
     // Fetch accounts from API
     const fetchAccounts = useCallback(async () => {
@@ -21,9 +19,7 @@ export default function BankODAccounts() {
         setError(null);
         try {
             const { data } = await api.get<Account[]>(`orgs/${orgId}/accounts`);
-            const filteredAccounts = data.filter(
-                (acc) => acc.type === "BANK_OD"
-            );
+            const filteredAccounts = data.filter((acc) => acc.type === "BANK_OD");
             setAccounts(filteredAccounts);
             if (filteredAccounts.length > 0) {
                 setSelectedAccount(filteredAccounts[0]);
@@ -54,18 +50,10 @@ export default function BankODAccounts() {
             {/* Header Section */}
             <div className="flex items-center justify-between border-b pb-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">
-                        Bank OverDraft Accounts
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                        View and manage your bank-od accounts
-                    </p>
+                    <h2 className="text-2xl font-bold text-gray-800">Bank OverDraft Accounts</h2>
+                    <p className="text-sm text-gray-500">View and manage your bank-od accounts</p>
                 </div>
-                <CreateAccountForm
-                    type="BANK_OD"
-                    onSubmit={onSubmit}
-                    disableType={true}
-                />
+                <CreateAccountForm type="BANK_OD" onSubmit={onSubmit} disableType={true} />
             </div>
 
             {/* Loading State */}
@@ -76,9 +64,7 @@ export default function BankODAccounts() {
             ) : error ? (
                 <p className="text-center text-red-500">{error}</p>
             ) : accounts.length === 0 ? (
-                <p className="text-center text-gray-500 mt-6">
-                    No bank-od accounts found.
-                </p>
+                <p className="text-center text-gray-500 mt-6">No bank-od accounts found.</p>
             ) : (
                 <>
                     {/* Account List */}
@@ -88,8 +74,8 @@ export default function BankODAccounts() {
                                 key={account.id}
                                 accountName={account.name}
                                 type="BANK_OD"
-                                accountNumber={account.details.accountNumber}
-                                bankName={account.details.bankName}
+                                accountNumber={account.details?.accountNumber || ""}
+                                bankName={account.details?.bankName || ""}
                                 balance={account.balance}
                                 onClick={() => setSelectedAccount(account)}
                                 isSelected={selectedAccount?.id === account.id}
