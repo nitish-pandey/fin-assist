@@ -164,6 +164,7 @@ export default function BuyProductForm({
     // const [formData, setFormData] = useState<OrderFormData>(() =>
     //     createInitialState(type, orgId, defaultEntity)
     // );
+    const [orderDate, setOrderDate] = useState<Date | null>(new Date());
     const { buyCart, updateBuyCart, sellCart, updateSellCart } = useOrg();
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -417,6 +418,7 @@ export default function BuyProductForm({
                 ),
                 type,
                 payments: finalPayments,
+                orderDate: orderDate || new Date(),
             };
 
             const createdOrder = await onSubmit(submitData);
@@ -541,6 +543,7 @@ export default function BuyProductForm({
                         charges={formData.charges}
                         setCharge={handleUpdateCharges}
                     />
+
                     {error && (
                         <div className="p-3 border border-red-500 bg-red-50 text-red-600 rounded relative">
                             {error}
@@ -603,6 +606,18 @@ export default function BuyProductForm({
                             }
                             rows={3}
                             className="w-full"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label htmlFor="orderDate" className="text-sm font-medium text-gray-700">
+                            Order Date
+                        </label>
+                        <input
+                            type="date"
+                            id="orderDate"
+                            value={orderDate ? orderDate.toISOString().split("T")[0] : ""}
+                            onChange={(e) => setOrderDate(new Date(e.target.value))}
+                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
 
