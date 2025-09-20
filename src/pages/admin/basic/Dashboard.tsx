@@ -1,14 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-} from "recharts";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import {
     Package,
     Settings,
@@ -23,7 +14,6 @@ import {
     CreditCard,
     Banknote,
     Target,
-    ArrowUpRight,
     ArrowDownRight,
 } from "lucide-react";
 import { api } from "@/utils/api";
@@ -76,6 +66,7 @@ interface DashboardData {
     totalBuyOrders?: number;
     totalSellOrders?: number;
     totalRevenue?: number;
+    totalInventoryValue?: number;
     totalExpenses?: number;
     netProfit?: number;
     totalCashBalance?: number;
@@ -158,50 +149,27 @@ const Dashboard = () => {
     // Derived data calculations
     const getDerivedData = (dashboardData: DashboardData) => {
         const totalTransactions =
-            dashboardData.transactions?.reduce(
-                (sum, item) => sum + item.value,
-                0
-            ) || 0;
-        const totalTransactionsFormatted = `${(
-            totalTransactions / 1000
-        ).toFixed(1)}K`;
+            dashboardData.transactions?.reduce((sum, item) => sum + item.value, 0) || 0;
+        const totalTransactionsFormatted = `${totalTransactions.toFixed(2)}`;
 
-        const creditPendingFormatted = `₹${(
-            (dashboardData.creditPending || 0) / 1000
-        ).toFixed(1)}K`;
-        const debitPendingFormatted = `₹${(
-            (dashboardData.debitPending || 0) / 1000
-        ).toFixed(1)}K`;
+        const creditPendingFormatted = `₹${(dashboardData.creditPending || 0).toFixed(2)}`;
+        const debitPendingFormatted = `₹${(dashboardData.debitPending || 0).toFixed(2)}`;
 
         const buyDue = 100 - (dashboardData.buyPaid || 0);
         const sellDue = 100 - (dashboardData.sellPaid || 0);
 
         // Format revenue, expenses, profit
-        const totalRevenueFormatted = `₹${(
-            (dashboardData.totalRevenue || 0) / 1000
-        ).toFixed(1)}K`;
-        const totalExpensesFormatted = `₹${(
-            (dashboardData.totalExpenses || 0) / 1000
-        ).toFixed(1)}K`;
-        const netProfitFormatted = `₹${(
-            (dashboardData.netProfit || 0) / 1000
-        ).toFixed(1)}K`;
+        const totalRevenueFormatted = `₹${(dashboardData.totalRevenue || 0).toFixed(2)}`;
+        const totalExpensesFormatted = `₹${(dashboardData.totalExpenses || 0).toFixed(2)}`;
+        const netProfitFormatted = `₹${(dashboardData.netProfit || 0).toFixed(2)}`;
 
         // Format balance data
-        const totalBalanceFormatted = `₹${(
-            (dashboardData.totalBalance || 0) / 1000
-        ).toFixed(1)}K`;
-        const totalCashBalanceFormatted = `₹${(
-            (dashboardData.totalCashBalance || 0) / 1000
-        ).toFixed(1)}K`;
-        const totalBankBalanceFormatted = `₹${
-            dashboardData.totalBankBalance || 0
-        }`;
+        const totalBalanceFormatted = `₹${(dashboardData.totalBalance || 0).toFixed(2)}`;
+        const totalCashBalanceFormatted = `₹${(dashboardData.totalCashBalance || 0).toFixed(2)}`;
+        const totalBankBalanceFormatted = `₹${dashboardData.totalBankBalance || 0}`;
 
         // Format average order value
-        const averageOrderValueFormatted = `₹${
-            dashboardData.averageOrderValue || 0
-        }`;
+        const averageOrderValueFormatted = `₹${dashboardData.averageOrderValue || 0}`;
 
         // Prepare account balance chart data
         const accountChartData =
@@ -220,8 +188,7 @@ const Dashboard = () => {
             },
             {
                 name: "Unpaid",
-                value:
-                    dashboardData.paymentStatusSummary?.totalUnpaidOrders || 0,
+                value: dashboardData.paymentStatusSummary?.totalUnpaidOrders || 0,
                 color: "#EF4444",
             },
         ];
@@ -256,22 +223,14 @@ const Dashboard = () => {
         const radius = size / 2 - 6;
         const circumference = 2 * Math.PI * radius;
         const strokeDasharray = circumference;
-        const strokeDashoffset =
-            circumference - (percentage / 100) * circumference;
+        const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
         const fontSize = size < 80 ? "text-xs" : "text-lg";
         const strokeWidth = size < 80 ? 4 : 6;
 
         return (
-            <div
-                className="relative mx-auto"
-                style={{ width: size, height: size }}
-            >
-                <svg
-                    width={size}
-                    height={size}
-                    className="transform -rotate-90"
-                >
+            <div className="relative mx-auto" style={{ width: size, height: size }}>
+                <svg width={size} height={size} className="transform -rotate-90">
                     <circle
                         cx={size / 2}
                         cy={size / 2}
@@ -315,10 +274,7 @@ const Dashboard = () => {
                 {/* Top metrics skeleton */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {[...Array(4)].map((_, i) => (
-                        <div
-                            key={i}
-                            className="bg-white rounded-xl p-6 shadow-sm h-32"
-                        ></div>
+                        <div key={i} className="bg-white rounded-xl p-6 shadow-sm h-32"></div>
                     ))}
                 </div>
 
@@ -342,19 +298,13 @@ const Dashboard = () => {
         <div className="p-6 bg-gray-50 min-h-[90vh]">
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Dashboard
-                    </h1>
-                    <p className="text-gray-600">
-                        A descriptive body text comes here
-                    </p>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+                    <p className="text-gray-600">A descriptive body text comes here</p>
                 </div>
 
                 <div className="bg-white rounded-xl p-12 shadow-sm text-center">
                     <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                        Something went wrong
-                    </h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
                     <p className="text-gray-600 mb-6">{error}</p>
                     <button
                         onClick={loadData}
@@ -394,9 +344,7 @@ const Dashboard = () => {
                 {/* Header */}
                 <div className="mb-6 flex justify-between items-start">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                            Dashboard
-                        </h1>
+                        <h1 className="text-2xl font-bold text-gray-900 mb-1">Dashboard</h1>
                         <p className="text-gray-600 text-sm">
                             Complete business overview and analytics
                         </p>
@@ -429,18 +377,6 @@ const Dashboard = () => {
                         <div className="text-green-100 text-xs">Revenue</div>
                     </div>
 
-                    {/* Net Profit */}
-                    <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-lg p-4 text-white">
-                        <div className="flex items-center justify-between mb-2">
-                            <Target className="w-6 h-6" />
-                            <ArrowUpRight className="w-4 h-4" />
-                        </div>
-                        <div className="text-xl font-bold mb-1">
-                            {derivedData.netProfitFormatted}
-                        </div>
-                        <div className="text-blue-100 text-xs">Profit</div>
-                    </div>
-
                     {/* Total Orders */}
                     <div className="bg-gradient-to-r from-purple-500 to-violet-600 rounded-lg p-4 text-white">
                         <div className="flex items-center justify-between mb-2">
@@ -452,16 +388,23 @@ const Dashboard = () => {
                                         : "bg-red-500/20 text-red-100"
                                 }`}
                             >
-                                {(data.orderGrowthPercentage || 0) >= 0
-                                    ? "+"
-                                    : ""}
+                                {(data.orderGrowthPercentage || 0) >= 0 ? "+" : ""}
                                 {data.orderGrowthPercentage || 0}%
                             </span>
                         </div>
-                        <div className="text-xl font-bold mb-1">
-                            {data.totalOrders}
-                        </div>
+                        <div className="text-xl font-bold mb-1">{data.totalOrders}</div>
                         <div className="text-purple-100 text-xs">Orders</div>
+                    </div>
+
+                    {/* Total Inventory Value */}
+                    <div className="bg-gradient-to-r from-indigo-500 to-blue-600 rounded-lg p-4 text-white">
+                        <div className="flex items-center justify-between mb-2">
+                            <Package className="w-6 h-6" />
+                        </div>
+                        <div className="text-xl font-bold mb-1">
+                            ₹{data.totalInventoryValue?.toFixed(2) || "0.00"}
+                        </div>
+                        <div className="text-indigo-100 text-xs">Inventory Value</div>
                     </div>
 
                     {/* Total Balance */}
@@ -517,9 +460,7 @@ const Dashboard = () => {
 
                     {/* Payment Status */}
                     <div className="bg-white rounded-lg p-4 shadow-sm">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                            Payment Status
-                        </h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Status</h3>
 
                         <div className="h-32 mb-3">
                             <ResponsiveContainer width="100%" height="100%">
@@ -532,14 +473,9 @@ const Dashboard = () => {
                                         outerRadius={55}
                                         dataKey="value"
                                     >
-                                        {derivedData.paymentStatusData.map(
-                                            (entry, index) => (
-                                                <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={entry.color}
-                                                />
-                                            )
-                                        )}
+                                        {derivedData.paymentStatusData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
                                     </Pie>
                                 </PieChart>
                             </ResponsiveContainer>
@@ -552,20 +488,16 @@ const Dashboard = () => {
                                     <span className="text-gray-600">Paid</span>
                                 </div>
                                 <span className="font-semibold">
-                                    {data.paymentStatusSummary
-                                        ?.totalPaidOrders || 0}
+                                    {data.paymentStatusSummary?.totalPaidOrders || 0}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between text-sm">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                    <span className="text-gray-600">
-                                        Unpaid
-                                    </span>
+                                    <span className="text-gray-600">Unpaid</span>
                                 </div>
                                 <span className="font-semibold">
-                                    {data.paymentStatusSummary
-                                        ?.totalUnpaidOrders || 0}
+                                    {data.paymentStatusSummary?.totalUnpaidOrders || 0}
                                 </span>
                             </div>
                         </div>
@@ -573,56 +505,39 @@ const Dashboard = () => {
 
                     {/* Quick Stats */}
                     <div className="bg-white rounded-lg p-4 shadow-sm">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                            Quick Stats
-                        </h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
 
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Package className="w-4 h-4 text-blue-600" />
-                                    <span className="text-sm text-gray-600">
-                                        Products
-                                    </span>
+                                    <span className="text-sm text-gray-600">Products</span>
                                 </div>
-                                <span className="font-bold text-gray-900">
-                                    {data.products}
-                                </span>
+                                <span className="font-bold text-gray-900">{data.products}</span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Users className="w-4 h-4 text-green-600" />
-                                    <span className="text-sm text-gray-600">
-                                        Entities
-                                    </span>
+                                    <span className="text-sm text-gray-600">Entities</span>
                                 </div>
-                                <span className="font-bold text-gray-900">
-                                    {data.entities}
-                                </span>
+                                <span className="font-bold text-gray-900">{data.entities}</span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Target className="w-4 h-4 text-purple-600" />
-                                    <span className="text-sm text-gray-600">
-                                        Avg Order
-                                    </span>
+                                    <span className="text-sm text-gray-600">Avg Order</span>
                                 </div>
                                 <span className="font-bold text-gray-900">
                                     ₹
                                     {data.orderSummary?.averageOrderValue
-                                        ? Math.round(
-                                              data.orderSummary
-                                                  .averageOrderValue
-                                          )
+                                        ? Math.round(data.orderSummary.averageOrderValue)
                                         : data.averageOrderValue || 0}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <ArrowDownRight className="w-4 h-4 text-red-600" />
-                                    <span className="text-sm text-gray-600">
-                                        Expenses
-                                    </span>
+                                    <span className="text-sm text-gray-600">Expenses</span>
                                 </div>
                                 <span className="font-bold text-gray-900">
                                     {derivedData.totalExpensesFormatted}
@@ -661,9 +576,7 @@ const Dashboard = () => {
                                                 {account.name}
                                             </div>
                                             <div className="text-xs text-gray-500 capitalize">
-                                                {account.type
-                                                    .replace("_", " ")
-                                                    .toLowerCase()}
+                                                {account.type.replace("_", " ").toLowerCase()}
                                             </div>
                                         </div>
                                     </div>
@@ -687,44 +600,28 @@ const Dashboard = () => {
                                     <div className="text-lg font-bold text-blue-600">
                                         {data.totalBuyOrders}
                                     </div>
-                                    <div className="text-xs text-blue-700">
-                                        Buy Orders
-                                    </div>
+                                    <div className="text-xs text-blue-700">Buy Orders</div>
                                 </div>
                                 <div className="text-center p-2 bg-green-50 rounded">
                                     <div className="text-lg font-bold text-green-600">
                                         {data.totalSellOrders}
                                     </div>
-                                    <div className="text-xs text-green-700">
-                                        Sell Orders
-                                    </div>
+                                    <div className="text-xs text-green-700">Sell Orders</div>
                                 </div>
                             </div>
 
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">
-                                        Current Month
-                                    </span>
-                                    <span className="font-semibold">
-                                        {data.currentMonthOrders}
-                                    </span>
+                                    <span className="text-gray-600">Current Month</span>
+                                    <span className="font-semibold">{data.currentMonthOrders}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">
-                                        Last Month
-                                    </span>
-                                    <span className="font-semibold">
-                                        {data.lastMonthOrders}
-                                    </span>
+                                    <span className="text-gray-600">Last Month</span>
+                                    <span className="font-semibold">{data.lastMonthOrders}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">
-                                        Recent Orders
-                                    </span>
-                                    <span className="font-semibold">
-                                        {data.recentOrdersCount}
-                                    </span>
+                                    <span className="text-gray-600">Recent Orders</span>
+                                    <span className="font-semibold">{data.recentOrdersCount}</span>
                                 </div>
                             </div>
                         </div>
@@ -754,9 +651,7 @@ const Dashboard = () => {
                                 <div className="flex items-center justify-between p-2 bg-yellow-50 rounded">
                                     <div className="flex items-center gap-2">
                                         <TrendingUp className="w-4 h-4 text-yellow-600" />
-                                        <span className="text-sm text-gray-900">
-                                            Debit Pending
-                                        </span>
+                                        <span className="text-sm text-gray-900">Debit Pending</span>
                                     </div>
                                     <span className="text-sm font-bold text-yellow-600">
                                         {derivedData.debitPendingFormatted}
@@ -768,25 +663,15 @@ const Dashboard = () => {
                             <div className="grid grid-cols-2 gap-2">
                                 <div className="text-center">
                                     <div className="mb-1">
-                                        <ProgressCircle
-                                            percentage={data.buyPaid || 0}
-                                            size={60}
-                                        />
+                                        <ProgressCircle percentage={data.buyPaid || 0} size={60} />
                                     </div>
-                                    <div className="text-xs text-gray-600">
-                                        Buy Orders
-                                    </div>
+                                    <div className="text-xs text-gray-600">Buy Orders</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="mb-1">
-                                        <ProgressCircle
-                                            percentage={data.sellPaid || 0}
-                                            size={60}
-                                        />
+                                        <ProgressCircle percentage={data.sellPaid || 0} size={60} />
                                     </div>
-                                    <div className="text-xs text-gray-600">
-                                        Sell Orders
-                                    </div>
+                                    <div className="text-xs text-gray-600">Sell Orders</div>
                                 </div>
                             </div>
                         </div>
@@ -794,156 +679,119 @@ const Dashboard = () => {
                 </div>
 
                 {/* Recent Orders Section */}
-                {data.orderSummary?.recentOrders &&
-                    data.orderSummary.recentOrders.length > 0 && (
-                        <div className="bg-white rounded-lg p-4 shadow-sm">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                    Recent Orders
-                                </h3>
-                                <div className="text-sm text-gray-600">
-                                    Showing{" "}
-                                    {data.orderSummary.recentOrders.length}{" "}
-                                    recent orders
-                                </div>
-                            </div>
-
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b border-gray-200">
-                                            <th className="text-left py-2 px-3 font-medium text-gray-900">
-                                                Order #
-                                            </th>
-                                            <th className="text-left py-2 px-3 font-medium text-gray-900">
-                                                Type
-                                            </th>
-                                            <th className="text-right py-2 px-3 font-medium text-gray-900">
-                                                Amount
-                                            </th>
-                                            <th className="text-center py-2 px-3 font-medium text-gray-900">
-                                                Status
-                                            </th>
-                                            <th className="text-right py-2 px-3 font-medium text-gray-900">
-                                                Date
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {data.orderSummary.recentOrders.map(
-                                            (order) => (
-                                                <tr
-                                                    key={order.id}
-                                                    className="border-b border-gray-100 hover:bg-gray-50"
-                                                >
-                                                    <td className="py-2 px-3">
-                                                        <div className="font-medium text-gray-900">
-                                                            {order.orderNumber}
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-2 px-3">
-                                                        <span
-                                                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                                                order.type ===
-                                                                "BUY"
-                                                                    ? "bg-blue-100 text-blue-800"
-                                                                    : "bg-green-100 text-green-800"
-                                                            }`}
-                                                        >
-                                                            {order.type}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-2 px-3 text-right font-medium">
-                                                        ₹
-                                                        {order.totalAmount.toLocaleString()}
-                                                    </td>
-                                                    <td className="py-2 px-3 text-center">
-                                                        <span
-                                                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                                                order.paymentStatus ===
-                                                                "PAID"
-                                                                    ? "bg-green-100 text-green-800"
-                                                                    : order.paymentStatus ===
-                                                                      "PARTIAL"
-                                                                    ? "bg-yellow-100 text-yellow-800"
-                                                                    : "bg-red-100 text-red-800"
-                                                            }`}
-                                                        >
-                                                            {
-                                                                order.paymentStatus
-                                                            }
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-2 px-3 text-right text-gray-600">
-                                                        {new Date(
-                                                            order.createdAt
-                                                        ).toLocaleDateString(
-                                                            "en-US",
-                                                            {
-                                                                month: "short",
-                                                                day: "numeric",
-                                                                year: "numeric",
-                                                            }
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            )
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Order Summary Stats */}
-                            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-gray-200">
-                                <div className="text-center p-2 bg-blue-50 rounded">
-                                    <div className="text-lg font-bold text-blue-600">
-                                        {data.orderSummary.totalOrders}
-                                    </div>
-                                    <div className="text-xs text-blue-700">
-                                        Total Orders
-                                    </div>
-                                </div>
-                                <div className="text-center p-2 bg-green-50 rounded">
-                                    <div className="text-lg font-bold text-green-600">
-                                        ₹
-                                        {(
-                                            data.orderSummary.totalRevenue /
-                                            1000
-                                        ).toFixed(1)}
-                                        K
-                                    </div>
-                                    <div className="text-xs text-green-700">
-                                        Total Revenue
-                                    </div>
-                                </div>
-                                <div className="text-center p-2 bg-purple-50 rounded">
-                                    <div className="text-lg font-bold text-purple-600">
-                                        ₹
-                                        {(
-                                            data.orderSummary.totalPaid / 1000
-                                        ).toFixed(1)}
-                                        K
-                                    </div>
-                                    <div className="text-xs text-purple-700">
-                                        Total Paid
-                                    </div>
-                                </div>
-                                <div className="text-center p-2 bg-orange-50 rounded">
-                                    <div className="text-lg font-bold text-orange-600">
-                                        ₹
-                                        {(
-                                            data.orderSummary.pendingAmount /
-                                            1000
-                                        ).toFixed(1)}
-                                        K
-                                    </div>
-                                    <div className="text-xs text-orange-700">
-                                        Pending
-                                    </div>
-                                </div>
+                {data.orderSummary?.recentOrders && data.orderSummary.recentOrders.length > 0 && (
+                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">Recent Orders</h3>
+                            <div className="text-sm text-gray-600">
+                                Showing {data.orderSummary.recentOrders.length} recent orders
                             </div>
                         </div>
-                    )}
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-gray-200">
+                                        <th className="text-left py-2 px-3 font-medium text-gray-900">
+                                            Order #
+                                        </th>
+                                        <th className="text-left py-2 px-3 font-medium text-gray-900">
+                                            Type
+                                        </th>
+                                        <th className="text-right py-2 px-3 font-medium text-gray-900">
+                                            Amount
+                                        </th>
+                                        <th className="text-center py-2 px-3 font-medium text-gray-900">
+                                            Status
+                                        </th>
+                                        <th className="text-right py-2 px-3 font-medium text-gray-900">
+                                            Date
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {data.orderSummary.recentOrders.map((order) => (
+                                        <tr
+                                            key={order.id}
+                                            className="border-b border-gray-100 hover:bg-gray-50"
+                                        >
+                                            <td className="py-2 px-3">
+                                                <div className="font-medium text-gray-900">
+                                                    {order.orderNumber}
+                                                </div>
+                                            </td>
+                                            <td className="py-2 px-3">
+                                                <span
+                                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                                        order.type === "BUY"
+                                                            ? "bg-blue-100 text-blue-800"
+                                                            : "bg-green-100 text-green-800"
+                                                    }`}
+                                                >
+                                                    {order.type}
+                                                </span>
+                                            </td>
+                                            <td className="py-2 px-3 text-right font-medium">
+                                                ₹{order.totalAmount.toLocaleString()}
+                                            </td>
+                                            <td className="py-2 px-3 text-center">
+                                                <span
+                                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                                        order.paymentStatus === "PAID"
+                                                            ? "bg-green-100 text-green-800"
+                                                            : order.paymentStatus === "PARTIAL"
+                                                            ? "bg-yellow-100 text-yellow-800"
+                                                            : "bg-red-100 text-red-800"
+                                                    }`}
+                                                >
+                                                    {order.paymentStatus}
+                                                </span>
+                                            </td>
+                                            <td className="py-2 px-3 text-right text-gray-600">
+                                                {new Date(order.createdAt).toLocaleDateString(
+                                                    "en-US",
+                                                    {
+                                                        month: "short",
+                                                        day: "numeric",
+                                                        year: "numeric",
+                                                    }
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Order Summary Stats */}
+                        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-gray-200">
+                            <div className="text-center p-2 bg-blue-50 rounded">
+                                <div className="text-lg font-bold text-blue-600">
+                                    {data.orderSummary.totalOrders}
+                                </div>
+                                <div className="text-xs text-blue-700">Total Orders</div>
+                            </div>
+                            <div className="text-center p-2 bg-green-50 rounded">
+                                <div className="text-lg font-bold text-green-600">
+                                    ₹{data.orderSummary.totalRevenue.toFixed(2)}
+                                </div>
+                                <div className="text-xs text-green-700">Total Revenue</div>
+                            </div>
+                            <div className="text-center p-2 bg-purple-50 rounded">
+                                <div className="text-lg font-bold text-purple-600">
+                                    ₹{data.orderSummary.totalPaid.toFixed(2)}
+                                </div>
+                                <div className="text-xs text-purple-700">Total Paid</div>
+                            </div>
+                            <div className="text-center p-2 bg-orange-50 rounded">
+                                <div className="text-lg font-bold text-orange-600">
+                                    ₹{data.orderSummary.pendingAmount.toFixed(2)}
+                                </div>
+                                <div className="text-xs text-orange-700">Pending</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

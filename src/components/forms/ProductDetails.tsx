@@ -199,9 +199,9 @@ export function ProductDetails({
 
             <CardContent className="p-6 space-y-6">
                 <div className="flex gap-4 font-medium text-sm text-muted-foreground bg-slate-50 p-3 rounded-md items-center">
-                    <div className="w-10">#</div>
-                    <div className="w-40">Product</div>
-                    <div className="min-w-28 max-w-80 w-full">Variant</div>
+                    <div className="w-6">#</div>
+                    <div className="w-32">Product</div>
+                    <div className="min-w-28 max-w-60 w-full">Variant</div>
                     <div className="w-24">Quantity</div>
                     <div className="w-24">Rate (Rs)</div>
                     <div className="w-28 text-right">Amount</div>
@@ -323,8 +323,8 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
 
     return (
         <div className="flex gap-4 items-center bg-white p-3 rounded-lg border">
-            <div className="col-span-1 w-10 font-medium text-slate-600">{index + 1}</div>
-            <div className="col-span-2 w-40">
+            <div className="col-span-1 w-6 font-medium text-slate-600 text-sm">{index + 1}</div>
+            <div className="col-span-2 w-32">
                 <SelectPopover
                     items={products.map((p) => ({ id: p.id, label: p.name }))}
                     selectedId={item.productId}
@@ -332,7 +332,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
                     placeholder="Select product"
                 />
             </div>
-            <div className="col-span-2 max-w-80">
+            <div className="col-span-2 max-w-60">
                 {product ? (
                     <SelectPopover
                         items={(product.variants ?? []).map((v) => ({
