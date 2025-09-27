@@ -157,27 +157,79 @@ export const generateInvoicePDF = (order: Order, organization?: Organization | n
     return pdf;
 };
 
-// Helper function to convert numbers to words (simplified)
+// Helper function to convert numbers to words (Indian numbering system)
 const convertNumberToWords = (amount: number): string => {
-    const ones = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
-
     if (amount === 0) return "zero rupees";
-    if (amount === 1800) return "One thousand eight hundred rupees";
 
-    // Simplified conversion for common amounts
-    if (amount < 1000) {
-        return `${amount} rupees`;
-    } else if (amount < 10000) {
-        const thousand = Math.floor(amount / 1000);
-        const remainder = amount % 1000;
-        let result = ones[thousand] + " thousand";
-        if (remainder > 0) {
-            result += " " + remainder;
+    const ones = [
+        "",
+        "one",
+        "two",
+        "three",
+        "four",
+        "five",
+        "six",
+        "seven",
+        "eight",
+        "nine",
+        "ten",
+        "eleven",
+        "twelve",
+        "thirteen",
+        "fourteen",
+        "fifteen",
+        "sixteen",
+        "seventeen",
+        "eighteen",
+        "nineteen",
+    ];
+    const tens = [
+        "",
+        "",
+        "twenty",
+        "thirty",
+        "forty",
+        "fifty",
+        "sixty",
+        "seventy",
+        "eighty",
+        "ninety",
+    ];
+    const units = [
+        { value: 10000000, str: "crore" },
+        { value: 100000, str: "lakh" },
+        { value: 1000, str: "thousand" },
+        { value: 100, str: "hundred" },
+    ];
+
+    function numberToWords(n: number): string {
+        let word = "";
+        if (n < 20) {
+            word += ones[n];
+        } else if (n < 100) {
+            word += tens[Math.floor(n / 10)];
+            if (n % 10 > 0) word += " " + ones[n % 10];
+        } else {
+            for (const unit of units) {
+                if (n >= unit.value) {
+                    const count = Math.floor(n / unit.value);
+                    word += numberToWords(count) + " " + unit.str;
+                    n = n % unit.value;
+                    if (n > 0) word += " ";
+                }
+            }
+            if (n > 0) {
+                if (word !== "") word += "and ";
+                word += numberToWords(n);
+            }
         }
-        return result + " rupees";
+        return word.trim();
     }
 
-    return `${amount} rupees`;
+    let result = numberToWords(amount);
+    // Capitalize first letter
+    result = result.charAt(0).toUpperCase() + result.slice(1);
+    return result + " rupees";
 };
 
 export const downloadInvoicePDF = (order: Order, organization?: Organization | null): void => {

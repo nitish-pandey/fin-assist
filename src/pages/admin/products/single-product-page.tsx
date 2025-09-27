@@ -518,21 +518,6 @@ const SingleProductPage = () => {
                                                             </div>
                                                         </div>
                                                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                                            <div className="text-left sm:text-right">
-                                                                <div className="text-sm font-medium">
-                                                                    Current Stock:{" "}
-                                                                    <Badge
-                                                                        variant="outline"
-                                                                        className="text-base"
-                                                                    >
-                                                                        {totalStock} units
-                                                                    </Badge>
-                                                                </div>
-                                                                <div className="text-sm text-muted-foreground mt-1">
-                                                                    Value:{" "}
-                                                                    {formatCurrency(inventoryValue)}
-                                                                </div>
-                                                            </div>
                                                             <div className="flex items-center gap-2">
                                                                 <Button
                                                                     variant="outline"
@@ -598,7 +583,7 @@ const SingleProductPage = () => {
                                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                                                         <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
                                                             <div className="font-medium text-blue-800">
-                                                                Buy Price
+                                                                Latest Buy Price
                                                             </div>
                                                             <div className="text-lg font-bold text-blue-900">
                                                                 {formatCurrency(variant.buyPrice)}
@@ -634,7 +619,7 @@ const SingleProductPage = () => {
                                                         </div>
                                                         <div className="bg-emerald-50 p-3 rounded-md border border-emerald-200">
                                                             <div className="font-medium text-emerald-800">
-                                                                Estimated Value
+                                                                Inventory Value
                                                             </div>
                                                             <div className="text-lg font-bold text-emerald-900">
                                                                 {formatCurrency(
@@ -675,13 +660,10 @@ const SingleProductPage = () => {
                                                         </div>
                                                         <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
                                                             <div className="font-medium text-gray-800">
-                                                                Inventory Value
+                                                                Buy Value
                                                             </div>
                                                             <div className="text-lg font-bold text-gray-900">
                                                                 {formatCurrency(inventoryValue)}
-                                                            </div>
-                                                            <div className="text-xs text-gray-600">
-                                                                Current Worth
                                                             </div>
                                                         </div>
                                                     </div>

@@ -75,22 +75,15 @@ interface AddTransactionProps {
     ) => Promise<void>;
 }
 
-export function AddTransactionDialog({
-    account,
-    onAddTransaction,
-}: AddTransactionProps) {
+export function AddTransactionDialog({ account, onAddTransaction }: AddTransactionProps) {
     const { orgId, accounts } = useOrg();
     const [open, setOpen] = useState(false);
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
-    const [type, setType] = useState<"BUY" | "SELL" | "MISC" | "TRANSFER">(
-        "BUY"
-    );
+    const [type, setType] = useState<"BUY" | "SELL" | "MISC" | "TRANSFER">("BUY");
     const [category, setCategory] = useState<TransactionCategory | "">("");
     const [entityId, setEntityId] = useState<string>("");
-    const [transferAccountId, setTransferAccountId] = useState<string | null>(
-        null
-    );
+    const [transferAccountId, setTransferAccountId] = useState<string | null>(null);
     const [charge, setCharge] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [details, setDetails] = useState<TransactionDetails>({});
@@ -142,22 +135,17 @@ export function AddTransactionDialog({
             toast({
                 title: "Error",
                 description: `Credit amount cannot exceed account balance of ${formatCurrency(
-                    account.balance,
-                    "USD"
+                    account.balance
                 )}`,
                 variant: "destructive",
             });
             return;
         }
-        if (
-            type === "TRANSFER" &&
-            numericAmount + (charge || 0) > account?.balance
-        ) {
+        if (type === "TRANSFER" && numericAmount + (charge || 0) > account?.balance) {
             toast({
                 title: "Error",
                 description: `Transfer amount cannot exceed account balance of ${formatCurrency(
-                    account.balance,
-                    "USD"
+                    account.balance
                 )}`,
                 variant: "destructive",
             });
@@ -192,15 +180,9 @@ export function AddTransactionDialog({
                 };
 
                 try {
-                    await api.post(
-                        `/orgs/${orgId}/expenses-income`,
-                        expenseIncomeData
-                    );
+                    await api.post(`/orgs/${orgId}/expenses-income`, expenseIncomeData);
                 } catch (expenseIncomeError) {
-                    console.error(
-                        "Failed to create expense/income record:",
-                        expenseIncomeError
-                    );
+                    console.error("Failed to create expense/income record:", expenseIncomeError);
                     // Don't fail the whole transaction if expense/income creation fails
                 }
             }
@@ -225,11 +207,8 @@ export function AddTransactionDialog({
         }
     };
 
-    const formatCurrency = (value: number, currency: string) => {
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: currency,
-        }).format(value);
+    const formatCurrency = (value: number) => {
+        return `Rs ${value.toFixed(2)}`;
     };
 
     if (!account) {
@@ -247,9 +226,7 @@ export function AddTransactionDialog({
             <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Add Transaction</DialogTitle>
-                    <DialogDescription>
-                        Add a new transaction to your account.
-                    </DialogDescription>
+                    <DialogDescription>Add a new transaction to your account.</DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
                     <Card className="bg-muted/50">
@@ -259,17 +236,13 @@ export function AddTransactionDialog({
                                     <span className="text-sm font-medium text-muted-foreground">
                                         Account
                                     </span>
-                                    <span className="text-sm font-semibold">
-                                        {account.name}
-                                    </span>
+                                    <span className="text-sm font-semibold">{account.name}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm font-medium text-muted-foreground">
                                         Type
                                     </span>
-                                    <span className="text-sm">
-                                        {account.type}
-                                    </span>
+                                    <span className="text-sm">{account.type}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm font-medium text-muted-foreground">
@@ -285,7 +258,7 @@ export function AddTransactionDialog({
                                                 : ""
                                         )}
                                     >
-                                        {formatCurrency(account.balance, "USD")}
+                                        {formatCurrency(account.balance)}
                                     </span>
                                 </div>
                             </div>
@@ -366,17 +339,13 @@ export function AddTransactionDialog({
                                 <Select
                                     value={category}
                                     onValueChange={(value: string) =>
-                                        setCategory(
-                                            value as TransactionCategory
-                                        )
+                                        setCategory(value as TransactionCategory)
                                     }
                                 >
                                     <SelectTrigger>
                                         <SelectValue
                                             placeholder={`Select ${
-                                                type === "BUY"
-                                                    ? "expense"
-                                                    : "income"
+                                                type === "BUY" ? "expense" : "income"
                                             } category`}
                                         />
                                     </SelectTrigger>
@@ -385,10 +354,7 @@ export function AddTransactionDialog({
                                             ? EXPENSE_CATEGORIES
                                             : INCOME_CATEGORIES
                                         ).map((cat) => (
-                                            <SelectItem
-                                                key={cat.value}
-                                                value={cat.value}
-                                            >
+                                            <SelectItem key={cat.value} value={cat.value}>
                                                 {cat.label}
                                             </SelectItem>
                                         ))}
@@ -399,30 +365,20 @@ export function AddTransactionDialog({
 
                         {type === "TRANSFER" && (
                             <div className="grid gap-2">
-                                <Label htmlFor="transferFrom">
-                                    Transfer To
-                                </Label>
+                                <Label htmlFor="transferFrom">Transfer To</Label>
                                 <Select
                                     value={transferAccountId || ""}
-                                    onValueChange={(value: string) =>
-                                        setTransferAccountId(value)
-                                    }
+                                    onValueChange={(value: string) => setTransferAccountId(value)}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select account" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {accounts
-                                            .filter(
-                                                (acc) => account.id !== acc.id
-                                            )
+                                            .filter((acc) => account.id !== acc.id)
                                             .map((account) => (
-                                                <SelectItem
-                                                    key={account.id}
-                                                    value={account.id}
-                                                >
-                                                    {account.name} -{" "}
-                                                    {account.type}
+                                                <SelectItem key={account.id} value={account.id}>
+                                                    {account.name} - {account.type}
                                                 </SelectItem>
                                             ))}
                                     </SelectContent>
@@ -432,17 +388,13 @@ export function AddTransactionDialog({
                         {/* charge */}
                         {type === "TRANSFER" && (
                             <div className="grid gap-2">
-                                <Label htmlFor="transferCharge">
-                                    Transfer Charge
-                                </Label>
+                                <Label htmlFor="transferCharge">Transfer Charge</Label>
                                 <Input
                                     id="transferCharge"
                                     name="transferCharge"
                                     placeholder="Enter transfer charge"
                                     value={charge || ""}
-                                    onChange={(e) =>
-                                        setCharge(parseFloat(e.target.value))
-                                    }
+                                    onChange={(e) => setCharge(parseFloat(e.target.value))}
                                 />
                             </div>
                         )}
@@ -450,24 +402,17 @@ export function AddTransactionDialog({
                         {/* Entity Selection - only show for expense/income transactions */}
                         {type !== "MISC" && type !== "TRANSFER" && (
                             <div className="grid gap-2">
-                                <Label htmlFor="entity">
-                                    Entity (Optional)
-                                </Label>
+                                <Label htmlFor="entity">Entity (Optional)</Label>
                                 <Select
                                     value={entityId}
-                                    onValueChange={(value: string) =>
-                                        setEntityId(value)
-                                    }
+                                    onValueChange={(value: string) => setEntityId(value)}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select entity" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {entities.map((entity) => (
-                                            <SelectItem
-                                                key={entity.id}
-                                                value={entity.id}
-                                            >
+                                            <SelectItem key={entity.id} value={entity.id}>
                                                 {entity.name}
                                             </SelectItem>
                                         ))}
@@ -494,9 +439,7 @@ export function AddTransactionDialog({
                                 />
                             </div>
                             <div className="grid gap-2 py-4">
-                                <Label htmlFor="details">
-                                    Cheque Issuer Bank
-                                </Label>
+                                <Label htmlFor="details">Cheque Issuer Bank</Label>
                                 <Input
                                     id="chequeIssuerBank"
                                     name="chequeIssuerBank"

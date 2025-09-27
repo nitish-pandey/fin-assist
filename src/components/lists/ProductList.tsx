@@ -39,6 +39,32 @@ export const ProductList = ({ products, isLoading, error }: ProductListProps) =>
             header: "SKU",
             accessorKey: "sku",
         },
+        {
+            header: "Inventory",
+            accessorKey: "variants",
+            cell: (props) => {
+                const totalInventory =
+                    props.row.original.variants?.reduce(
+                        (sum, variant) =>
+                            sum +
+                            (variant.stock_fifo_queue?.reduce(
+                                (acc: number, queue) =>
+                                    acc + queue.availableStock * queue.estimatedPrice,
+                                0
+                            ) || 0),
+                        0
+                    ) || 0;
+                return (
+                    <span>
+                        Rs{" "}
+                        {totalInventory.toLocaleString("en-IN", {
+                            maximumFractionDigits: 2,
+                            minimumFractionDigits: 2,
+                        })}
+                    </span>
+                );
+            },
+        },
     ];
     return (
         <div className="">

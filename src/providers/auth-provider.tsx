@@ -1,11 +1,5 @@
 import { Organization, User, RoleAccess } from "@/data/types";
-import {
-    createContext,
-    useContext,
-    useState,
-    useEffect,
-    useCallback,
-} from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { api } from "@/utils/api";
 import { useNavigate } from "react-router-dom";
 
@@ -25,7 +19,7 @@ interface AuthProviderProps {
     children: React.ReactNode;
 }
 
-const NonAuthRoutes = ["/unverified"];
+const NonAuthRoutes = ["/unverified", "/"];
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -37,8 +31,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const initializeAuth = async () => {
         setLoading(true);
         try {
-            const res = (await api.get("/users/me", { withCredentials: true }))
-                .data as User;
+            const res = (await api.get("/users/me", { withCredentials: true })).data as User;
 
             setUser(res);
             setOrgs(res.organizations || []);
@@ -70,13 +63,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     const login = async (email: string, password: string) => {
-        const res = (
-            await api.post(
-                "/users/login",
-                { email, password },
-                { withCredentials: true }
-            )
-        ).data as {
+        const res = (await api.post("/users/login", { email, password }, { withCredentials: true }))
+            .data as {
             user: User;
             organizations: Organization[];
             permissions: RoleAccess[];
