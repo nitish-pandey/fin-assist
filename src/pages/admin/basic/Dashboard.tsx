@@ -20,7 +20,7 @@ import { api } from "@/utils/api";
 import { useOrg } from "@/providers/org-provider";
 
 interface TransactionData {
-    month: string;
+    period: string;
     value: number;
 }
 
@@ -88,17 +88,22 @@ interface ApiResponse {
     error?: string;
 }
 
+type PeriodType = "week" | "month" | "year" | "all";
+
 const Dashboard = () => {
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>("month");
     const { orgId } = useOrg();
 
-    // Mock API call with 2-second delay
-    const fetchDashboardData = async (): Promise<ApiResponse> => {
+    // API call with period parameter
+    const fetchDashboardData = async (
+        period: PeriodType = selectedPeriod
+    ): Promise<ApiResponse> => {
         try {
-            const data = await api.get(`/orgs/${orgId}/dashboard`);
-            const orderSummary = await api.get(`/orgs/${orgId}/orders/summary`);
+            const data = await api.get(`/orgs/${orgId}/dashboard?period=${period}`);
+            const orderSummary = await api.get(`/orgs/${orgId}/orders/summary?period=${period}`);
 
             // Combine dashboard data with order summary
             const combinedData = {
@@ -129,6 +134,27 @@ const Dashboard = () => {
 
         try {
             const response = await fetchDashboardData();
+
+            if (response.success && response.data) {
+                setData(response.data);
+            } else {
+                setError(response.error || "Unknown error occurred");
+            }
+        } catch (err) {
+            setError("Network error. Please check your connection.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handle period change
+    const handlePeriodChange = async (period: PeriodType) => {
+        setSelectedPeriod(period);
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetchDashboardData(period);
 
             if (response.success && response.data) {
                 setData(response.data);
@@ -196,7 +222,7 @@ const Dashboard = () => {
         // Format months for display (remove year)
         const chartData = dashboardData.transactions?.map((item) => ({
             ...item,
-            month: item.month.split("-")[1], // Extract month part
+            month: item.period.split("-")[1], // Extract month part
         }));
 
         return {
@@ -349,18 +375,43 @@ const Dashboard = () => {
                             Complete business overview and analytics
                         </p>
                     </div>
-                    <button
-                        onClick={loadData}
-                        disabled={loading}
-                        className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg font-medium transition-colors text-sm"
-                    >
-                        {loading ? (
-                            <RefreshCw className="w-4 h-4 animate-spin" />
-                        ) : (
-                            <RefreshCw className="w-4 h-4" />
-                        )}
-                        {loading ? "Refreshing..." : "Refresh"}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {/* Period Selection Buttons */}
+                        <button
+                            onClick={loadData}
+                            disabled={loading}
+                            className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg font-medium transition-colors text-sm"
+                        >
+                            {loading ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <RefreshCw className="w-4 h-4" />
+                            )}
+                            {loading ? "Refreshing..." : "Refresh"}
+                        </button>
+                        <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                            {(["week", "month", "year", "all"] as PeriodType[]).map((period) => (
+                                <button
+                                    key={period}
+                                    onClick={() => handlePeriodChange(period)}
+                                    disabled={loading}
+                                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                                        selectedPeriod === period
+                                            ? "bg-white text-gray-900 shadow-sm"
+                                            : "text-gray-600 hover:text-gray-900 disabled:text-gray-400"
+                                    }`}
+                                >
+                                    {period === "week"
+                                        ? "Week"
+                                        : period === "month"
+                                        ? "Month"
+                                        : period === "year"
+                                        ? "Year"
+                                        : "All"}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Top Metrics Cards - More Compact */}
@@ -761,34 +812,6 @@ const Dashboard = () => {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
-
-                        {/* Order Summary Stats */}
-                        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-gray-200">
-                            <div className="text-center p-2 bg-blue-50 rounded">
-                                <div className="text-lg font-bold text-blue-600">
-                                    {data.orderSummary.totalOrders}
-                                </div>
-                                <div className="text-xs text-blue-700">Total Orders</div>
-                            </div>
-                            <div className="text-center p-2 bg-green-50 rounded">
-                                <div className="text-lg font-bold text-green-600">
-                                    ₹{data.orderSummary.totalRevenue.toFixed(2)}
-                                </div>
-                                <div className="text-xs text-green-700">Total Revenue</div>
-                            </div>
-                            <div className="text-center p-2 bg-purple-50 rounded">
-                                <div className="text-lg font-bold text-purple-600">
-                                    ₹{data.orderSummary.totalPaid.toFixed(2)}
-                                </div>
-                                <div className="text-xs text-purple-700">Total Paid</div>
-                            </div>
-                            <div className="text-center p-2 bg-orange-50 rounded">
-                                <div className="text-lg font-bold text-orange-600">
-                                    ₹{data.orderSummary.pendingAmount.toFixed(2)}
-                                </div>
-                                <div className="text-xs text-orange-700">Pending</div>
-                            </div>
                         </div>
                     </div>
                 )}

@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogHeader } from "../ui/dialog";
 import { api } from "@/utils/api";
 import { useOrg } from "@/providers/org-provider";
 import { Switch } from "../ui/switch";
+import { validateAccountBalances } from "@/utils/validation";
+import { BalanceSummary } from "../modules/balance-summary";
 // import BillUpload from "../modules/bill-upload";
 
 interface OrderProduct {
@@ -108,10 +110,12 @@ const AccountSelectionDialog = ({
     accounts,
     onSelect,
     onClose,
+    vendorCharges,
 }: {
     accounts: Account[];
     onSelect: (account: Account) => void;
     onClose: () => void;
+    vendorCharges: number;
 }) => {
     return (
         <Dialog open={true} onOpenChange={onClose}>
@@ -119,26 +123,58 @@ const AccountSelectionDialog = ({
                 <DialogHeader>
                     <h2 className="text-xl font-semibold">Select an Account</h2>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Choose an account to process vendor charges
+                        Choose an account to process vendor charges of Rs {vendorCharges.toFixed(2)}
                     </p>
                 </DialogHeader>
                 <div className="mt-4 max-h-[300px] overflow-y-auto">
                     <ul className="space-y-2">
-                        {accounts.map((account) => (
-                            <li
-                                key={account.id}
-                                onClick={() => onSelect(account)}
-                                className="flex items-center p-3 rounded-md border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
-                            >
-                                <div className="flex-1">
-                                    <h3 className="font-medium">{account.name}</h3>
-                                    <p className="text-sm text-muted-foreground">{account.type}</p>
-                                </div>
-                                <Button variant="ghost" size="sm" className="ml-2">
-                                    Select
-                                </Button>
-                            </li>
-                        ))}
+                        {accounts.map((account) => {
+                            const hasInsufficientBalance = account.balance < vendorCharges;
+                            return (
+                                <li
+                                    key={account.id}
+                                    onClick={() => !hasInsufficientBalance && onSelect(account)}
+                                    className={`flex items-center p-3 rounded-md border transition-colors ${
+                                        hasInsufficientBalance
+                                            ? "border-red-200 bg-red-50 hover:bg-red-100 cursor-not-allowed"
+                                            : "border-gray-200 hover:bg-gray-50 cursor-pointer"
+                                    }`}
+                                >
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="font-medium">{account.name}</h3>
+                                            {hasInsufficientBalance && (
+                                                <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
+                                                    Insufficient
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-sm text-muted-foreground">
+                                                {account.type}
+                                            </p>
+                                            <p
+                                                className={`text-sm ${
+                                                    hasInsufficientBalance
+                                                        ? "text-red-600"
+                                                        : "text-green-600"
+                                                }`}
+                                            >
+                                                Balance: Rs {account.balance.toFixed(2)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant={hasInsufficientBalance ? "destructive" : "ghost"}
+                                        size="sm"
+                                        className="ml-2"
+                                        disabled={hasInsufficientBalance}
+                                    >
+                                        {hasInsufficientBalance ? "Cannot Select" : "Select"}
+                                    </Button>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </div>
                 <div className="mt-4 flex justify-end">
@@ -350,6 +386,14 @@ export default function BuyProductForm({
             return "Select Entity for unpaid order.";
         }
 
+        // For BUY orders, validate account balances using the utility function
+        if (type === "BUY") {
+            const balanceValidation = validateAccountBalances(formData.payments, accounts, type);
+            if (!balanceValidation.isValid) {
+                return balanceValidation.errors[0]; // Return the first error for display
+            }
+        }
+
         return null;
     };
 
@@ -383,6 +427,29 @@ export default function BuyProductForm({
         if (calculations.vendorCharges > 0 && !selectedAccount) {
             setIsAccountSelectionActive(true);
             return;
+        }
+
+        // Final balance validation for BUY orders before submission
+        if (type === "BUY") {
+            const balanceValidationError = validatePaymentForm();
+            if (balanceValidationError) {
+                setError(balanceValidationError);
+                return;
+            }
+
+            // Validate vendor charges account balance
+            if (calculations.vendorCharges > 0 && selectedAccount) {
+                if (selectedAccount.balance < calculations.vendorCharges) {
+                    setError(
+                        `Insufficient balance in ${
+                            selectedAccount.name
+                        } for vendor charges. Available: Rs ${selectedAccount.balance.toFixed(
+                            2
+                        )}, Required: Rs ${calculations.vendorCharges.toFixed(2)}`
+                    );
+                    return;
+                }
+            }
         }
 
         setLoading(true);
@@ -588,6 +655,15 @@ export default function BuyProductForm({
                         grandTotal={calculations.grandTotal}
                         type={type}
                     />
+
+                    {/* Balance Summary for BUY orders */}
+                    {type === "BUY" && formData.payments.length > 0 && (
+                        <BalanceSummary
+                            payments={formData.payments}
+                            accounts={accounts}
+                            orderType={type}
+                        />
+                    )}
 
                     {/* Order Description */}
                     <div className="space-y-2">
@@ -923,6 +999,7 @@ export default function BuyProductForm({
             {isAccountSelectionActive && (
                 <AccountSelectionDialog
                     accounts={accounts}
+                    vendorCharges={calculations.vendorCharges}
                     onSelect={(account) => {
                         setSelectedAccount(account);
                         setIsAccountSelectionActive(false);
