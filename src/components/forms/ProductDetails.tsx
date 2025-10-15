@@ -337,7 +337,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
                     <SelectPopover
                         items={(product.variants ?? []).map((v) => ({
                             id: v.id,
-                            label: `${v.name}${
+                            label: `${v.name.replace(product.name + "-", "")}${
                                 type === "SELL"
                                     ? ` (Stock: ${getVariantStock(v)})${
                                           !isPublic
@@ -345,7 +345,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
                                               : ""
                                       }`
                                     : !isPublic
-                                    ? "- Last Bought At: Rs " + v.buyPrice
+                                    ? " - Last Bought At: Rs " + v.buyPrice
                                     : ""
                             }`,
                         }))}
@@ -379,7 +379,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
                         }
                         onBlur={(e) => handleQuantityChange(parseInt(e.target.value))}
                         className={`w-14 h-8 text-center ${
-                            hasStockError ? "border-red-500 bg-red-50" : ""
+                            hasStockError && product ? "border-red-500 bg-red-50" : ""
                         }`}
                         disabled={!item.variantId}
                     />
@@ -394,7 +394,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
                         <Plus className="h-3 w-3" />
                     </Button>
                 </div>
-                {hasStockError && (
+                {hasStockError && product && (
                     <div className="text-xs text-red-500 mt-1 text-center">Exceeds stock</div>
                 )}
             </div>
@@ -509,7 +509,7 @@ const SelectPopover: React.FC<SelectPopoverProps> = ({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between truncate"
+                    className="w-full justify-between truncate text-sm"
                 >
                     {selectedItem && selectedId ? selectedItem.label : placeholder || "Select..."}
                     <ChevronDown className="ml-2 h-4 w-4" />
@@ -543,7 +543,7 @@ const SelectPopover: React.FC<SelectPopoverProps> = ({
                                         setOpen(false);
                                         setSearch("");
                                     }}
-                                    className={`px-4 py-2 cursor-pointer hover:bg-slate-100 ${
+                                    className={`px-4 py-2 text-xs cursor-pointer hover:bg-slate-100 ${
                                         item.id === selectedId ? "bg-slate-200" : ""
                                     }`}
                                 >
@@ -774,7 +774,7 @@ function GlobalSearchPopover({
                                         : "hover:bg-slate-50"
                                 }`}
                             >
-                                <div className="flex justify-between items-start w-full">
+                                <div className="flex justify-between items-start w-full text-[10px]">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="font-medium text-sm truncate">

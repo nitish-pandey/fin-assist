@@ -141,7 +141,8 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
         type: "BUY" | "SELL" | "MISC" | "TRANSFER",
         details: object = {},
         transferAccountId: string | null = null,
-        charge: number | null = null
+        charge: number | null = null,
+        createdAt?: string
     ) => {
         if (type === "TRANSFER" && transferAccountId) {
             await api.post(
@@ -151,6 +152,7 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
                     type: "SELL",
                     description: description + "-transfered from " + localAccount.name,
                     details,
+                    ...(createdAt && { createdAt }),
                 }
             );
             const created = await api.post(
@@ -164,6 +166,7 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
                         transferAccountId +
                         (charge && charge > 0 ? " with charge " + charge : ""),
                     details,
+                    ...(createdAt && { createdAt }),
                 }
             );
             setLocalAccount((prev) => {
@@ -182,6 +185,7 @@ const AccountDetails = ({ account, isLoading, error, type = "BANK" }: AccountDet
                     type,
                     description,
                     details,
+                    ...(createdAt && { createdAt }),
                 }
             );
 

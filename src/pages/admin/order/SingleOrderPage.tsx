@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Printer, RefreshCw, ArrowLeft, Edit, Download } from "lucide-react";
 import AddPaymentDialog from "@/components/modals/AddPaymentDialog";
 import { useToast } from "@/hooks/use-toast";
-import { RemoveModal } from "@/components/modals/RemoveModal";
+// import { RemoveModal } from "@/components/modals/RemoveModal";
 
 const SingleOrderPage = () => {
     const { orgId, organization } = useOrg();
@@ -133,13 +133,19 @@ const SingleOrderPage = () => {
         }
     };
 
-    const handleAddPayment = async (amount: number, accountId: string, details: object) => {
+    const handleAddPayment = async (
+        amount: number,
+        accountId: string,
+        details: object,
+        createdAt?: string
+    ) => {
         try {
             setRefreshing(true);
             await api.post(`/orgs/${orgId}/orders/${orderId}/transactions`, {
                 amount,
                 accountId,
                 details,
+                ...(createdAt && { createdAt }),
             });
             await fetchOrder();
             toast({
@@ -197,15 +203,15 @@ const SingleOrderPage = () => {
         );
     }
 
-    const handleDeleteOrder = async () => {
-        if (!orgId || !orderId) return;
-        await api.delete(`/orgs/${orgId}/orders/${orderId}`);
-        toast({
-            title: "Success",
-            description: "Order deleted successfully",
-        });
-        navigate(`/org/${orgId}/transactions/all`);
-    };
+    // const handleDeleteOrder = async () => {
+    //     if (!orgId || !orderId) return;
+    //     await api.delete(`/orgs/${orgId}/orders/${orderId}`);
+    //     toast({
+    //         title: "Success",
+    //         description: "Order deleted successfully",
+    //     });
+    //     navigate(`/org/${orgId}/transactions/all`);
+    // };
 
     return (
         <div className="container mx-auto p-6 space-y-6">
@@ -213,7 +219,7 @@ const SingleOrderPage = () => {
                 <Breadcrumb>
                     <BreadcrumbList>
                         <BreadcrumbItem>
-                            <BreadcrumbLink href={`/org/${orgId}/orders/view`}>
+                            <BreadcrumbLink href={`/org/${orgId}/transactions/all`}>
                                 Orders
                             </BreadcrumbLink>
                         </BreadcrumbItem>
@@ -224,12 +230,12 @@ const SingleOrderPage = () => {
                     </BreadcrumbList>
                 </Breadcrumb>
                 <div className="flex gap-4">
-                    <RemoveModal
+                    {/* <RemoveModal
                         title="Delete Order"
                         text="Delete"
                         description="Are you sure you want to delete this order?"
                         onRemove={handleDeleteOrder}
-                    />
+                    /> */}
                     {order.paymentStatus !== "PAID" && (
                         <Link to={`/org/${orgId}/orders/${orderId}/edit`}>
                             <Button variant="outline">
@@ -341,8 +347,6 @@ const EntityDetails = ({ entity }: { entity: Entity }) => (
 );
 
 const OrderItems = ({ items }: { items: OrderItem[] }) => {
-    const totalAmount = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-
     return (
         <Card>
             <CardHeader className="bg-muted/50">
@@ -378,16 +382,6 @@ const OrderItems = ({ items }: { items: OrderItem[] }) => {
                             </TableRow>
                         ))}
                     </TableBody>
-                    <TableFooter>
-                        <TableRow>
-                            <TableCell colSpan={3} className="text-right font-medium">
-                                Total
-                            </TableCell>
-                            <TableCell className="text-right font-medium">
-                                Nrs {totalAmount.toFixed(2)}
-                            </TableCell>
-                        </TableRow>
-                    </TableFooter>
                 </Table>
             </CardContent>
         </Card>

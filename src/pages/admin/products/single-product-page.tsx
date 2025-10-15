@@ -619,7 +619,7 @@ const SingleProductPage = () => {
                                                         </div>
                                                         <div className="bg-emerald-50 p-3 rounded-md border border-emerald-200">
                                                             <div className="font-medium text-emerald-800">
-                                                                Inventory Value
+                                                                Total Estimated Value
                                                             </div>
                                                             <div className="text-lg font-bold text-emerald-900">
                                                                 {formatCurrency(
@@ -660,7 +660,7 @@ const SingleProductPage = () => {
                                                         </div>
                                                         <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
                                                             <div className="font-medium text-gray-800">
-                                                                Buy Value
+                                                                Inventory Value
                                                             </div>
                                                             <div className="text-lg font-bold text-gray-900">
                                                                 {formatCurrency(inventoryValue)}

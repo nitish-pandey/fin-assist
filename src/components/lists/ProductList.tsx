@@ -48,8 +48,7 @@ export const ProductList = ({ products, isLoading, error }: ProductListProps) =>
                         (sum, variant) =>
                             sum +
                             (variant.stock_fifo_queue?.reduce(
-                                (acc: number, queue) =>
-                                    acc + queue.availableStock * queue.estimatedPrice,
+                                (acc: number, queue) => acc + queue.availableStock * queue.buyPrice,
                                 0
                             ) || 0),
                         0

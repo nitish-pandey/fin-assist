@@ -33,9 +33,7 @@ export function generateVariants(
     }
 
     // Get all valid options (with name and at least one value)
-    const validOptions = options.filter(
-        (option) => option.name && option.values.length > 0
-    );
+    const validOptions = options.filter((option) => option.name && option.values.length > 0);
 
     if (validOptions.length === 0) {
         return [];
@@ -112,8 +110,5 @@ export function generateVariants(
 
 // Add this function to format currency values
 export function formatCurrency(value: number): string {
-    return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-    }).format(value);
+    return `Rs ${value.toFixed(2)}`; // Adjust currency symbol as needed
 }

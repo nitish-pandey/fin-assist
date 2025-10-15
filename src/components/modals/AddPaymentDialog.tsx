@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 interface AddPaymentDialogProps {
     accounts: Account[];
     type: "BUY" | "SELL" | "MISC";
-    onAddPayment: (amount: number, accountId: string, details: object) => void;
+    onAddPayment: (amount: number, accountId: string, details: object, createdAt?: string) => void;
     remainingAmount?: number;
 }
 
@@ -32,6 +32,10 @@ export default function AddPaymentDialog({
     const [accountId, setAccountId] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [details, setDetails] = useState<TransactionDetails>({});
+    const [transactionDate, setTransactionDate] = useState<string>(
+        new Date().toISOString().split("T")[0]
+    );
+    const [currentTime] = useState<string>(new Date().toISOString());
 
     // Find the default cash account
     const cashAccount = useMemo(
@@ -66,6 +70,7 @@ export default function AddPaymentDialog({
         setAccountId("");
         setDetails({});
         setError(null);
+        setTransactionDate(new Date().toISOString().split("T")[0]);
     };
 
     const addAllRemaining = () => {
@@ -96,7 +101,20 @@ export default function AddPaymentDialog({
             }
         }
 
-        onAddPayment(Number(amount), accountId, details);
+        // Convert date to ISO datetime format, preserving current time
+        const createdAtISO = transactionDate
+            ? (() => {
+                  const selectedDate = new Date(transactionDate);
+                  const currentDateTime = new Date(currentTime);
+                  selectedDate.setHours(currentDateTime.getHours());
+                  selectedDate.setMinutes(currentDateTime.getMinutes());
+                  selectedDate.setSeconds(currentDateTime.getSeconds());
+                  selectedDate.setMilliseconds(currentDateTime.getMilliseconds());
+                  return selectedDate.toISOString();
+              })()
+            : new Date().toISOString();
+
+        onAddPayment(Number(amount), accountId, details, createdAtISO);
         resetState();
     };
 
@@ -150,6 +168,17 @@ export default function AddPaymentDialog({
                                     setAmount(value ? Number(value) : "");
                                     setError(null);
                                 }}
+                            />
+                        </div>
+
+                        {/* Transaction Date */}
+                        <div className="space-y-1">
+                            <Label htmlFor="transactionDate">Transaction Date (Optional)</Label>
+                            <Input
+                                id="transactionDate"
+                                type="date"
+                                value={transactionDate}
+                                onChange={(e) => setTransactionDate(e.target.value)}
                             />
                         </div>
 

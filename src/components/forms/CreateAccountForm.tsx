@@ -239,7 +239,7 @@ const CreateAccountForm: React.FC<CreateAccountFormProps> = ({
                             <Label htmlFor="limit">OD Limit</Label>
                             <Input
                                 id="limit"
-                                {...register("accumulatedInterest", {
+                                {...register("limit", {
                                     required: "IFSC code is required",
                                 })}
                             />

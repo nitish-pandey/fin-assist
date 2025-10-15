@@ -71,7 +71,8 @@ interface AddTransactionProps {
         type: "BUY" | "SELL" | "MISC" | "TRANSFER",
         details: object,
         transferAccountId: string | null,
-        charge: number | null
+        charge: number | null,
+        createdAt?: string
     ) => Promise<void>;
 }
 
@@ -88,6 +89,10 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
     const [isLoading, setIsLoading] = useState(false);
     const [details, setDetails] = useState<TransactionDetails>({});
     const [entities, setEntities] = useState<Entity[]>([]);
+    const [transactionDate, setTransactionDate] = useState<string>(
+        new Date().toISOString().split("T")[0]
+    );
+    const [currentTime] = useState<string>(new Date().toISOString());
 
     const { toast } = useToast();
 
@@ -155,6 +160,19 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
         setIsLoading(true);
 
         try {
+            // Convert date to ISO datetime format, preserving current time
+            const createdAtISO = transactionDate
+                ? (() => {
+                      const selectedDate = new Date(transactionDate);
+                      const currentDateTime = new Date(currentTime);
+                      selectedDate.setHours(currentDateTime.getHours());
+                      selectedDate.setMinutes(currentDateTime.getMinutes());
+                      selectedDate.setSeconds(currentDateTime.getSeconds());
+                      selectedDate.setMilliseconds(currentDateTime.getMilliseconds());
+                      return selectedDate.toISOString();
+                  })()
+                : new Date().toISOString();
+
             // Add the regular account transaction
             await onAddTransaction(
                 numericAmount,
@@ -162,7 +180,8 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
                 type,
                 details || {},
                 transferAccountId,
-                charge
+                charge,
+                createdAtISO
             );
 
             // If this is an expense or income transaction, also create an expense/income record
@@ -196,6 +215,7 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
             setDescription("");
             setCategory("");
             setEntityId("");
+            setTransactionDate(new Date().toISOString().split("T")[0]);
         } catch (error) {
             toast({
                 title: "Error",
@@ -286,6 +306,15 @@ export function AddTransactionDialog({ account, onAddTransaction }: AddTransacti
                                 placeholder="Enter transaction details"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="transactionDate">Transaction Date (Optional)</Label>
+                            <Input
+                                id="transactionDate"
+                                type="date"
+                                value={transactionDate}
+                                onChange={(e) => setTransactionDate(e.target.value)}
                             />
                         </div>
                         <div className="grid gap-2">
