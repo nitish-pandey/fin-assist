@@ -29,8 +29,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Printer, RefreshCw, ArrowLeft, Edit, Download } from "lucide-react";
 import AddPaymentDialog from "@/components/modals/AddPaymentDialog";
+import RefundDialog from "@/components/modals/RefundDialog";
 import { useToast } from "@/hooks/use-toast";
-// import { RemoveModal } from "@/components/modals/RemoveModal";
 
 const SingleOrderPage = () => {
     const { orgId, organization } = useOrg();
@@ -203,16 +203,6 @@ const SingleOrderPage = () => {
         );
     }
 
-    // const handleDeleteOrder = async () => {
-    //     if (!orgId || !orderId) return;
-    //     await api.delete(`/orgs/${orgId}/orders/${orderId}`);
-    //     toast({
-    //         title: "Success",
-    //         description: "Order deleted successfully",
-    //     });
-    //     navigate(`/org/${orgId}/transactions/all`);
-    // };
-
     return (
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center print:hidden">
@@ -266,6 +256,15 @@ const SingleOrderPage = () => {
                             type={order.type}
                             accounts={accounts}
                             onAddPayment={handleAddPayment}
+                        />
+                    )}
+                    {/* Refund button - only for SELL orders (customer returns) */}
+                    {order.type === "SELL" && (
+                        <RefundDialog
+                            order={order}
+                            accounts={accounts}
+                            orgId={orgId || ""}
+                            onRefundSuccess={fetchOrder}
                         />
                     )}
                 </div>

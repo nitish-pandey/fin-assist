@@ -374,11 +374,9 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
                         min="1"
                         max={type === "SELL" ? stock : undefined}
                         value={item.quantity}
-                        onChange={(e) =>
-                            onUpdate(index, { quantity: parseInt(e.target.value) || 1 })
-                        }
-                        onBlur={(e) => handleQuantityChange(parseInt(e.target.value))}
-                        className={`w-14 h-8 text-center ${
+                        onChange={(e) => onUpdate(index, { quantity: parseInt(e.target.value) })}
+                        onBlur={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                        className={`w-16 h-8 text-center ${
                             hasStockError && product ? "border-red-500 bg-red-50" : ""
                         }`}
                         disabled={!item.variantId}

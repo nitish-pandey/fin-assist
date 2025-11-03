@@ -40,6 +40,23 @@ export const ProductList = ({ products, isLoading, error }: ProductListProps) =>
             accessorKey: "sku",
         },
         {
+            header: "Stock",
+            accessorKey: "variants",
+            cell: (props) => {
+                const totalStock =
+                    props.row.original.variants?.reduce(
+                        (sum, variant) =>
+                            sum +
+                            (variant.stock_fifo_queue?.reduce(
+                                (acc: number, queue) => acc + queue.availableStock,
+                                0
+                            ) || 0),
+                        0
+                    ) || 0;
+                return <span>{totalStock}</span>;
+            },
+        },
+        {
             header: "Inventory",
             accessorKey: "variants",
             cell: (props) => {
