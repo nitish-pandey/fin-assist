@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { Building, Mail, Globe, CreditCard, Clock } from "lucide-react";
+import React, { useMemo, useRef, useState } from "react";
+import { Building, Mail, Globe, CreditCard, Clock, Camera, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import type { Organization } from "@/data/types";
 import { api } from "@/utils/api";
 import EditOrgModal from "@/components/modals/EditOrgInfo";
@@ -15,6 +16,9 @@ import { FaAddressBook } from "react-icons/fa";
 
 export default function OrgInfoPage() {
     const { orgId, refetch, organization } = useOrg();
+    const { toast } = useToast();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     const timeFormatted = useMemo(() => {
         if (!organization?.createdAt) return "N/A";
@@ -40,6 +44,93 @@ export default function OrgInfoPage() {
         window.location.href = "/profile";
     };
 
+    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+        if (!allowedTypes.includes(file.type)) {
+            toast({
+                title: "Invalid file type",
+                description: "Please select a JPG, PNG, GIF, or WebP image file",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        // Validate file size (1MB max)
+        if (file.size > 1 * 1024 * 1024) {
+            toast({
+                title: "File too large",
+                description: "File size must be less than 1MB",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setIsUploading(true);
+        toast({
+            title: "Uploading image...",
+            description: "Please wait while we upload your logo",
+        });
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            // Upload image
+            const uploadResponse = await api.post("/upload/public", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            console.log("Upload response:", uploadResponse);
+            const imageUrl = uploadResponse.data.data.url;
+            console.log("Image URL:", imageUrl);
+            // Update organization with new logo
+            await api.put(`/orgs/${orgId}`, {
+                ...organization,
+                logo: imageUrl,
+            });
+
+            toast({
+                title: "Logo updated successfully",
+                description: "Your organization logo has been updated",
+            });
+
+            refetch();
+        } catch (error: any) {
+            console.error("Failed to upload image:", error);
+
+            // Check if it's a 413 error (file too large)
+            if (error?.response?.status === 413) {
+                toast({
+                    title: "File too large",
+                    description:
+                        "The file you're trying to upload is too large. Please choose a smaller file.",
+                    variant: "destructive",
+                });
+            } else {
+                toast({
+                    title: "Upload failed",
+                    description: "Failed to upload image. Please try again.",
+                    variant: "destructive",
+                });
+            }
+        } finally {
+            setIsUploading(false);
+            // Reset file input to allow re-uploading same file
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }
+    };
+
+    const handleLogoClick = () => {
+        fileInputRef.current?.click();
+    };
+
     return (
         <div className="bg-gray-50/50 p-4 md:p-8">
             <div className="max-w-6xl mx-auto space-y-8">
@@ -47,15 +138,40 @@ export default function OrgInfoPage() {
                 <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-sm">
                     <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
                         <div className="flex items-center gap-4">
-                            <Avatar className="h-20 w-20 rounded-xl shadow-sm border-2 border-gray-100">
-                                <AvatarImage
-                                    src={organization.logo || undefined}
-                                    alt={`${organization.name} logo`}
-                                />
-                                <AvatarFallback className="bg-blue-50 text-blue-600 text-xl font-semibold rounded-xl">
-                                    {organization.name.charAt(0).toUpperCase()}
-                                </AvatarFallback>
-                            </Avatar>
+                            <div className="flex flex-col items-center gap-2">
+                                <div className="relative group">
+                                    <Avatar className="h-20 w-20 rounded-xl shadow-sm border-2 border-gray-100 cursor-pointer transition-all duration-200 group-hover:shadow-md">
+                                        <AvatarImage
+                                            src={organization.logo || undefined}
+                                            alt={`${organization.name} logo`}
+                                        />
+                                        <AvatarFallback className="bg-blue-50 text-blue-600 text-xl font-semibold rounded-xl">
+                                            {organization.name.charAt(0).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div
+                                        className="absolute inset-0 bg-black bg-opacity-50 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+                                        onClick={handleLogoClick}
+                                    >
+                                        {isUploading ? (
+                                            <Upload className="h-6 w-6 text-white animate-spin" />
+                                        ) : (
+                                            <Camera className="h-6 w-6 text-white" />
+                                        )}
+                                    </div>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                                        onChange={handleImageUpload}
+                                        className="hidden"
+                                        disabled={isUploading}
+                                    />
+                                </div>
+                                <p className="text-xs text-gray-500 text-center">
+                                    {isUploading ? "Uploading..." : "Click to upload logo"}
+                                </p>
+                            </div>
                             <div className="space-y-2">
                                 <div className="flex items-center gap-3">
                                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900">

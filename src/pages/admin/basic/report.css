@@ -1,0 +1,82 @@
+/* Print styles for the report page */
+@media print {
+    /* Hide all non-essential elements when printing */
+    .no-print {
+        display: none !important;
+    }
+
+    /* Ensure full width for print */
+    .print-full-width {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 10px !important;
+    }
+
+    /* Remove shadows and borders that don't print well */
+    .print-clean {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* Ensure good spacing between sections */
+    .print-section {
+        page-break-inside: avoid;
+        margin-bottom: 20px;
+    }
+
+    /* Make text smaller for better fit */
+    .print-text {
+        font-size: 12px !important;
+    }
+
+    /* Table specific print styles */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    th {
+        background-color: #f5f5f5 !important;
+        font-weight: bold;
+    }
+
+    /* Page breaks */
+    .page-break {
+        page-break-before: always;
+    }
+
+    /* Hide background colors that might not print well */
+    * {
+        background: white !important;
+        color: black !important;
+    }
+
+    /* Keep essential colors for better readability */
+    .text-green-600,
+    .text-green-800 {
+        color: #059669 !important;
+    }
+
+    .text-red-600,
+    .text-red-800 {
+        color: #dc2626 !important;
+    }
+
+    .text-blue-600,
+    .text-blue-800 {
+        color: #2563eb !important;
+    }
+
+    .text-yellow-600,
+    .text-yellow-800 {
+        color: #d97706 !important;
+    }
+}

@@ -3,6 +3,10 @@ export interface User {
     email: string;
     password: string;
     name: string;
+    phone?: string | null;
+    bio?: string | null;
+    avatar?: string | null;
+    address?: string | null;
     createdAt: string;
     updatedAt: string;
 

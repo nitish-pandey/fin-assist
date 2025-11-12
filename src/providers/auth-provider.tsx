@@ -8,6 +8,7 @@ interface AuthContextData {
     orgs: Organization[] | null;
     permissions: RoleAccess[] | null;
     login: (email: string, password: string) => Promise<void>;
+    googleLogin: (token: string) => Promise<void>;
     logout: () => void;
     loading: boolean;
     refetch: () => Promise<void>;
@@ -19,7 +20,7 @@ interface AuthProviderProps {
     children: React.ReactNode;
 }
 
-const NonAuthRoutes = ["/unverified", "/"];
+const NonAuthRoutes = ["/unverified"];
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
@@ -75,6 +76,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setPermissions(res.permissions);
     };
 
+    const googleLogin = async (token: string) => {
+        const res = (await api.post("/users/google-login", { token }, { withCredentials: true }))
+            .data as {
+            user: User;
+            organizations: Organization[];
+            permissions: RoleAccess[];
+        };
+
+        setUser(res.user);
+        setOrgs(res.organizations);
+        setPermissions(res.permissions);
+    };
+
     const logout = useCallback(async () => {
         try {
             await api.post("/users/logout", {}, { withCredentials: true });
@@ -97,6 +111,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 orgs,
                 permissions,
                 login,
+                googleLogin,
                 logout,
                 loading,
                 refetch: initializeAuth,

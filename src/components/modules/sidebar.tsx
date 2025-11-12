@@ -42,14 +42,14 @@ interface SidebarItem {
     }[];
 }
 
-const bottomItems = [
-    { name: "Profile", path: "/profile", icon: ProfileIcon },
-    { name: "Log out", path: "/logout", icon: LogoutIcon },
-];
-
 export default function Sidebar() {
     const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
     const { orgId } = useOrg(); // Assuming you have a context or provider for organization data
+    const { user } = useAuth();
+    const bottomItems = [
+        { name: "Profile", path: "/profile", icon: user?.avatar || ProfileIcon },
+        { name: "Log out", path: "/logout", icon: LogoutIcon },
+    ];
 
     const getPathname = (path: string) => {
         return `/org/${orgId}/${path}`;
@@ -98,6 +98,11 @@ export default function Sidebar() {
             icon: EntityIcon,
         },
         {
+            name: "Reports",
+            path: getPathname("report"),
+            icon: CashIcon,
+        },
+        {
             name: "Transactions",
             icon: TransactionIcon,
             subItems: [
@@ -123,11 +128,11 @@ export default function Sidebar() {
                 },
             ],
         },
-        {
-            name: "Profit & Loss",
-            path: getPathname("transactions/profit-loss"),
-            icon: TransactionIcon,
-        },
+        // {
+        //     name: "Profit & Loss",
+        //     path: getPathname("transactions/profit-loss"),
+        //     icon: TransactionIcon,
+        // },
         {
             name: "Expenses & Income",
             icon: TransactionIcon,
@@ -212,10 +217,7 @@ export default function Sidebar() {
                 })) || [];
         const permittedOrgs: OrgData[] =
             permissions
-                ?.filter(
-                    (perm) =>
-                        !ownedOrgs.some((org) => org.id === perm.organizationId)
-                )
+                ?.filter((perm) => !ownedOrgs.some((org) => org.id === perm.organizationId))
                 .map((perm) => ({
                     id: perm.organizationId,
                     name: perm.organization?.name || "Shared Org",
@@ -240,11 +242,7 @@ export default function Sidebar() {
                     )}
                 >
                     <div className="flex items-center gap-4">
-                        <img
-                            src={item.icon}
-                            alt={item.name}
-                            className="w-5 h-5"
-                        />
+                        <img src={item.icon} alt={item.name} className="w-5 h-5" />
                         <span className="text-sm">{item.name}</span>
                     </div>
                     {!item.subItems && (
@@ -254,11 +252,7 @@ export default function Sidebar() {
                         />
                     )}
                     {item.subItems &&
-                        (isActive ? (
-                            <ChevronDown size={16} />
-                        ) : (
-                            <ChevronRight size={16} />
-                        ))}
+                        (isActive ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
                 </div>
                 {item.subItems && isActive && (
                     <div className="pl-8 flex flex-col gap-2 mt-3">
@@ -273,11 +267,7 @@ export default function Sidebar() {
                                 )}
                             >
                                 <div className="flex items-center gap-3 px-2 py-2">
-                                    <img
-                                        src={sub.icon}
-                                        alt={sub.name}
-                                        className="w-4 h-4"
-                                    />
+                                    <img src={sub.icon} alt={sub.name} className="w-4 h-4" />
                                     {sub.name}
                                 </div>
                             </NavLink>
@@ -304,11 +294,7 @@ export default function Sidebar() {
                         className="flex items-center gap-4 px-2 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md"
                     >
                         {item.icon && (
-                            <img
-                                src={item.icon}
-                                alt={item.name}
-                                className="w-5 h-5"
-                            />
+                            <img src={item.icon} alt={item.name} className="w-6 h-6 rounded-full" />
                         )}
                         {item.name}
                     </NavLink>

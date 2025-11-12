@@ -41,6 +41,7 @@ import ExpensesPage from "./pages/admin/expenses/ExpensesPage";
 import IncomePage from "./pages/admin/income/IncomePage";
 import RecurringTransactionsPage from "./pages/admin/recurring/RecurringTransactionsPage";
 import FinAssistHomepage from "./pages/HomePage";
+import ReportPage from "./pages/admin/basic/report";
 
 export const routes: RouteObject[] = [
     {
@@ -95,6 +96,10 @@ export const routes: RouteObject[] = [
                     {
                         element: <DashboardPage />,
                         path: "dashboard",
+                    },
+                    {
+                        element: <ReportPage />,
+                        path: "report",
                     },
                     {
                         element: <OrgUsers />,

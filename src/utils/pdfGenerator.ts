@@ -8,6 +8,32 @@ export const generateInvoicePDF = (order: Order, organization?: Organization | n
     const rightMargin = 20;
     let yPosition = 25;
 
+    // Add organization logo in top-right corner if available
+    if (organization?.logo) {
+        try {
+            const logoSize = 25; // 25mm width/height for small logo
+            const logoX = pageWidth - rightMargin - logoSize;
+            const logoY = 10; // 10mm from top
+
+            // Determine image format from logo URL/data
+            let imageFormat = "JPEG";
+            const logoUrl = organization.logo.toLowerCase();
+            if (logoUrl.includes("png") || logoUrl.includes("data:image/png")) {
+                imageFormat = "PNG";
+            } else if (
+                logoUrl.includes("jpg") ||
+                logoUrl.includes("jpeg") ||
+                logoUrl.includes("data:image/jpeg")
+            ) {
+                imageFormat = "JPEG";
+            }
+
+            pdf.addImage(organization.logo, imageFormat, logoX, logoY, logoSize, logoSize);
+        } catch (error) {
+            console.warn("Failed to add logo to PDF:", error);
+        }
+    }
+
     // Company Header Section
     pdf.setFontSize(14);
     pdf.setFont("helvetica", "bold");

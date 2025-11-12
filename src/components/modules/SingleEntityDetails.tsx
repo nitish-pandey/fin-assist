@@ -18,27 +18,21 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
     User,
     Phone,
     Mail,
     FileText,
-    ShoppingCart,
-    CreditCard,
     TrendingUp,
     TrendingDown,
-    AlertCircle,
     Search,
-    Filter,
     Download,
-    Grid,
-    List,
+    ArrowUpCircle,
+    ArrowDownCircle,
 } from "lucide-react";
 
 import { Account, Entity, Order, PaymentStatus } from "@/data/types";
 import { Link } from "react-router-dom";
-import { FaMoneyBill } from "react-icons/fa";
 import AddEntity from "../modals/AddEntity";
 import { api } from "@/utils/api";
 import AddPaymentDialog from "../modals/AddPaymentDialog";
@@ -48,32 +42,17 @@ interface EntityPageProps {
     accounts?: Account[];
 }
 
-type ViewMode = "grid" | "table";
-
 interface FilterState {
     search: string;
     status: PaymentStatus | "ALL";
-    type: Order["type"] | "ALL";
-    dateFrom: string;
-    dateTo: string;
-    amountMin: string;
-    amountMax: string;
 }
 
 const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [] }) => {
-    // State for filters, sorting, and view mode
+    // State for filters
     const [filters, setFilters] = useState<FilterState>({
         search: "",
         status: "ALL",
-        type: "ALL",
-        dateFrom: "",
-        dateTo: "",
-        amountMin: "",
-        amountMax: "",
     });
-
-    const [viewMode, setViewMode] = useState<ViewMode>("grid");
-    const [showFilters, setShowFilters] = useState(false);
 
     // Memoized calculation functions
     const calculateOrderPaidAmount = useCallback((order: Order): number => {
@@ -94,30 +73,55 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
         [calculateOrderPaidAmount]
     );
 
-    // Memoized order statistics calculation
+    // Separate buy and sell orders
+    const { buyOrders, sellOrders } = useMemo(() => {
+        if (!entity.orders) return { buyOrders: [], sellOrders: [] };
+
+        return {
+            buyOrders: entity.orders.filter((order) => order.type === "BUY"),
+            sellOrders: entity.orders.filter((order) => order.type === "SELL"),
+        };
+    }, [entity.orders]);
+
+    // Memoized order statistics calculation with proper buy/sell logic
     const stats = useMemo(() => {
         if (!entity.orders || entity.orders.length === 0) {
             return {
                 totalOrders: 0,
-                totalAmount: 0,
-                totalPaid: 0,
-                totalRemaining: 0,
+                // Buy orders - amounts we owe to entity
+                totalBuyAmount: 0,
+                totalBuyPaid: 0,
+                totalBuyRemaining: 0, // Amount to give
+                // Sell orders - amounts entity owes us
+                totalSellAmount: 0,
+                totalSellPaid: 0,
+                totalSellRemaining: 0, // Amount to take
+                // Net balance
+                netBalance: 0, // Positive = we owe entity, Negative = entity owes us
                 paidOrders: 0,
                 pendingOrders: 0,
-                overdueOrders: 0,
             };
         }
 
-        let totalAmount = 0;
-        let totalPaid = 0;
+        let totalBuyAmount = 0;
+        let totalBuyPaid = 0;
+        let totalSellAmount = 0;
+        let totalSellPaid = 0;
         let paidOrders = 0;
         let pendingOrders = 0;
-        let overdueOrders = 0;
 
         entity.orders.forEach((order) => {
-            totalAmount += order.totalAmount;
             const paidAmount = calculateOrderPaidAmount(order);
-            totalPaid += paidAmount;
+
+            if (order.type === "BUY") {
+                // Buy orders - we owe money to the entity
+                totalBuyAmount += order.totalAmount;
+                totalBuyPaid += paidAmount;
+            } else if (order.type === "SELL") {
+                // Sell orders - entity owes money to us
+                totalSellAmount += order.totalAmount;
+                totalSellPaid += paidAmount;
+            }
 
             switch (order.paymentStatus) {
                 case "PAID":
@@ -130,22 +134,29 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
             }
         });
 
+        const totalBuyRemaining = totalBuyAmount - totalBuyPaid;
+        const totalSellRemaining = totalSellAmount - totalSellPaid;
+        const netBalance = totalBuyRemaining - totalSellRemaining; // Positive = we owe, Negative = they owe
+
         return {
             totalOrders: entity.orders.length,
-            totalAmount,
-            totalPaid,
-            totalRemaining: totalAmount - totalPaid,
+            totalBuyAmount,
+            totalBuyPaid,
+            totalBuyRemaining,
+            totalSellAmount,
+            totalSellPaid,
+            totalSellRemaining,
+            netBalance,
             paidOrders,
             pendingOrders,
-            overdueOrders,
         };
     }, [entity.orders, calculateOrderPaidAmount]);
 
     // Filtered orders (sorted by date, newest first)
-    const filteredAndSortedOrders = useMemo(() => {
-        if (!entity.orders) return [];
+    const filteredBuyOrders = useMemo(() => {
+        if (!buyOrders) return [];
 
-        let filtered = entity.orders.filter((order) => {
+        let filtered = buyOrders.filter((order) => {
             // Search filter
             if (filters.search) {
                 const searchTerm = filters.search.toLowerCase();
@@ -160,30 +171,30 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
                 return false;
             }
 
-            // Type filter
-            if (filters.type !== "ALL" && order.type !== filters.type) {
-                return false;
+            return true;
+        });
+
+        // Sort by date (newest first)
+        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        return filtered;
+    }, [buyOrders, filters]);
+
+    const filteredSellOrders = useMemo(() => {
+        if (!sellOrders) return [];
+
+        let filtered = sellOrders.filter((order) => {
+            // Search filter
+            if (filters.search) {
+                const searchTerm = filters.search.toLowerCase();
+                const matchesSearch =
+                    order.orderNumber.toLowerCase().includes(searchTerm) ||
+                    (order.description && order.description.toLowerCase().includes(searchTerm));
+                if (!matchesSearch) return false;
             }
 
-            // Date filter
-            if (filters.dateFrom) {
-                const orderDate = new Date(order.createdAt);
-                const fromDate = new Date(filters.dateFrom);
-                if (orderDate < fromDate) return false;
-            }
-
-            if (filters.dateTo) {
-                const orderDate = new Date(order.createdAt);
-                const toDate = new Date(filters.dateTo);
-                if (orderDate > toDate) return false;
-            }
-
-            // Amount filter
-            if (filters.amountMin && order.totalAmount < parseFloat(filters.amountMin)) {
-                return false;
-            }
-
-            if (filters.amountMax && order.totalAmount > parseFloat(filters.amountMax)) {
+            // Status filter
+            if (filters.status !== "ALL" && order.paymentStatus !== filters.status) {
                 return false;
             }
 
@@ -194,7 +205,7 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
         filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         return filtered;
-    }, [entity.orders, filters]);
+    }, [sellOrders, filters]);
 
     const getPaymentStatusBadge = useCallback((status: PaymentStatus) => {
         const variants: Record<PaymentStatus, string> = {
@@ -206,17 +217,6 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
         };
 
         return <Badge className={variants[status]}>{status}</Badge>;
-    }, []);
-
-    const getOrderTypeIcon = useCallback((type: Order["type"]) => {
-        switch (type) {
-            case "BUY":
-                return <TrendingDown className="h-4 w-4 text-red-500" />;
-            case "SELL":
-                return <TrendingUp className="h-4 w-4 text-green-500" />;
-            case "MISC":
-                return <FileText className="h-4 w-4 text-gray-500" />;
-        }
     }, []);
 
     const formatCurrency = useCallback((amount: number) => {
@@ -241,13 +241,13 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
             "Type",
             "Status",
             "Date",
-            "Base Amount",
             "Total Amount",
             "Paid Amount",
             "Remaining",
             "Description",
         ];
-        const csvData = filteredAndSortedOrders.map((order) => {
+        const allOrders = [...filteredBuyOrders, ...filteredSellOrders];
+        const csvData = allOrders.map((order) => {
             const paidAmount = calculateOrderPaidAmount(order);
             const remaining = calculateOrderRemaining(order);
             return [
@@ -255,7 +255,6 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
                 order.type,
                 order.paymentStatus,
                 formatDate(order.createdAt),
-                order.baseAmount,
                 order.totalAmount,
                 paidAmount,
                 remaining,
@@ -275,7 +274,8 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
         a.click();
         window.URL.revokeObjectURL(url);
     }, [
-        filteredAndSortedOrders,
+        filteredBuyOrders,
+        filteredSellOrders,
         entity.name,
         calculateOrderPaidAmount,
         calculateOrderRemaining,
@@ -319,16 +319,18 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
                         <p>${stats.totalOrders}</p>
                     </div>
                     <div class="stat-card">
-                        <h3>Total Amount</h3>
-                        <p>${formatCurrency(stats.totalAmount)}</p>
+                        <h3>Net Balance</h3>
+                        <p>${formatCurrency(Math.abs(stats.netBalance))} ${
+            stats.netBalance >= 0 ? "(To Give)" : "(To Take)"
+        }</p>
                     </div>
                     <div class="stat-card">
-                        <h3>Total Paid</h3>
-                        <p>${formatCurrency(stats.totalPaid)}</p>
+                        <h3>Buy Orders Due</h3>
+                        <p>${formatCurrency(stats.totalBuyRemaining)}</p>
                     </div>
                     <div class="stat-card">
-                        <h3>Total Remaining</h3>
-                        <p>${formatCurrency(stats.totalRemaining)}</p>
+                        <h3>Sell Orders Due</h3>
+                        <p>${formatCurrency(stats.totalSellRemaining)}</p>
                     </div>
                 </div>
                 
@@ -346,7 +348,7 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
                         </tr>
                     </thead>
                     <tbody>
-                        ${filteredAndSortedOrders
+                        ${[...filteredBuyOrders, ...filteredSellOrders]
                             .map((order) => {
                                 const paidAmount = calculateOrderPaidAmount(order);
                                 const remaining = calculateOrderRemaining(order);
@@ -375,28 +377,17 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
     }, [
         entity,
         stats,
-        filteredAndSortedOrders,
+        filteredBuyOrders,
+        filteredSellOrders,
         calculateOrderPaidAmount,
         calculateOrderRemaining,
         formatDate,
         formatCurrency,
     ]);
 
-    // Filter and sort handlers
+    // Filter handlers
     const handleFilterChange = useCallback((key: keyof FilterState, value: string) => {
         setFilters((prev) => ({ ...prev, [key]: value }));
-    }, []);
-
-    const clearFilters = useCallback(() => {
-        setFilters({
-            search: "",
-            status: "ALL",
-            type: "ALL",
-            dateFrom: "",
-            dateTo: "",
-            amountMin: "",
-            amountMax: "",
-        });
     }, []);
 
     const handleAddPayment = useCallback(
@@ -411,9 +402,19 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
                 amount: number;
             }[] = [];
 
-            for (const order of entity.orders
-                ? entity.orders.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-                : []) {
+            // Prioritize buy orders (money we owe to entity) first
+            const ordersToProcess = entity.orders
+                ? [...entity.orders]
+                      .filter((order) => calculateOrderRemaining(order) > 0)
+                      .sort((a, b) => {
+                          // Buy orders first (we owe money), then by date
+                          if (a.type === "BUY" && b.type !== "BUY") return -1;
+                          if (b.type === "BUY" && a.type !== "BUY") return 1;
+                          return a.createdAt.localeCompare(b.createdAt);
+                      })
+                : [];
+
+            for (const order of ordersToProcess) {
                 if (remainingAmount <= 0) {
                     break;
                 }
@@ -455,7 +456,7 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
     );
     return (
         <div className="max-w-7xl mx-auto p-4 space-y-4">
-            {/* Compact Entity Header */}
+            {/* Entity Header */}
             <div className="bg-white rounded-xl border border-gray-200 p-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -498,7 +499,7 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
                         <AddPaymentDialog
                             accounts={accounts}
                             type="MISC"
-                            remainingAmount={stats.totalRemaining}
+                            remainingAmount={Math.abs(stats.netBalance)}
                             onAddPayment={handleAddPayment}
                         />
                         <AddEntity
@@ -522,364 +523,191 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
                 )}
             </div>
 
-            {/* Compact Statistics */}
+            {/* Financial Summary */}
             <div className="bg-white rounded-xl border border-gray-200 p-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                            <ShoppingCart className="h-4 w-4 text-blue-600" />
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Financial Summary</h2>
+
+                {/* Net Balance Card */}
+                <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-sm font-medium text-gray-600">Net Balance</h3>
+                            <div className="flex items-center space-x-2 mt-1">
+                                {stats.netBalance >= 0 ? (
+                                    <ArrowUpCircle className="h-5 w-5 text-red-500" />
+                                ) : (
+                                    <ArrowDownCircle className="h-5 w-5 text-green-500" />
+                                )}
+                                <span
+                                    className={`text-2xl font-bold ${
+                                        stats.netBalance >= 0 ? "text-red-600" : "text-green-600"
+                                    }`}
+                                >
+                                    {formatCurrency(Math.abs(stats.netBalance))}
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                                {stats.netBalance >= 0
+                                    ? "You owe this entity"
+                                    : "This entity owes you"}
+                            </p>
                         </div>
-                        <div className="text-xl font-bold text-gray-900">{stats.totalOrders}</div>
-                        <div className="text-xs text-gray-500">Orders</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                            <FaMoneyBill className="h-4 w-4 text-yellow-600" />
+                        <div className="text-right">
+                            <div className="text-sm text-gray-600">Total Orders</div>
+                            <div className="text-xl font-bold">{stats.totalOrders}</div>
                         </div>
-                        <div className="text-xl font-bold text-gray-900">
-                            {formatCurrency(stats.totalAmount)}
-                        </div>
-                        <div className="text-xs text-gray-500">Total</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                            <CreditCard className="h-4 w-4 text-green-600" />
-                        </div>
-                        <div className="text-xl font-bold text-green-600">
-                            {formatCurrency(stats.totalPaid)}
-                        </div>
-                        <div className="text-xs text-gray-500">Paid</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                            <AlertCircle className="h-4 w-4 text-red-600" />
-                        </div>
-                        <div className="text-xl font-bold text-red-600">
-                            {formatCurrency(stats.totalRemaining)}
-                        </div>
-                        <div className="text-xs text-gray-500">Due</div>
                     </div>
                 </div>
 
-                {/* Compact Progress Bar */}
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between text-sm mb-2">
-                        <span className="text-gray-600">Payment Progress</span>
-                        <span className="font-medium">
-                            {stats.totalAmount > 0
-                                ? ((stats.totalPaid / stats.totalAmount) * 100).toFixed(1)
-                                : 0}
-                            %
-                        </span>
+                {/* Buy & Sell Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Buy Orders Summary */}
+                    <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                        <div className="flex items-center space-x-2 mb-3">
+                            <TrendingDown className="h-5 w-5 text-red-600" />
+                            <h3 className="font-semibold text-red-900">
+                                Buy Orders (Amount to Give)
+                            </h3>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <span className="text-sm text-gray-600">Total Amount:</span>
+                                <span className="font-medium">
+                                    {formatCurrency(stats.totalBuyAmount)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-sm text-gray-600">Paid:</span>
+                                <span className="font-medium text-green-600">
+                                    {formatCurrency(stats.totalBuyPaid)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between border-t border-red-200 pt-2">
+                                <span className="font-medium text-gray-900">Remaining:</span>
+                                <span className="font-bold text-red-600">
+                                    {formatCurrency(stats.totalBuyRemaining)}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <Progress
-                        value={
-                            stats.totalAmount > 0 ? (stats.totalPaid / stats.totalAmount) * 100 : 0
-                        }
-                        className="h-2"
-                    />
+
+                    {/* Sell Orders Summary */}
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex items-center space-x-2 mb-3">
+                            <TrendingUp className="h-5 w-5 text-green-600" />
+                            <h3 className="font-semibold text-green-900">
+                                Sell Orders (Amount to Take)
+                            </h3>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <span className="text-sm text-gray-600">Total Amount:</span>
+                                <span className="font-medium">
+                                    {formatCurrency(stats.totalSellAmount)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-sm text-gray-600">Received:</span>
+                                <span className="font-medium text-green-600">
+                                    {formatCurrency(stats.totalSellPaid)}
+                                </span>
+                            </div>
+                            <div className="flex justify-between border-t border-green-200 pt-2">
+                                <span className="font-medium text-gray-900">Remaining:</span>
+                                <span className="font-bold text-green-600">
+                                    {formatCurrency(stats.totalSellRemaining)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Compact Orders Management */}
-            <div className="bg-white rounded-xl border border-gray-200">
-                <div className="p-4 border-b border-gray-100">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                            <h2 className="text-lg font-semibold text-gray-900">Orders</h2>
-                            <Badge variant="secondary" className="text-xs">
-                                {filteredAndSortedOrders.length}
-                            </Badge>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Button
-                                variant={viewMode === "table" ? "default" : "ghost"}
-                                size="sm"
-                                onClick={() => setViewMode("table")}
-                                className="h-8 px-2"
-                            >
-                                <List className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant={viewMode === "grid" ? "default" : "ghost"}
-                                size="sm"
-                                onClick={() => setViewMode("grid")}
-                                className="h-8 px-2"
-                            >
-                                <Grid className="h-4 w-4" />
-                            </Button>
-                            <Sheet open={showFilters} onOpenChange={setShowFilters}>
-                                <SheetTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-8 px-2">
-                                        <Filter className="h-4 w-4" />
-                                    </Button>
-                                </SheetTrigger>
-                                <SheetContent>
-                                    <SheetHeader>
-                                        <SheetTitle>Filter Orders</SheetTitle>
-                                    </SheetHeader>
-                                    <div className="space-y-4 mt-6">
-                                        <div>
-                                            <label className="text-sm font-medium">Search</label>
-                                            <Input
-                                                placeholder="Order number or description..."
-                                                value={filters.search}
-                                                onChange={(e) =>
-                                                    handleFilterChange("search", e.target.value)
-                                                }
-                                                className="mt-1"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-medium">Status</label>
-                                            <Select
-                                                value={filters.status}
-                                                onValueChange={(value) =>
-                                                    handleFilterChange("status", value)
-                                                }
-                                            >
-                                                <SelectTrigger className="mt-1">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="ALL">All Status</SelectItem>
-                                                    <SelectItem value="PAID">Paid</SelectItem>
-                                                    <SelectItem value="PENDING">Pending</SelectItem>
-                                                    <SelectItem value="PARTIAL">Partial</SelectItem>
-                                                    <SelectItem value="FAILED">Failed</SelectItem>
-                                                    <SelectItem value="CANCELLED">
-                                                        Cancelled
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-medium">Type</label>
-                                            <Select
-                                                value={filters.type}
-                                                onValueChange={(value) =>
-                                                    handleFilterChange("type", value)
-                                                }
-                                            >
-                                                <SelectTrigger className="mt-1">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="ALL">All Types</SelectItem>
-                                                    <SelectItem value="BUY">Buy</SelectItem>
-                                                    <SelectItem value="SELL">Sell</SelectItem>
-                                                    <SelectItem value="MISC">
-                                                        Miscellaneous
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label className="text-sm font-medium">
-                                                    Date From
-                                                </label>
-                                                <Input
-                                                    type="date"
-                                                    value={filters.dateFrom}
-                                                    onChange={(e) =>
-                                                        handleFilterChange(
-                                                            "dateFrom",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-sm font-medium">
-                                                    Date To
-                                                </label>
-                                                <Input
-                                                    type="date"
-                                                    value={filters.dateTo}
-                                                    onChange={(e) =>
-                                                        handleFilterChange("dateTo", e.target.value)
-                                                    }
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label className="text-sm font-medium">
-                                                    Min Amount
-                                                </label>
-                                                <Input
-                                                    type="number"
-                                                    placeholder="0.00"
-                                                    value={filters.amountMin}
-                                                    onChange={(e) =>
-                                                        handleFilterChange(
-                                                            "amountMin",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-sm font-medium">
-                                                    Max Amount
-                                                </label>
-                                                <Input
-                                                    type="number"
-                                                    placeholder="999999.00"
-                                                    value={filters.amountMax}
-                                                    onChange={(e) =>
-                                                        handleFilterChange(
-                                                            "amountMax",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    className="mt-1"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex space-x-2 pt-4">
-                                            <Button
-                                                onClick={clearFilters}
-                                                variant="outline"
-                                                className="flex-1"
-                                            >
-                                                Clear All
-                                            </Button>
-                                            <Button
-                                                onClick={() => setShowFilters(false)}
-                                                className="flex-1"
-                                            >
-                                                Apply
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </SheetContent>
-                            </Sheet>
-                        </div>
-                    </div>
-
-                    {/* Compact Search Bar */}
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                        <div className="relative">
+            {/* Simple Search and Status Filter */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold text-gray-900">Order Details</h2>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <div className="relative flex-1 sm:w-64">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                                 placeholder="Search orders..."
                                 value={filters.search}
                                 onChange={(e) => handleFilterChange("search", e.target.value)}
-                                className="pl-10 h-9"
+                                className="pl-10"
                             />
                         </div>
+                        <Select
+                            value={filters.status}
+                            onValueChange={(value) => handleFilterChange("status", value)}
+                        >
+                            <SelectTrigger className="w-32">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL">All Status</SelectItem>
+                                <SelectItem value="PAID">Paid</SelectItem>
+                                <SelectItem value="PENDING">Pending</SelectItem>
+                                <SelectItem value="PARTIAL">Partial</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 
-                <div className="p-4">
-                    {!entity.orders || entity.orders.length === 0 ? (
-                        <div className="text-center py-8">
-                            <ShoppingCart className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                            <p className="text-gray-500 text-sm">No orders found</p>
+                {/* Buy Orders Section */}
+                <div className="mb-6">
+                    <div className="flex items-center space-x-2 mb-4">
+                        <div className="flex items-center space-x-2">
+                            <TrendingDown className="h-5 w-5 text-red-600" />
+                            <h3 className="text-md font-semibold text-red-900">
+                                Buy Orders - Amount to Give
+                            </h3>
                         </div>
-                    ) : filteredAndSortedOrders.length === 0 ? (
-                        <div className="text-center py-8">
-                            <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                            <p className="text-gray-500 text-sm mb-3">No matching orders</p>
-                            <Button onClick={clearFilters} variant="outline" size="sm">
-                                Clear Filters
-                            </Button>
+                        <Badge variant="secondary" className="bg-red-100 text-red-800">
+                            {filteredBuyOrders.length}
+                        </Badge>
+                        {stats.totalBuyRemaining > 0 && (
+                            <Badge className="bg-red-600 text-white">
+                                Due: {formatCurrency(stats.totalBuyRemaining)}
+                            </Badge>
+                        )}
+                    </div>
+
+                    {filteredBuyOrders.length === 0 ? (
+                        <div className="text-center py-6 bg-gray-50 rounded-lg">
+                            <TrendingDown className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                            <p className="text-gray-500 text-sm">No buy orders found</p>
                         </div>
                     ) : (
-                        <>
-                            {viewMode === "table" ? (
-                                <div className="overflow-x-auto">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="border-b border-gray-200">
-                                                <TableHead className="text-xs font-medium text-gray-600">
-                                                    Order
-                                                </TableHead>
-                                                <TableHead className="text-xs font-medium text-gray-600">
-                                                    Status
-                                                </TableHead>
-                                                <TableHead className="text-xs font-medium text-gray-600">
-                                                    Date
-                                                </TableHead>
-                                                <TableHead className="text-xs font-medium text-gray-600 text-right">
-                                                    Total
-                                                </TableHead>
-                                                <TableHead className="text-xs font-medium text-gray-600 text-right">
-                                                    Due
-                                                </TableHead>
-                                                <TableHead className="text-xs font-medium text-gray-600 text-center">
-                                                    Progress
-                                                </TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {filteredAndSortedOrders.map((order) => {
-                                                const paidAmount = calculateOrderPaidAmount(order);
-                                                const remaining = calculateOrderRemaining(order);
-                                                const progressPercentage =
-                                                    order.totalAmount > 0
-                                                        ? (paidAmount / order.totalAmount) * 100
-                                                        : 0;
-
-                                                return (
-                                                    <TableRow
-                                                        key={order.id}
-                                                        className="hover:bg-gray-50 border-b border-gray-100"
-                                                    >
-                                                        <TableCell className="py-3">
-                                                            <div className="flex items-center space-x-2">
-                                                                <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center">
-                                                                    {getOrderTypeIcon(order.type)}
-                                                                </div>
-                                                                <Link
-                                                                    to={`/org/${entity.organizationId}/orders/${order.id}`}
-                                                                    className="text-blue-600 hover:underline font-medium text-sm"
-                                                                >
-                                                                    {order.orderNumber}
-                                                                </Link>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {getPaymentStatusBadge(
-                                                                order.paymentStatus
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell className="text-sm text-gray-600">
-                                                            {formatDate(order.createdAt)}
-                                                        </TableCell>
-                                                        <TableCell className="text-right text-sm font-medium">
-                                                            {formatCurrency(order.totalAmount)}
-                                                        </TableCell>
-                                                        <TableCell className="text-right text-sm font-medium text-red-600">
-                                                            {formatCurrency(remaining)}
-                                                        </TableCell>
-                                                        <TableCell className="text-center">
-                                                            <div className="flex items-center space-x-2">
-                                                                <div className="flex-1">
-                                                                    <Progress
-                                                                        value={progressPercentage}
-                                                                        className="h-1"
-                                                                    />
-                                                                </div>
-                                                                <span className="text-xs text-gray-500 min-w-[30px]">
-                                                                    {progressPercentage.toFixed(0)}%
-                                                                </span>
-                                                            </div>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            })}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {filteredAndSortedOrders.map((order) => {
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="border-b border-gray-200">
+                                        <TableHead className="text-xs font-medium text-gray-600">
+                                            Order
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600">
+                                            Status
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600">
+                                            Date
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600 text-right">
+                                            Total
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600 text-right">
+                                            Paid
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600 text-right">
+                                            To Give
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600 text-center">
+                                            Progress
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredBuyOrders.map((order) => {
                                         const paidAmount = calculateOrderPaidAmount(order);
                                         const remaining = calculateOrderRemaining(order);
                                         const progressPercentage =
@@ -888,90 +716,173 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
                                                 : 0;
 
                                         return (
-                                            <div
+                                            <TableRow
                                                 key={order.id}
-                                                className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 transition-colors"
+                                                className="hover:bg-red-50 border-b border-gray-100"
                                             >
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex items-start space-x-3 flex-1">
-                                                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                                            {getOrderTypeIcon(order.type)}
+                                                <TableCell className="py-3">
+                                                    <Link
+                                                        to={`/org/${entity.organizationId}/orders/${order.id}`}
+                                                        className="text-blue-600 hover:underline font-medium text-sm"
+                                                    >
+                                                        {order.orderNumber}
+                                                    </Link>
+                                                    {order.description && (
+                                                        <p className="text-xs text-gray-500 truncate">
+                                                            {order.description}
+                                                        </p>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {getPaymentStatusBadge(order.paymentStatus)}
+                                                </TableCell>
+                                                <TableCell className="text-sm text-gray-600">
+                                                    {formatDate(order.createdAt)}
+                                                </TableCell>
+                                                <TableCell className="text-right text-sm font-medium">
+                                                    {formatCurrency(order.totalAmount)}
+                                                </TableCell>
+                                                <TableCell className="text-right text-sm font-medium text-green-600">
+                                                    {formatCurrency(paidAmount)}
+                                                </TableCell>
+                                                <TableCell className="text-right text-sm font-bold text-red-600">
+                                                    {formatCurrency(remaining)}
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <div className="flex items-center space-x-2">
+                                                        <div className="flex-1">
+                                                            <Progress
+                                                                value={progressPercentage}
+                                                                className="h-2"
+                                                            />
                                                         </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <Link
-                                                                to={`/org/${entity.organizationId}/orders/${order.id}`}
-                                                                className="text-blue-600 hover:underline font-medium block"
-                                                            >
-                                                                {order.orderNumber}
-                                                            </Link>
-                                                            <p className="text-sm text-gray-600">
-                                                                {order.type
-                                                                    .charAt(0)
-                                                                    .toUpperCase() +
-                                                                    order.type
-                                                                        .slice(1)
-                                                                        .toLowerCase()}{" "}
-                                                                Order
-                                                            </p>
-                                                            <p className="text-xs text-gray-500 mt-1 truncate">
-                                                                {order.description ||
-                                                                    "No description"}
-                                                            </p>
-                                                            <div className="flex items-center space-x-3 mt-2 text-xs text-gray-500">
-                                                                <span>
-                                                                    {formatDate(order.createdAt)}
-                                                                </span>
-                                                                <span>
-                                                                    {order.transactions?.length ||
-                                                                        0}{" "}
-                                                                    transactions
-                                                                </span>
-                                                            </div>
-                                                        </div>
+                                                        <span className="text-xs text-gray-500 min-w-[35px]">
+                                                            {progressPercentage.toFixed(0)}%
+                                                        </span>
                                                     </div>
-                                                    <div className="text-right ml-4">
-                                                        {getPaymentStatusBadge(order.paymentStatus)}
-                                                        <div className="mt-2 space-y-1 text-xs">
-                                                            <div className="text-gray-600">
-                                                                Total:{" "}
-                                                                <span className="font-medium text-gray-900">
-                                                                    {formatCurrency(
-                                                                        order.totalAmount
-                                                                    )}
-                                                                </span>
-                                                            </div>
-                                                            <div className="text-red-600">
-                                                                Due:{" "}
-                                                                <span className="font-medium">
-                                                                    {formatCurrency(remaining)}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {order.totalAmount > 0 && (
-                                                    <div className="mt-3 pt-3 border-t border-gray-100">
-                                                        <div className="flex items-center justify-between text-xs mb-1">
-                                                            <span className="text-gray-600">
-                                                                Payment Progress
-                                                            </span>
-                                                            <span className="font-medium">
-                                                                {progressPercentage.toFixed(1)}%
-                                                            </span>
-                                                        </div>
-                                                        <Progress
-                                                            value={progressPercentage}
-                                                            className="h-1"
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
+                                                </TableCell>
+                                            </TableRow>
                                         );
                                     })}
-                                </div>
-                            )}
-                        </>
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+                </div>
+
+                {/* Sell Orders Section */}
+                <div>
+                    <div className="flex items-center space-x-2 mb-4">
+                        <div className="flex items-center space-x-2">
+                            <TrendingUp className="h-5 w-5 text-green-600" />
+                            <h3 className="text-md font-semibold text-green-900">
+                                Sell Orders - Amount to Take
+                            </h3>
+                        </div>
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                            {filteredSellOrders.length}
+                        </Badge>
+                        {stats.totalSellRemaining > 0 && (
+                            <Badge className="bg-green-600 text-white">
+                                Due: {formatCurrency(stats.totalSellRemaining)}
+                            </Badge>
+                        )}
+                    </div>
+
+                    {filteredSellOrders.length === 0 ? (
+                        <div className="text-center py-6 bg-gray-50 rounded-lg">
+                            <TrendingUp className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                            <p className="text-gray-500 text-sm">No sell orders found</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="border-b border-gray-200">
+                                        <TableHead className="text-xs font-medium text-gray-600">
+                                            Order
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600">
+                                            Status
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600">
+                                            Date
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600 text-right">
+                                            Total
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600 text-right">
+                                            Received
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600 text-right">
+                                            To Take
+                                        </TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600 text-center">
+                                            Progress
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredSellOrders.map((order) => {
+                                        const paidAmount = calculateOrderPaidAmount(order);
+                                        const remaining = calculateOrderRemaining(order);
+                                        const progressPercentage =
+                                            order.totalAmount > 0
+                                                ? (paidAmount / order.totalAmount) * 100
+                                                : 0;
+
+                                        return (
+                                            <TableRow
+                                                key={order.id}
+                                                className="hover:bg-green-50 border-b border-gray-100"
+                                            >
+                                                <TableCell className="py-3">
+                                                    <Link
+                                                        to={`/org/${entity.organizationId}/orders/${order.id}`}
+                                                        className="text-blue-600 hover:underline font-medium text-sm"
+                                                    >
+                                                        {order.orderNumber}
+                                                    </Link>
+                                                    {order.description && (
+                                                        <p className="text-xs text-gray-500 truncate">
+                                                            {order.description}
+                                                        </p>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {getPaymentStatusBadge(order.paymentStatus)}
+                                                </TableCell>
+                                                <TableCell className="text-sm text-gray-600">
+                                                    {formatDate(order.createdAt)}
+                                                </TableCell>
+                                                <TableCell className="text-right text-sm font-medium">
+                                                    {formatCurrency(order.totalAmount)}
+                                                </TableCell>
+                                                <TableCell className="text-right text-sm font-medium text-green-600">
+                                                    {formatCurrency(paidAmount)}
+                                                </TableCell>
+                                                <TableCell className="text-right text-sm font-bold text-green-600">
+                                                    {formatCurrency(remaining)}
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    <div className="flex items-center space-x-2">
+                                                        <div className="flex-1">
+                                                            <Progress
+                                                                value={progressPercentage}
+                                                                className="h-2"
+                                                            />
+                                                        </div>
+                                                        <span className="text-xs text-gray-500 min-w-[35px]">
+                                                            {progressPercentage.toFixed(0)}%
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
                     )}
                 </div>
             </div>
