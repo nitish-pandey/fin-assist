@@ -183,6 +183,8 @@ export interface Order {
         bearedByEntity: boolean;
     }[];
 
+    paidTillNow?: number;
+
     organization?: Organization | null;
     entity?: Entity | null;
 

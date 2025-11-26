@@ -1,9 +1,12 @@
 import { useOrg } from "@/providers/org-provider";
 import { api } from "@/utils/api";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { exportToExcel, exportToPDF } from "@/utils/reportExports";
 import { TableComponent } from "@/components/modules/Table";
 import "./report.css";
+import { Link } from "react-router-dom";
+import { ColumnDef } from "@tanstack/react-table";
+import { Order } from "@/data/types";
 
 const FISCAL_YEARS = [
     {
@@ -36,7 +39,15 @@ const FISCAL_YEARS = [
 const getPeriod = (type: string) => {
     const now = new Date();
     let start: Date, end: Date;
-    if (type === "week") {
+    if (type === "today") {
+        start = new Date(now);
+        end = new Date(now);
+    } else if (type === "yesterday") {
+        start = new Date(now);
+        start.setDate(now.getDate() - 1);
+        end = new Date(now);
+        end.setDate(now.getDate() - 1);
+    } else if (type === "week") {
         const day = now.getDay();
         start = new Date(now);
         start.setDate(now.getDate() - day);
@@ -80,10 +91,39 @@ const ReportPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [periodType, setPeriodType] = useState("month");
-    const [customStart, setCustomStart] = useState("");
-    const [customEnd, setCustomEnd] = useState("");
+    const [customStart, setCustomStart] = useState(() => {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        return startOfMonth.toISOString().slice(0, 10);
+    });
+    const [customEnd, setCustomEnd] = useState(() => {
+        const today = new Date();
+        return today.toISOString().slice(0, 10);
+    });
     const [selectedFiscalYear, setSelectedFiscalYear] = useState(FISCAL_YEARS[0]);
     const [activeTab, setActiveTab] = useState("summary");
+
+    // Auto-fetch report when component mounts or period changes
+    useEffect(() => {
+        if (orgId) {
+            handleFetch();
+        }
+    }, [orgId, periodType, customStart, customEnd, selectedFiscalYear]);
+
+    // Handle custom date changes and validate dates
+    const handleCustomStartChange = (date: string) => {
+        setCustomStart(date);
+        if (date && customEnd && new Date(date) > new Date(customEnd)) {
+            setCustomEnd(date);
+        }
+    };
+
+    const handleCustomEndChange = (date: string) => {
+        setCustomEnd(date);
+        if (date && customStart && new Date(date) < new Date(customStart)) {
+            setCustomStart(date);
+        }
+    };
 
     // Column definitions for daily breakdown table
     // Column definitions for daily breakdown table
@@ -193,12 +233,17 @@ const ReportPage = () => {
     ];
 
     // Column definitions for orders table
-    const ordersColumns = [
+    const ordersColumns: ColumnDef<Order>[] = [
         {
             accessorKey: "orderNumber",
             header: "Order #",
-            cell: ({ getValue }: any) => (
-                <span className="font-medium text-blue-600">{getValue()}</span>
+            cell: (props) => (
+                <Link
+                    to={`/org/${orgId}/orders/${props.row.original.id}`}
+                    className="font-medium text-blue-600"
+                >
+                    {props.row.original.orderNumber}
+                </Link>
             ),
         },
         {
@@ -395,6 +440,8 @@ const ReportPage = () => {
                                 </label>
                                 <div className="flex flex-wrap gap-2">
                                     {[
+                                        { key: "today", label: "Today" },
+                                        { key: "yesterday", label: "Yesterday" },
                                         { key: "week", label: "This Week" },
                                         { key: "month", label: "This Month" },
                                         { key: "year", label: "This Year" },
@@ -451,7 +498,9 @@ const ReportPage = () => {
                                         <input
                                             type="date"
                                             value={customStart}
-                                            onChange={(e) => setCustomStart(e.target.value)}
+                                            onChange={(e) =>
+                                                handleCustomStartChange(e.target.value)
+                                            }
                                             className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                                         />
                                     </div>
@@ -462,23 +511,34 @@ const ReportPage = () => {
                                         <input
                                             type="date"
                                             value={customEnd}
-                                            onChange={(e) => setCustomEnd(e.target.value)}
+                                            onChange={(e) => handleCustomEndChange(e.target.value)}
                                             className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                                         />
                                     </div>
+                                    {customStart && customEnd && (
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            {new Date(customEnd).getTime() -
+                                                new Date(customStart).getTime() >=
+                                            0
+                                                ? `${
+                                                      Math.ceil(
+                                                          (new Date(customEnd).getTime() -
+                                                              new Date(customStart).getTime()) /
+                                                              (1000 * 60 * 60 * 24)
+                                                      ) + 1
+                                                  } days selected`
+                                                : "Invalid date range"}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={handleFetch}
-                                    disabled={loading}
-                                    className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 text-sm font-medium shadow-lg hover:shadow-xl"
-                                >
-                                    {loading ? (
-                                        <>
+                            {(loading || error) && (
+                                <div className="flex items-center gap-3">
+                                    {loading && (
+                                        <div className="flex items-center gap-2 text-blue-600 text-sm font-medium">
                                             <svg
-                                                className="animate-spin w-4 h-4 text-white"
+                                                className="animate-spin w-4 h-4"
                                                 xmlns="http://www.w3.org/2000/svg"
                                                 fill="none"
                                                 viewBox="0 0 24 24"
@@ -497,34 +557,16 @@ const ReportPage = () => {
                                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                                 ></path>
                                             </svg>
-                                            Loading...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg
-                                                className="w-4 h-4"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                                                />
-                                            </svg>
-                                            Generate
-                                        </>
+                                            Generating report...
+                                        </div>
                                     )}
-                                </button>
-
-                                {error && (
-                                    <div className="text-red-700 bg-red-100 px-3 py-2 rounded-lg border border-red-200 text-sm font-medium">
-                                        {error}
-                                    </div>
-                                )}
-                            </div>
+                                    {error && (
+                                        <div className="text-red-700 bg-red-100 px-3 py-2 rounded-lg border border-red-200 text-sm font-medium">
+                                            {error}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -616,7 +658,7 @@ const ReportPage = () => {
                                                 <div className="flex items-center justify-between">
                                                     <div>
                                                         <p className="text-emerald-700 text-xs font-semibold uppercase tracking-wider">
-                                                            Revenue
+                                                            Revenue (Incoming)
                                                         </p>
                                                         <p className="text-lg font-bold text-gray-900 mt-1">
                                                             {formatCurrency(
@@ -646,7 +688,7 @@ const ReportPage = () => {
                                                 <div className="flex items-center justify-between">
                                                     <div>
                                                         <p className="text-red-700 text-xs font-semibold uppercase tracking-wider">
-                                                            Costs
+                                                            Cost (Outgoing)
                                                         </p>
                                                         <p className="text-lg font-bold text-gray-900 mt-1">
                                                             {formatCurrency(
@@ -956,7 +998,12 @@ const ReportPage = () => {
                                                                     className="hover:bg-gray-50"
                                                                 >
                                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                                                                        {product.name}
+                                                                        <Link
+                                                                            to={`/org/${orgId}/products/${product.id}`}
+                                                                            className="hover:underline"
+                                                                        >
+                                                                            {product.name}
+                                                                        </Link>
                                                                     </td>
                                                                     <td className="px-4 py-3 text-sm text-gray-600">
                                                                         {product.quantity}
@@ -1046,7 +1093,12 @@ const ReportPage = () => {
                                                                     className="hover:bg-gray-50"
                                                                 >
                                                                     <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                                                                        {customer.name}
+                                                                        <Link
+                                                                            to={`/org/${orgId}/entity/${customer.id}`}
+                                                                            className="hover:underline"
+                                                                        >
+                                                                            {customer.name}
+                                                                        </Link>
                                                                     </td>
                                                                     <td className="px-4 py-3 text-sm text-gray-600">
                                                                         {customer.orders}

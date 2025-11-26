@@ -56,13 +56,7 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
 
     // Memoized calculation functions
     const calculateOrderPaidAmount = useCallback((order: Order): number => {
-        if (!order.transactions || order.transactions.length === 0) {
-            return 0;
-        }
-
-        return order.transactions.reduce((sum, transaction) => {
-            return sum + transaction.amount;
-        }, 0);
+        return order.paidTillNow || 0;
     }, []);
 
     const calculateOrderRemaining = useCallback(
@@ -708,8 +702,8 @@ const EntityPage: React.FC<EntityPageProps> = React.memo(({ entity, accounts = [
                                 </TableHeader>
                                 <TableBody>
                                     {filteredBuyOrders.map((order) => {
-                                        const paidAmount = calculateOrderPaidAmount(order);
-                                        const remaining = calculateOrderRemaining(order);
+                                        const paidAmount = order.paidTillNow || 0;
+                                        const remaining = order.totalAmount - paidAmount;
                                         const progressPercentage =
                                             order.totalAmount > 0
                                                 ? (paidAmount / order.totalAmount) * 100

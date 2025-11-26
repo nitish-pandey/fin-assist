@@ -401,6 +401,8 @@ const OrderTransactions = ({ transactions }: { transactions: Transaction[] }) =>
                         <TableRow>
                             <TableHead>Date</TableHead>
                             <TableHead>Account</TableHead>
+                            <TableHead>Description</TableHead>
+
                             <TableHead>Type</TableHead>
                             <TableHead className="text-right">Amount</TableHead>
                         </TableRow>
@@ -412,6 +414,7 @@ const OrderTransactions = ({ transactions }: { transactions: Transaction[] }) =>
                                     {new Date(transaction.createdAt).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell>{transaction.account?.name || "N/A"}</TableCell>
+                                <TableCell>{transaction.description || "N/A"}</TableCell>
                                 <TableCell>{transaction.account?.type || "N/A"}</TableCell>
                                 <TableCell className="text-right">
                                     Nrs {transaction.amount.toFixed(2)}
@@ -436,8 +439,7 @@ const OrderTransactions = ({ transactions }: { transactions: Transaction[] }) =>
 };
 
 const OrderSummary = ({ order }: { order: Order }) => {
-    const totalPaid =
-        order.transactions?.reduce((sum, transaction) => sum + transaction.amount, 0) || 0;
+    const totalPaid = order.paidTillNow || 0;
     const remainingToPay = order.totalAmount - totalPaid;
 
     return (
