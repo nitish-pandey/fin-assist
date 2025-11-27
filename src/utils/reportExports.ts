@@ -552,3 +552,727 @@ export const exportToPDF = (report: any) => {
         alert("Error generating PDF. Please try again.");
     }
 };
+
+export const exportProductStockToExcel = (
+    products: any[],
+    organizationData: any,
+    fileName?: string
+) => {
+    try {
+        if (!products || products.length === 0) {
+            alert("No products data to export");
+            return;
+        }
+
+        const wb = XLSX.utils.book_new();
+
+        // Calculate aggregated data with enhanced metrics
+        let totalStock = 0;
+        let totalBuyingPrice = 0;
+        let totalEstimatedPrice = 0;
+        let totalCurrentValue = 0;
+        let totalVariants = 0;
+        let lowStockVariants = 0;
+        let outOfStockVariants = 0;
+        let totalFifoEntries = 0;
+        const lowStockThreshold = 10; // Can be configurable
+
+        // 1. Enhanced Product Variants Detail Sheet
+        const variantData = [
+            [
+                "Product Name",
+                "Variant Name",
+                "SKU",
+                "Variant Code",
+                "Stock Quantity",
+                "Stock Status",
+                "Buy Price (Avg)",
+                "Buy Price (Min)",
+                "Buy Price (Max)",
+                "Estimated Price (Avg)",
+                "Total Buy Value",
+                "Total Estimated Value",
+                "Potential Profit",
+                "Profit Margin %",
+                "FIFO Entries Count",
+                "Oldest Stock Date",
+                "Newest Stock Date",
+                "Stock Age (Days)",
+                "Category",
+                "Product Description",
+                "Variant Description",
+                "Created At",
+                "Updated At",
+                "Published Status",
+            ],
+        ];
+
+        products.forEach((product: any) => {
+            if (product.variants && product.variants.length > 0) {
+                product.variants.forEach((variant: any) => {
+                    const fifoQueue = variant.stock_fifo_queue || [];
+                    const variantStock = fifoQueue.reduce(
+                        (sum: number, queue: any) => sum + queue.availableStock,
+                        0
+                    );
+
+                    totalFifoEntries += fifoQueue.length;
+
+                    // Calculate price statistics
+                    const buyPrices = fifoQueue
+                        .filter((q: any) => q.buyPrice > 0)
+                        .map((q: any) => q.buyPrice);
+                    const estimatedPrices = fifoQueue
+                        .filter((q: any) => q.estimatedPrice > 0)
+                        .map((q: any) => q.estimatedPrice);
+
+                    const avgBuyPrice = buyPrices.length
+                        ? buyPrices.reduce((a: number, b: number) => a + b, 0) / buyPrices.length
+                        : variant.buyPrice || 0;
+                    const minBuyPrice = buyPrices.length
+                        ? Math.min(...buyPrices)
+                        : variant.buyPrice || 0;
+                    const maxBuyPrice = buyPrices.length
+                        ? Math.max(...buyPrices)
+                        : variant.buyPrice || 0;
+                    const avgEstimatedPrice = estimatedPrices.length
+                        ? estimatedPrices.reduce((a: number, b: number) => a + b, 0) /
+                          estimatedPrices.length
+                        : 0;
+
+                    // Calculate dates for stock aging
+                    const stockDates = fifoQueue
+                        .map((q: any) => new Date(q.createdAt))
+                        .filter((d: Date) => !isNaN(d.getTime()));
+                    const oldestDate = stockDates.length
+                        ? new Date(Math.min(...stockDates.map((d: Date) => d.getTime())))
+                        : null;
+                    const newestDate = stockDates.length
+                        ? new Date(Math.max(...stockDates.map((d: Date) => d.getTime())))
+                        : null;
+                    const stockAgeInDays = oldestDate
+                        ? Math.floor(
+                              (new Date().getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24)
+                          )
+                        : 0;
+
+                    const totalBuyValue = variantStock * avgBuyPrice;
+                    const totalEstimatedValue = variantStock * avgEstimatedPrice;
+                    const potentialProfit = totalEstimatedValue - totalBuyValue;
+                    const profitMargin =
+                        totalBuyValue > 0 ? (potentialProfit / totalBuyValue) * 100 : 0;
+
+                    // Stock status
+                    let stockStatus = "Normal";
+                    if (variantStock === 0) {
+                        stockStatus = "Out of Stock";
+                        outOfStockVariants++;
+                    } else if (variantStock <= lowStockThreshold) {
+                        stockStatus = "Low Stock";
+                        lowStockVariants++;
+                    } else if (variantStock > 100) {
+                        stockStatus = "High Stock";
+                    }
+
+                    totalStock += variantStock;
+                    totalBuyingPrice += totalBuyValue;
+                    totalEstimatedPrice += totalEstimatedValue;
+                    totalCurrentValue += totalBuyValue;
+                    totalVariants++;
+
+                    variantData.push([
+                        product.name,
+                        variant.name,
+                        product.sku,
+                        variant.code,
+                        variantStock,
+                        stockStatus,
+                        avgBuyPrice.toFixed(2),
+                        minBuyPrice.toFixed(2),
+                        maxBuyPrice.toFixed(2),
+                        avgEstimatedPrice.toFixed(2),
+                        totalBuyValue.toFixed(2),
+                        totalEstimatedValue.toFixed(2),
+                        potentialProfit.toFixed(2),
+                        profitMargin.toFixed(2) + "%",
+                        fifoQueue.length,
+                        oldestDate ? formatDate(oldestDate.toISOString()) : "N/A",
+                        newestDate ? formatDate(newestDate.toISOString()) : "N/A",
+                        stockAgeInDays,
+                        product.category?.name || "Uncategorized",
+                        product.description || "",
+                        variant.description || "",
+                        formatDate(variant.createdAt || product.createdAt),
+                        formatDate(variant.updatedAt || product.updatedAt),
+                        product.isPublished ? "Published" : "Draft",
+                    ]);
+                });
+            } else {
+                // Product without variants
+                outOfStockVariants++;
+                variantData.push([
+                    product.name,
+                    "Default Variant",
+                    product.sku,
+                    product.sku,
+                    0,
+                    "Out of Stock",
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    "0%",
+                    0,
+                    "N/A",
+                    "N/A",
+                    0,
+                    product.category?.name || "Uncategorized",
+                    product.description || "",
+                    "",
+                    formatDate(product.createdAt),
+                    formatDate(product.updatedAt),
+                    product.isPublished ? "Published" : "Draft",
+                ]);
+            }
+        });
+
+        const variantWs = XLSX.utils.aoa_to_sheet(variantData);
+        XLSX.utils.book_append_sheet(wb, variantWs, "Variant Details");
+
+        // 2. Enhanced Summary Sheet
+        const avgBuyPrice = totalStock > 0 ? totalBuyingPrice / totalStock : 0;
+        const avgEstimatedPrice = totalStock > 0 ? totalEstimatedPrice / totalStock : 0;
+        const totalPotentialProfit = totalEstimatedPrice - totalBuyingPrice;
+        const overallProfitMargin =
+            totalBuyingPrice > 0 ? (totalPotentialProfit / totalBuyingPrice) * 100 : 0;
+
+        const summaryData = [
+            ["COMPREHENSIVE PRODUCT STOCK ANALYSIS", ""],
+            ["", ""],
+            ["REPORT METADATA", ""],
+            [
+                "Generated At",
+                new Date().toLocaleString("en-IN", {
+                    timeZone: "Asia/Katmandu",
+                    dateStyle: "full",
+                    timeStyle: "medium",
+                }),
+            ],
+            ["Report Type", "Product Stock Inventory Analysis"],
+            ["Data Source", "Product Management System"],
+            ["Currency", "NPR (Nepalese Rupees)"],
+            ["", ""],
+            ["ORGANIZATION INFORMATION", ""],
+            ["Organization Name", organizationData?.name || "N/A"],
+            ["Contact Number", organizationData?.contact || "N/A"],
+            ["PAN Number", organizationData?.pan || "N/A"],
+            ["VAT Number", organizationData?.vat || "N/A"],
+            ["VAT Status", organizationData?.vatStatus || "N/A"],
+            ["Domain", organizationData?.domain || "N/A"],
+            [
+                "Depreciation Rate",
+                organizationData?.depreciationRate
+                    ? `${organizationData.depreciationRate}%`
+                    : "N/A",
+            ],
+            ["", ""],
+            ["INVENTORY OVERVIEW", ""],
+            ["Total Products", products.length],
+            ["Total Product Variants", totalVariants],
+            ["Total FIFO Entries", totalFifoEntries],
+            ["Products with Variants", products.filter((p) => p.variants?.length > 0).length],
+            ["Products without Variants", products.filter((p) => !p.variants?.length).length],
+            ["Published Products", products.filter((p) => p.isPublished).length],
+            ["Draft Products", products.filter((p) => !p.isPublished).length],
+            ["", ""],
+            ["STOCK STATUS SUMMARY", ""],
+            ["Total Stock Units", totalStock.toLocaleString("en-IN")],
+            ["Variants In Stock", (totalVariants - outOfStockVariants).toLocaleString("en-IN")],
+            ["Out of Stock Variants", outOfStockVariants.toLocaleString("en-IN")],
+            [
+                "Low Stock Variants (≤" + lowStockThreshold + " units)",
+                lowStockVariants.toLocaleString("en-IN"),
+            ],
+            [
+                "Normal Stock Variants",
+                Math.max(0, totalVariants - outOfStockVariants - lowStockVariants).toLocaleString(
+                    "en-IN"
+                ),
+            ],
+            [
+                "Stock Fill Rate",
+                totalVariants > 0
+                    ? `${(((totalVariants - outOfStockVariants) / totalVariants) * 100).toFixed(
+                          1
+                      )}%`
+                    : "0%",
+            ],
+            ["", ""],
+            ["FINANCIAL SUMMARY", ""],
+            ["Total Inventory Value (Buy Price)", formatCurrency(totalBuyingPrice)],
+            ["Total Estimated Value", formatCurrency(totalEstimatedPrice)],
+            ["Current Market Value", formatCurrency(totalCurrentValue)],
+            ["Total Potential Profit", formatCurrency(totalPotentialProfit)],
+            ["Overall Profit Margin", `${overallProfitMargin.toFixed(2)}%`],
+            ["", ""],
+            ["PRICE ANALYTICS", ""],
+            ["Average Buy Price per Unit", formatCurrency(avgBuyPrice)],
+            ["Average Estimated Price per Unit", formatCurrency(avgEstimatedPrice)],
+            [
+                "Average Stock per Variant",
+                totalVariants > 0 ? (totalStock / totalVariants).toFixed(1) : "0",
+            ],
+            [
+                "Average Inventory Value per Product",
+                formatCurrency(products.length > 0 ? totalBuyingPrice / products.length : 0),
+            ],
+            [
+                "Average FIFO Entries per Variant",
+                totalVariants > 0 ? (totalFifoEntries / totalVariants).toFixed(1) : "0",
+            ],
+            ["", ""],
+            ["RISK INDICATORS", ""],
+            [
+                "Stock Coverage Ratio",
+                `${
+                    totalVariants > 0
+                        ? (((totalVariants - outOfStockVariants) / totalVariants) * 100).toFixed(1)
+                        : 0
+                }%`,
+            ],
+            [
+                "Inventory Turnover Health",
+                outOfStockVariants > totalVariants * 0.2
+                    ? "Poor (>20% out of stock)"
+                    : outOfStockVariants > totalVariants * 0.1
+                    ? "Fair (10-20% out of stock)"
+                    : "Good (<10% out of stock)",
+            ],
+            [
+                "Profit Margin Health",
+                overallProfitMargin > 30
+                    ? "Excellent (>30%)"
+                    : overallProfitMargin > 15
+                    ? "Good (15-30%)"
+                    : overallProfitMargin > 5
+                    ? "Fair (5-15%)"
+                    : "Poor (<5%)",
+            ],
+        ];
+
+        const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(wb, summaryWs, "Executive Summary");
+
+        // 3. FIFO Queue Details Sheet
+        const fifoData = [
+            [
+                "Product Name",
+                "Variant Name",
+                "Variant Code",
+                "Entry Date",
+                "Buy Price",
+                "Estimated Price",
+                "Original Stock",
+                "Available Stock",
+                "Used Stock",
+                "Stock Usage %",
+                "Entry Value",
+                "Remaining Value",
+                "Age (Days)",
+                "Status",
+            ],
+        ];
+
+        products.forEach((product: any) => {
+            if (product.variants && product.variants.length > 0) {
+                product.variants.forEach((variant: any) => {
+                    if (variant.stock_fifo_queue && variant.stock_fifo_queue.length > 0) {
+                        variant.stock_fifo_queue.forEach((queue: any) => {
+                            const entryDate = new Date(queue.createdAt);
+                            const ageInDays = Math.floor(
+                                (new Date().getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24)
+                            );
+                            const usedStock = queue.originalStock - queue.availableStock;
+                            const usagePercent =
+                                queue.originalStock > 0
+                                    ? (usedStock / queue.originalStock) * 100
+                                    : 0;
+                            const entryValue = queue.originalStock * queue.buyPrice;
+                            const remainingValue = queue.availableStock * queue.buyPrice;
+
+                            let status = "Active";
+                            if (queue.availableStock === 0) status = "Depleted";
+                            else if (ageInDays > 365) status = "Aged (>1 year)";
+                            else if (ageInDays > 180) status = "Aging (>6 months)";
+
+                            fifoData.push([
+                                product.name,
+                                variant.name,
+                                variant.code,
+                                formatDate(queue.createdAt),
+                                queue.buyPrice.toFixed(2),
+                                queue.estimatedPrice.toFixed(2),
+                                queue.originalStock,
+                                queue.availableStock,
+                                usedStock,
+                                `${usagePercent.toFixed(1)}%`,
+                                entryValue.toFixed(2),
+                                remainingValue.toFixed(2),
+                                ageInDays,
+                                status,
+                            ]);
+                        });
+                    }
+                });
+            }
+        });
+
+        const fifoWs = XLSX.utils.aoa_to_sheet(fifoData);
+        XLSX.utils.book_append_sheet(wb, fifoWs, "FIFO Queue Details");
+
+        // 4. Stock Aging Analysis Sheet
+        const agingData = [
+            [
+                "Age Range",
+                "Stock Quantity",
+                "Stock Value",
+                "Variants Count",
+                "Percentage of Total Stock",
+                "Avg Buy Price",
+                "Risk Level",
+            ],
+        ];
+
+        const ageRanges = [
+            { label: "0-30 days", min: 0, max: 30, risk: "Low" },
+            { label: "31-90 days", min: 31, max: 90, risk: "Low" },
+            { label: "91-180 days", min: 91, max: 180, risk: "Medium" },
+            { label: "181-365 days", min: 181, max: 365, risk: "High" },
+            { label: ">365 days", min: 366, max: Infinity, risk: "Very High" },
+        ];
+
+        ageRanges.forEach((range) => {
+            let rangeStock = 0;
+            let rangeValue = 0;
+            let rangeVariants = 0;
+            let rangeBuyPrices: number[] = [];
+
+            products.forEach((product: any) => {
+                if (product.variants) {
+                    product.variants.forEach((variant: any) => {
+                        if (variant.stock_fifo_queue) {
+                            variant.stock_fifo_queue.forEach((queue: any) => {
+                                const ageInDays = Math.floor(
+                                    (new Date().getTime() - new Date(queue.createdAt).getTime()) /
+                                        (1000 * 60 * 60 * 24)
+                                );
+                                if (
+                                    ageInDays >= range.min &&
+                                    ageInDays <= range.max &&
+                                    queue.availableStock > 0
+                                ) {
+                                    rangeStock += queue.availableStock;
+                                    rangeValue += queue.availableStock * queue.buyPrice;
+                                    rangeBuyPrices.push(queue.buyPrice);
+                                    rangeVariants++;
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            const avgBuyPrice = rangeBuyPrices.length
+                ? rangeBuyPrices.reduce((a: number, b: number) => a + b, 0) / rangeBuyPrices.length
+                : 0;
+            const percentageOfTotal = totalStock > 0 ? (rangeStock / totalStock) * 100 : 0;
+
+            agingData.push([
+                range.label,
+                rangeStock + "",
+                rangeValue.toFixed(2),
+                rangeVariants + "",
+                `${percentageOfTotal.toFixed(1)}%`,
+                avgBuyPrice.toFixed(2),
+                range.risk,
+            ]);
+        });
+
+        const agingWs = XLSX.utils.aoa_to_sheet(agingData);
+        XLSX.utils.book_append_sheet(wb, agingWs, "Stock Aging Analysis");
+
+        // 5. Low Stock Alerts Sheet
+        const alertsData = [
+            [
+                "Alert Type",
+                "Product Name",
+                "Variant Name",
+                "Current Stock",
+                "Threshold",
+                "Days Until Out of Stock",
+                "Total Value at Risk",
+                "Recommended Action",
+                "Priority",
+            ],
+        ];
+
+        products.forEach((product: any) => {
+            if (product.variants && product.variants.length > 0) {
+                product.variants.forEach((variant: any) => {
+                    const variantStock =
+                        variant.stock_fifo_queue?.reduce(
+                            (sum: number, queue: any) => sum + queue.availableStock,
+                            0
+                        ) || 0;
+
+                    const avgBuyPrice = variant.stock_fifo_queue?.length
+                        ? variant.stock_fifo_queue.reduce(
+                              (sum: number, queue: any) => sum + queue.buyPrice,
+                              0
+                          ) / variant.stock_fifo_queue.length
+                        : variant.buyPrice || 0;
+
+                    const totalValue = variantStock * avgBuyPrice;
+
+                    // Different alert types
+                    if (variantStock === 0) {
+                        alertsData.push([
+                            "OUT OF STOCK",
+                            product.name,
+                            variant.name,
+                            variantStock,
+                            lowStockThreshold,
+                            "0 (Immediate)",
+                            totalValue.toFixed(2),
+                            "Restock immediately",
+                            "CRITICAL",
+                        ]);
+                    } else if (variantStock <= lowStockThreshold) {
+                        const daysUntilOutOfStock = Math.floor(
+                            variantStock / Math.max(1, variantStock * 0.1)
+                        ); // Rough estimate
+                        alertsData.push([
+                            "LOW STOCK",
+                            product.name,
+                            variant.name,
+                            variantStock,
+                            lowStockThreshold,
+                            daysUntilOutOfStock.toString(),
+                            totalValue.toFixed(2),
+                            "Consider restocking soon",
+                            "HIGH",
+                        ]);
+                    } else if (variantStock > 200) {
+                        alertsData.push([
+                            "OVERSTOCK",
+                            product.name,
+                            variant.name,
+                            variantStock,
+                            "200",
+                            "N/A",
+                            totalValue.toFixed(2),
+                            "Consider reducing inventory",
+                            "MEDIUM",
+                        ]);
+                    }
+                });
+            }
+        });
+
+        // Add aging alerts
+        products.forEach((product: any) => {
+            if (product.variants) {
+                product.variants.forEach((variant: any) => {
+                    if (variant.stock_fifo_queue) {
+                        variant.stock_fifo_queue.forEach((queue: any) => {
+                            const ageInDays = Math.floor(
+                                (new Date().getTime() - new Date(queue.createdAt).getTime()) /
+                                    (1000 * 60 * 60 * 24)
+                            );
+                            if (ageInDays > 365 && queue.availableStock > 0) {
+                                const value = queue.availableStock * queue.buyPrice;
+                                alertsData.push([
+                                    "AGED STOCK",
+                                    product.name,
+                                    variant.name,
+                                    queue.availableStock,
+                                    "365 days",
+                                    "N/A",
+                                    value.toFixed(2),
+                                    "Consider discount sale or write-off",
+                                    "LOW",
+                                ]);
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+        const alertsWs = XLSX.utils.aoa_to_sheet(alertsData);
+        XLSX.utils.book_append_sheet(wb, alertsWs, "Stock Alerts");
+
+        // 6. Enhanced Category Analysis Sheet
+        const categoryMap = new Map();
+        products.forEach((product: any) => {
+            const categoryName = product.category?.name || "Uncategorized";
+            if (!categoryMap.has(categoryName)) {
+                categoryMap.set(categoryName, {
+                    name: categoryName,
+                    products: 0,
+                    variants: 0,
+                    totalStock: 0,
+                    totalBuyValue: 0,
+                    totalEstimatedValue: 0,
+                    outOfStockVariants: 0,
+                    lowStockVariants: 0,
+                    fifoEntries: 0,
+                    oldestStockAge: 0,
+                    newestStockAge: 0,
+                });
+            }
+
+            const category = categoryMap.get(categoryName);
+            category.products++;
+            category.variants += product.variants?.length || 0;
+
+            const productStock =
+                product.variants?.reduce(
+                    (sum: number, variant: any) =>
+                        sum +
+                        (variant.stock_fifo_queue?.reduce(
+                            (acc: number, queue: any) => acc + queue.availableStock,
+                            0
+                        ) || 0),
+                    0
+                ) || 0;
+
+            const productBuyValue =
+                product.variants?.reduce((sum: number, variant: any) => {
+                    const variantStock =
+                        variant.stock_fifo_queue?.reduce(
+                            (acc: number, queue: any) => acc + queue.availableStock,
+                            0
+                        ) || 0;
+                    const avgBuyPrice = variant.stock_fifo_queue?.length
+                        ? variant.stock_fifo_queue.reduce(
+                              (sum: number, queue: any) => sum + queue.buyPrice,
+                              0
+                          ) / variant.stock_fifo_queue.length
+                        : variant.buyPrice || 0;
+                    return sum + variantStock * avgBuyPrice;
+                }, 0) || 0;
+
+            const productEstimatedValue =
+                product.variants?.reduce((sum: number, variant: any) => {
+                    const variantStock =
+                        variant.stock_fifo_queue?.reduce(
+                            (acc: number, queue: any) => acc + queue.availableStock,
+                            0
+                        ) || 0;
+                    const avgEstimatedPrice = variant.stock_fifo_queue?.length
+                        ? variant.stock_fifo_queue.reduce(
+                              (sum: number, queue: any) => sum + queue.estimatedPrice,
+                              0
+                          ) / variant.stock_fifo_queue.length
+                        : 0;
+                    return sum + variantStock * avgEstimatedPrice;
+                }, 0) || 0;
+
+            category.totalStock += productStock;
+            category.totalBuyValue += productBuyValue;
+            category.totalEstimatedValue += productEstimatedValue;
+
+            // Count stock status variants
+            if (product.variants) {
+                product.variants.forEach((variant: any) => {
+                    const variantStock =
+                        variant.stock_fifo_queue?.reduce(
+                            (sum: number, queue: any) => sum + queue.availableStock,
+                            0
+                        ) || 0;
+                    category.fifoEntries += variant.stock_fifo_queue?.length || 0;
+
+                    if (variantStock === 0) {
+                        category.outOfStockVariants++;
+                    } else if (variantStock <= lowStockThreshold) {
+                        category.lowStockVariants++;
+                    }
+                });
+            }
+        });
+
+        const categoryData = [
+            [
+                "Category",
+                "Products",
+                "Variants",
+                "Total Stock",
+                "Stock Fill Rate %",
+                "Out of Stock",
+                "Low Stock",
+                "Total Buy Value",
+                "Total Estimated Value",
+                "Potential Profit",
+                "Profit Margin %",
+                "Avg Value per Unit",
+                "FIFO Entries",
+                "Category Health",
+            ],
+        ];
+
+        Array.from(categoryMap.values()).forEach((category: any) => {
+            const avgValuePerUnit =
+                category.totalStock > 0 ? category.totalBuyValue / category.totalStock : 0;
+            const potentialProfit = category.totalEstimatedValue - category.totalBuyValue;
+            const profitMargin =
+                category.totalBuyValue > 0 ? (potentialProfit / category.totalBuyValue) * 100 : 0;
+            const stockFillRate =
+                category.variants > 0
+                    ? ((category.variants - category.outOfStockVariants) / category.variants) * 100
+                    : 0;
+
+            let categoryHealth = "Excellent";
+            if (category.outOfStockVariants / category.variants > 0.3) categoryHealth = "Poor";
+            else if (category.outOfStockVariants / category.variants > 0.15)
+                categoryHealth = "Fair";
+            else if (category.outOfStockVariants / category.variants > 0.05)
+                categoryHealth = "Good";
+
+            categoryData.push([
+                category.name,
+                category.products,
+                category.variants,
+                category.totalStock,
+                `${stockFillRate.toFixed(1)}%`,
+                category.outOfStockVariants,
+                category.lowStockVariants,
+                category.totalBuyValue.toFixed(2),
+                category.totalEstimatedValue.toFixed(2),
+                potentialProfit.toFixed(2),
+                `${profitMargin.toFixed(1)}%`,
+                avgValuePerUnit.toFixed(2),
+                category.fifoEntries,
+                categoryHealth,
+            ]);
+        });
+
+        const categoryWs = XLSX.utils.aoa_to_sheet(categoryData);
+        XLSX.utils.book_append_sheet(wb, categoryWs, "Category Analytics");
+
+        // Generate and download file with enhanced naming
+        const timestamp = new Date().toISOString().split("T")[0];
+        const defaultFileName = `${
+            organizationData?.name || "Organization"
+        }-stock-analysis-${timestamp}.xlsx`;
+        XLSX.writeFile(wb, fileName || defaultFileName);
+
+        console.log("Enhanced product stock Excel export completed successfully");
+    } catch (error) {
+        console.error("Product Stock Excel Export Error:", error);
+        alert("Error generating Excel file. Please try again.");
+    }
+};
