@@ -71,6 +71,11 @@ export default function Sidebar() {
             icon: SellIcon,
         },
         {
+            name: "POS",
+            path: getPathname("pos"),
+            icon: DashboardIcon,
+        },
+        {
             name: "Products",
             path: "/products",
             icon: ProductIcon,
