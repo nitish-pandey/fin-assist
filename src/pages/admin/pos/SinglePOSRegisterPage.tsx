@@ -65,30 +65,6 @@ const getVariantStock = (variant?: ProductVariant): number => {
     return variant.stock_fifo_queue.reduce((total, entry) => total + entry.availableStock, 0);
 };
 
-const getVariantEstimatedPrice = (variant: ProductVariant, quantity: number = 1): number => {
-    const totalStock = getVariantStock(variant);
-    if (!variant.stock_fifo_queue || quantity <= 0 || totalStock <= 0) {
-        return variant.buyPrice || 0;
-    }
-
-    let remainingQty = Math.min(quantity, totalStock);
-    let totalPrice = 0;
-
-    for (const entry of variant.stock_fifo_queue) {
-        if (entry.availableStock <= 0) continue;
-        const qtyToUse = Math.min(entry.availableStock, remainingQty);
-        totalPrice += qtyToUse * entry.estimatedPrice;
-        remainingQty -= qtyToUse;
-        if (remainingQty <= 0) break;
-    }
-
-    return (
-        parseFloat((totalPrice / Math.min(quantity, totalStock)).toFixed(2)) ||
-        variant.buyPrice ||
-        0
-    );
-};
-
 export default function SinglePOSRegisterPage() {
     const { orgId } = useOrg();
     const { registerId } = useParams<{ registerId: string }>();
@@ -260,7 +236,6 @@ export default function SinglePOSRegisterPage() {
             updated[existingIndex].quantity += 1;
             setCart(updated);
         } else {
-            const estimatedPrice = getVariantEstimatedPrice(variant, 1);
             setCart([
                 ...cart,
                 {
@@ -268,7 +243,7 @@ export default function SinglePOSRegisterPage() {
                     variantId: variant.id,
                     name: product.name,
                     variantName: variant.name,
-                    rate: estimatedPrice,
+                    rate: variant.price,
                     quantity: 1,
                 },
             ]);
@@ -635,11 +610,10 @@ export default function SinglePOSRegisterPage() {
                         <div className="flex gap-2 overflow-x-auto pb-1">
                             <button
                                 onClick={() => setSelectedCategory(null)}
-                                className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
-                                    !selectedCategory
+                                className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${!selectedCategory
                                         ? "bg-primary text-primary-foreground"
                                         : "bg-gray-100 hover:bg-gray-200"
-                                }`}
+                                    }`}
                             >
                                 All
                             </button>
@@ -647,11 +621,10 @@ export default function SinglePOSRegisterPage() {
                                 <button
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
-                                    className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
-                                        selectedCategory === cat
+                                    className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${selectedCategory === cat
                                             ? "bg-primary text-primary-foreground"
                                             : "bg-gray-100 hover:bg-gray-200"
-                                    }`}
+                                        }`}
                                 >
                                     {cat}
                                 </button>
@@ -666,7 +639,6 @@ export default function SinglePOSRegisterPage() {
                                 product.variants?.map((variant) => {
                                     const stock = getVariantStock(variant);
                                     const isOutOfStock = stock <= 0;
-                                    const estimatedPrice = getVariantEstimatedPrice(variant, 1);
                                     return (
                                         <button
                                             key={variant.id}
@@ -674,11 +646,10 @@ export default function SinglePOSRegisterPage() {
                                                 !isOutOfStock && addToCart(product, variant)
                                             }
                                             disabled={isOutOfStock}
-                                            className={`relative bg-white rounded-lg border p-3 text-left transition-all hover:shadow-md ${
-                                                isOutOfStock
+                                            className={`relative bg-white rounded-lg border p-3 text-left transition-all hover:shadow-md ${isOutOfStock
                                                     ? "opacity-50 cursor-not-allowed"
                                                     : "hover:border-primary"
-                                            }`}
+                                                }`}
                                         >
                                             {/* Stock Badge */}
                                             <Badge
@@ -686,8 +657,8 @@ export default function SinglePOSRegisterPage() {
                                                     isOutOfStock
                                                         ? "destructive"
                                                         : stock < 10
-                                                        ? "secondary"
-                                                        : "default"
+                                                            ? "secondary"
+                                                            : "default"
                                                 }
                                                 className="absolute top-2 right-2 text-xs"
                                             >
@@ -715,7 +686,7 @@ export default function SinglePOSRegisterPage() {
                                                 {variant.name}
                                             </p>
                                             <p className="font-semibold text-sm mt-1">
-                                                {formatCurrency(estimatedPrice)}
+                                                {formatCurrency(variant.price)}
                                             </p>
                                         </button>
                                     );
@@ -990,22 +961,21 @@ export default function SinglePOSRegisterPage() {
                         </div>
                         {closeFormData.actualClosingBalance !== register.expectedClosingBalance && (
                             <div
-                                className={`text-sm p-2 rounded ${
-                                    closeFormData.actualClosingBalance <
-                                    register.expectedClosingBalance
+                                className={`text-sm p-2 rounded ${closeFormData.actualClosingBalance <
+                                        register.expectedClosingBalance
                                         ? "bg-red-50 text-red-600"
                                         : "bg-green-50 text-green-600"
-                                }`}
+                                    }`}
                             >
                                 Diff:{" "}
                                 {formatCurrency(
                                     Math.abs(
                                         closeFormData.actualClosingBalance -
-                                            register.expectedClosingBalance
+                                        register.expectedClosingBalance
                                     )
                                 )}
                                 {closeFormData.actualClosingBalance <
-                                register.expectedClosingBalance
+                                    register.expectedClosingBalance
                                     ? " short"
                                     : " over"}
                             </div>

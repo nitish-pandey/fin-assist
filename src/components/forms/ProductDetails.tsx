@@ -153,7 +153,7 @@ export function ProductDetails({
         const myVar = variant || product.variants?.[0];
         if (!myVar) return;
         const price =
-            type === "BUY" ? myVar.buyPrice || 0 : getVariantEstimatedPrice(myVar, 1) || 0;
+            type === "BUY" ? myVar.buyPrice || 0 : myVar.price || 0;
 
         const newProduct: SelectedProduct = {
             productId: product.id,
@@ -287,7 +287,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
         const rate =
             type === "BUY"
                 ? firstVariant.buyPrice
-                : getVariantEstimatedPrice(firstVariant, item.quantity) || 0;
+                : firstVariant.price;
 
         onUpdate(index, { productId, variantId: firstVariant.id, rate });
     };
@@ -299,7 +299,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
         const rate =
             type === "BUY"
                 ? selectedVariant.buyPrice
-                : getVariantEstimatedPrice(selectedVariant, item.quantity) || 0;
+                : selectedVariant.price;
 
         onUpdate(index, { variantId, rate });
     };
@@ -312,7 +312,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
 
         const updates: Partial<SelectedProduct> = { quantity };
         if (type === "SELL" && variant) {
-            updates.rate = getVariantEstimatedPrice(variant, quantity);
+            updates.rate = variant.price;
         }
         onUpdate(index, updates);
     };
@@ -609,7 +609,7 @@ function GlobalSearchPopover({
             if (product.variants?.length === 1 && (productMatches || variantMatches.length > 0)) {
                 const variant = product.variants[0];
                 const price =
-                    type === "BUY" ? variant.buyPrice : getVariantEstimatedPrice(variant, 1);
+                    type === "BUY" ? variant.buyPrice : variant.price;
                 results.push({
                     type: "product",
                     product,
@@ -624,7 +624,7 @@ function GlobalSearchPopover({
                 // Show matching variants
                 variantMatches.forEach((variant) => {
                     const price =
-                        type === "BUY" ? variant.buyPrice : getVariantEstimatedPrice(variant, 1);
+                        type === "BUY" ? variant.buyPrice : variant.price;
                     results.push({
                         type: "variant",
                         product,
@@ -641,7 +641,7 @@ function GlobalSearchPopover({
                         const price =
                             type === "BUY"
                                 ? variant.buyPrice
-                                : getVariantEstimatedPrice(variant, 1);
+                                : variant.price;
                         results.push({
                             type: "variant",
                             product,

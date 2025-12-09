@@ -619,7 +619,7 @@ const SingleProductPage = () => {
                                                         </div>
                                                         <div className="bg-emerald-50 p-3 rounded-md border border-emerald-200">
                                                             <div className="font-medium text-emerald-800">
-                                                                Total Estimated Value
+                                                                Total Adjusted Value
                                                             </div>
                                                             <div className="text-lg font-bold text-emerald-900">
                                                                 {formatCurrency(
@@ -627,7 +627,7 @@ const SingleProductPage = () => {
                                                                 )}
                                                             </div>
                                                             <div className="text-xs text-emerald-600">
-                                                                If Sold Today
+                                                                As of Today
                                                             </div>
                                                         </div>
                                                     </div>

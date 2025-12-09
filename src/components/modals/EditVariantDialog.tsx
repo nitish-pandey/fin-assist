@@ -27,7 +27,7 @@ interface EditVariantDialogProps {
 interface EditVariantFormData {
     name: string;
     description: string;
-    buyPrice: number;
+    price: number;
     estimatedPrice: number;
     stock: number;
     code: string;
@@ -55,7 +55,7 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
         defaultValues: {
             name: "",
             description: "",
-            buyPrice: 0,
+            price: 0,
             estimatedPrice: 0,
             stock: 0,
             code: "",
@@ -68,7 +68,7 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
         if (variant) {
             setValue("name", variant.name);
             setValue("description", variant.description || "");
-            setValue("buyPrice", variant.buyPrice);
+            setValue("price", variant.price);
             setValue("code", variant.code);
             setValue("sku", variant.sku);
         } else {
@@ -86,7 +86,7 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
                 {
                     name: data.name,
                     description: data.description,
-                    buyPrice: parseFloat(data.buyPrice.toString()),
+                    price: parseFloat(data.price.toString()),
                     estimatedPrice: parseFloat(data.estimatedPrice.toString()),
                     stock: parseInt(data.stock.toString()),
                     code: data.code,
@@ -195,24 +195,24 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="buyPrice">Buy Price</Label>
+                            <Label htmlFor="price">Sell Price</Label>
                             <Input
-                                id="buyPrice"
+                                id="price"
                                 type="number"
                                 step="0.01"
                                 min="0"
                                 placeholder="0.00"
-                                {...register("buyPrice", {
-                                    required: "Buy price is required",
+                                {...register("price", {
+                                    required: "Sell price is required",
                                     min: {
                                         value: 0,
-                                        message: "Buy price must be positive",
+                                        message: "Sell price must be positive",
                                     },
                                 })}
                                 disabled={isLoading}
                             />
-                            {errors.buyPrice && (
-                                <p className="text-red-500 text-sm">{errors.buyPrice.message}</p>
+                            {errors.price && (
+                                <p className="text-red-500 text-sm">{errors.price.message}</p>
                             )}
                         </div>
                     </div>

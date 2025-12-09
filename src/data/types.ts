@@ -126,8 +126,9 @@ export interface ProductVariant {
     productId: string;
 
     buyPrice: number;
-    // estimatedPrice: number;
-    // stock: number;
+    price: number; 
+    estimatedPrice: number;
+    stock: number;
 
     values: object;
     code: string;
