@@ -26,6 +26,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import AddCategory from "@/components/modals/AddCategory";
+import { ImageUpload, type ImageFile } from "./image-upload";
 
 // Define the validation schema
 const formSchema = z.object({
@@ -34,10 +35,7 @@ const formSchema = z.object({
     buyPrice: z.coerce.number(),
     sellPrice: z.coerce.number(),
     stock: z.coerce.number().min(0, "Stock cannot be negative"),
-    sku: z
-        .string()
-        .min(1, "SKU is required")
-        .max(20, "SKU must be 20 characters or less"),
+    sku: z.string().min(1, "SKU is required").max(20, "SKU must be 20 characters or less"),
     categoryId: z.string().min(1, "Category selection is required"),
 });
 
@@ -96,9 +94,7 @@ export function BasicDetailsForm({
             return () => subscription.unsubscribe();
         }
     }, [form, form.formState.isDirty, updateProduct, product]);
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-        product.categoryId
-    ); // Update form values when product changes
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(product.categoryId); // Update form values when product changes
     useEffect(() => {
         // Only reset the form if the values are different to avoid infinite loops
         if (
@@ -154,24 +150,17 @@ export function BasicDetailsForm({
             <h2 className="text-2xl font-semibold">Basic Details</h2>
 
             <Form {...form}>
-                <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="space-y-6"
-                >
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <FormField
                         control={form.control}
                         name="name"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>
-                                    Product Name{" "}
-                                    <span className="text-destructive">*</span>
+                                    Product Name <span className="text-destructive">*</span>
                                 </FormLabel>
                                 <FormControl>
-                                    <Input
-                                        placeholder="Enter product name"
-                                        {...field}
-                                    />
+                                    <Input placeholder="Enter product name" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -184,8 +173,7 @@ export function BasicDetailsForm({
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>
-                                    Category{" "}
-                                    <span className="text-destructive">*</span>
+                                    Category <span className="text-destructive">*</span>
                                 </FormLabel>
                                 <div className="flex items-center justify-between">
                                     <FormControl>
@@ -224,8 +212,7 @@ export function BasicDetailsForm({
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>
-                                    SKU{" "}
-                                    <span className="text-destructive">*</span>
+                                    SKU <span className="text-destructive">*</span>
                                 </FormLabel>
                                 <FormControl>
                                     <Input
@@ -265,17 +252,10 @@ export function BasicDetailsForm({
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Cost Price{" "}
-                                        <span className="text-destructive">
-                                            *
-                                        </span>
+                                        Cost Price <span className="text-destructive">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <Input
-                                            type="number"
-                                            placeholder="0.00"
-                                            {...field}
-                                        />
+                                        <Input type="number" placeholder="0.00" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -287,17 +267,10 @@ export function BasicDetailsForm({
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Selling Price{" "}
-                                        <span className="text-destructive">
-                                            *
-                                        </span>
+                                        Selling Price <span className="text-destructive">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <Input
-                                            type="number"
-                                            placeholder="0.00"
-                                            {...field}
-                                        />
+                                        <Input type="number" placeholder="0.00" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -310,23 +283,30 @@ export function BasicDetailsForm({
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>
-                                        Base Stock{" "}
-                                        <span className="text-destructive">
-                                            *
-                                        </span>
+                                        Base Stock <span className="text-destructive">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <Input
-                                            type="number"
-                                            placeholder="0"
-                                            {...field}
-                                        />
+                                        <Input type="number" placeholder="0" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
                     </div>
+
+                    {/* Image Upload Section */}
+                    <div className="pt-4 border-t">
+                        <ImageUpload
+                            images={product.pendingImages || []}
+                            onImagesChange={(images: ImageFile[]) =>
+                                updateProduct({ pendingImages: images })
+                            }
+                            maxImages={5}
+                            label="Product Images"
+                            description="Upload up to 5 images (JPG, PNG, WebP). Max 1MB each. These will be the default images for all variants."
+                        />
+                    </div>
+
                     <Button type="submit" className="w-full">
                         Next
                         <ChevronRight className="ml-2 h-4 w-4" />

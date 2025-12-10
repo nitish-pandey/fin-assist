@@ -1,5 +1,6 @@
 "use client";
 import type React from "react";
+import { useEffect } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,15 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import type { ProductVariant, ProductOptions } from "./types";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, ImageIcon } from "lucide-react";
+import { ImageUpload, type ImageFile } from "./image-upload";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface VariantsFormProps {
     variants: ProductVariant[];
@@ -24,19 +33,40 @@ interface VariantsFormProps {
     buyPrice?: number;
     sellPrice?: number;
     stock?: number;
+    productImages?: ImageFile[];
 }
 
 export function VariantsForm({
     variants,
     updateVariants,
     isLoading,
+    productImages = [],
 }: VariantsFormProps) {
+    // Initialize variant images with product images when product images change
+    useEffect(() => {
+        if (productImages.length > 0 && variants.length > 0) {
+            const needsUpdate = variants.some(
+                (variant) => !variant.pendingImages || variant.pendingImages.length === 0
+            );
+            if (needsUpdate) {
+                const updatedVariants = variants.map((variant) => {
+                    if (!variant.pendingImages || variant.pendingImages.length === 0) {
+                        return {
+                            ...variant,
+                            pendingImages: [...productImages],
+                        };
+                    }
+                    return variant;
+                });
+                updateVariants(updatedVariants);
+            }
+        }
+    }, [productImages]);
+
     // Get all unique option names for table headers
     const optionNames =
         variants.length > 0
-            ? Object.keys(variants[0].values).filter(
-                  (key) => key !== "undefined"
-              )
+            ? Object.keys(variants[0].values).filter((key) => key !== "undefined")
             : [];
 
     // Remove a variant
@@ -52,13 +82,8 @@ export function VariantsForm({
     ) => {
         const newVariants = [...variants];
 
-        if (
-            field === "buyPrice" ||
-            field === "sellPrice" ||
-            field === "stock"
-        ) {
-            newVariants[index][field] =
-                value === "" ? 0 : Number.parseFloat(value);
+        if (field === "buyPrice" || field === "sellPrice" || field === "stock") {
+            newVariants[index][field] = value === "" ? 0 : Number.parseFloat(value);
         } else {
             newVariants[index][field] = value;
         }
@@ -66,6 +91,22 @@ export function VariantsForm({
         updateVariants(newVariants);
     };
 
+    // Update variant images
+    const updateVariantImages = (index: number, images: ImageFile[]) => {
+        const newVariants = [...variants];
+        newVariants[index] = {
+            ...newVariants[index],
+            pendingImages: images,
+        };
+        updateVariants(newVariants);
+    };
+
+    // Get image count for a variant
+    const getVariantImageCount = (variant: ProductVariant) => {
+        return variant.pendingImages?.length || 0;
+    };
+
+    // Handle keyboard navigation in the table
     // Handle keyboard navigation in the table
     const handleKeyDown = (
         e: React.KeyboardEvent<HTMLInputElement>,
@@ -100,15 +141,11 @@ export function VariantsForm({
             {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg">
                     <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
-                    <p className="text-muted-foreground">
-                        Generating variants...
-                    </p>
+                    <p className="text-muted-foreground">Generating variants...</p>
                 </div>
             ) : variants.length === 0 ? (
                 <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                    <h3 className="text-lg font-medium">
-                        No variants available
-                    </h3>
+                    <h3 className="text-lg font-medium">No variants available</h3>
                     <p className="text-muted-foreground">
                         Add product options first to generate variants
                     </p>
@@ -121,10 +158,7 @@ export function VariantsForm({
                                 <TableHeader className="sticky top-0 bg-background z-10">
                                     <TableRow>
                                         {optionNames.map((option) => (
-                                            <TableHead
-                                                key={option}
-                                                className="font-medium"
-                                            >
+                                            <TableHead key={option} className="font-medium">
                                                 {option}
                                             </TableHead>
                                         ))}
@@ -132,19 +166,15 @@ export function VariantsForm({
                                         <TableHead>Buy Price</TableHead>
                                         <TableHead>Sell Price</TableHead>
                                         <TableHead>Stock</TableHead>
-                                        <TableHead className="w-20">
-                                            Actions
-                                        </TableHead>
+                                        <TableHead>Images</TableHead>
+                                        <TableHead className="w-20">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {variants.map((variant, index) => (
                                         <TableRow key={index} className="group">
                                             {optionNames.map((option) => (
-                                                <TableCell
-                                                    key={option}
-                                                    className="font-medium"
-                                                >
+                                                <TableCell key={option} className="font-medium">
                                                     {variant.values[option]}
                                                 </TableCell>
                                             ))}
@@ -153,18 +183,10 @@ export function VariantsForm({
                                                     id={`variant-${index}-sku`}
                                                     value={variant.sku}
                                                     onChange={(e) =>
-                                                        updateVariant(
-                                                            index,
-                                                            "sku",
-                                                            e.target.value
-                                                        )
+                                                        updateVariant(index, "sku", e.target.value)
                                                     }
                                                     onKeyDown={(e) =>
-                                                        handleKeyDown(
-                                                            e,
-                                                            index,
-                                                            "sku"
-                                                        )
+                                                        handleKeyDown(e, index, "sku")
                                                     }
                                                     className="h-8 bg-transparent"
                                                 />
@@ -173,9 +195,7 @@ export function VariantsForm({
                                                 <Input
                                                     id={`variant-${index}-buyPrice`}
                                                     type="number"
-                                                    value={
-                                                        variant.buyPrice || ""
-                                                    }
+                                                    value={variant.buyPrice || ""}
                                                     onChange={(e) =>
                                                         updateVariant(
                                                             index,
@@ -184,11 +204,7 @@ export function VariantsForm({
                                                         )
                                                     }
                                                     onKeyDown={(e) =>
-                                                        handleKeyDown(
-                                                            e,
-                                                            index,
-                                                            "buyPrice"
-                                                        )
+                                                        handleKeyDown(e, index, "buyPrice")
                                                     }
                                                     min="0"
                                                     step="0.01"
@@ -199,9 +215,7 @@ export function VariantsForm({
                                                 <Input
                                                     id={`variant-${index}-sellPrice`}
                                                     type="number"
-                                                    value={
-                                                        variant.sellPrice || ""
-                                                    }
+                                                    value={variant.sellPrice || ""}
                                                     onChange={(e) =>
                                                         updateVariant(
                                                             index,
@@ -210,11 +224,7 @@ export function VariantsForm({
                                                         )
                                                     }
                                                     onKeyDown={(e) =>
-                                                        handleKeyDown(
-                                                            e,
-                                                            index,
-                                                            "sellPrice"
-                                                        )
+                                                        handleKeyDown(e, index, "sellPrice")
                                                     }
                                                     min="0"
                                                     step="0.01"
@@ -234,11 +244,7 @@ export function VariantsForm({
                                                         )
                                                     }
                                                     onKeyDown={(e) =>
-                                                        handleKeyDown(
-                                                            e,
-                                                            index,
-                                                            "stock"
-                                                        )
+                                                        handleKeyDown(e, index, "stock")
                                                     }
                                                     min="0"
                                                     step="1"
@@ -246,12 +252,45 @@ export function VariantsForm({
                                                 />
                                             </TableCell>
                                             <TableCell>
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-8 gap-1"
+                                                        >
+                                                            <ImageIcon className="h-4 w-4" />
+                                                            <span className="text-xs">
+                                                                {getVariantImageCount(variant)}
+                                                            </span>
+                                                        </Button>
+                                                    </DialogTrigger>
+                                                    <DialogContent className="max-w-md">
+                                                        <DialogHeader>
+                                                            <DialogTitle>
+                                                                Images for{" "}
+                                                                {Object.values(variant.values).join(
+                                                                    " / "
+                                                                )}
+                                                            </DialogTitle>
+                                                        </DialogHeader>
+                                                        <ImageUpload
+                                                            images={variant.pendingImages || []}
+                                                            onImagesChange={(images) =>
+                                                                updateVariantImages(index, images)
+                                                            }
+                                                            maxImages={5}
+                                                            label="Variant Images"
+                                                            description="Add or remove images for this variant"
+                                                        />
+                                                    </DialogContent>
+                                                </Dialog>
+                                            </TableCell>
+                                            <TableCell>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() =>
-                                                        removeVariant(index)
-                                                    }
+                                                    onClick={() => removeVariant(index)}
                                                     className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                                                     title="Remove variant"
                                                 >

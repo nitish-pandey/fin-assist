@@ -413,6 +413,27 @@ const SingleProductPage = () => {
                                     </p>
                                 </div>
                             )}
+
+                            {/* Product Images */}
+                            {product.imageUrls && product.imageUrls.length > 0 && (
+                                <div className="mb-6">
+                                    <h3 className="text-sm font-medium mb-2">Product Images</h3>
+                                    <div className="flex gap-3 flex-wrap">
+                                        {product.imageUrls.map((url, index) => (
+                                            <div
+                                                key={index}
+                                                className="h-24 w-24 rounded-lg border overflow-hidden bg-muted"
+                                            >
+                                                <img
+                                                    src={url}
+                                                    alt={`${product.name} - Image ${index + 1}`}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </Card>
                     <Card>
@@ -492,29 +513,70 @@ const SingleProductPage = () => {
                                             <div key={variant.id} className="border rounded-lg">
                                                 {/* Variant Header with Basic Info */}
                                                 <div className="bg-muted/50 px-4 py-3 border-b">
-                                                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                                                        <div className="flex-1">
-                                                            <h4 className="font-medium text-lg">
-                                                                {variant.name}
-                                                            </h4>
-                                                            <div className="flex flex-wrap items-center gap-4 mt-1">
-                                                                <p className="text-sm text-muted-foreground">
-                                                                    SKU: {variant.sku}
-                                                                </p>
-                                                                <p className="text-sm text-muted-foreground">
-                                                                    Code: {variant.code}
-                                                                </p>
-                                                                <Badge
-                                                                    variant={
-                                                                        isLowStock
-                                                                            ? "destructive"
-                                                                            : "secondary"
-                                                                    }
-                                                                >
-                                                                    {isLowStock
-                                                                        ? "Low Stock"
-                                                                        : "In Stock"}
-                                                                </Badge>
+                                                    <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
+                                                        <div className="flex gap-4">
+                                                            {/* Variant Images */}
+                                                            {variant.imageUrls &&
+                                                                variant.imageUrls.length > 0 && (
+                                                                    <div className="flex gap-2 flex-shrink-0">
+                                                                        {variant.imageUrls
+                                                                            .slice(0, 3)
+                                                                            .map(
+                                                                                (url, imgIndex) => (
+                                                                                    <div
+                                                                                        key={
+                                                                                            imgIndex
+                                                                                        }
+                                                                                        className="h-16 w-16 rounded-md border overflow-hidden bg-background"
+                                                                                    >
+                                                                                        <img
+                                                                                            src={
+                                                                                                url
+                                                                                            }
+                                                                                            alt={`${
+                                                                                                variant.name
+                                                                                            } - Image ${
+                                                                                                imgIndex +
+                                                                                                1
+                                                                                            }`}
+                                                                                            className="h-full w-full object-cover"
+                                                                                        />
+                                                                                    </div>
+                                                                                )
+                                                                            )}
+                                                                        {variant.imageUrls.length >
+                                                                            3 && (
+                                                                            <div className="h-16 w-16 rounded-md border bg-muted flex items-center justify-center text-sm text-muted-foreground">
+                                                                                +
+                                                                                {variant.imageUrls
+                                                                                    .length - 3}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            <div className="flex-1">
+                                                                <h4 className="font-medium text-lg">
+                                                                    {variant.name}
+                                                                </h4>
+                                                                <div className="flex flex-wrap items-center gap-4 mt-1">
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        SKU: {variant.sku}
+                                                                    </p>
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        Code: {variant.code}
+                                                                    </p>
+                                                                    <Badge
+                                                                        variant={
+                                                                            isLowStock
+                                                                                ? "destructive"
+                                                                                : "secondary"
+                                                                        }
+                                                                    >
+                                                                        {isLowStock
+                                                                            ? "Low Stock"
+                                                                            : "In Stock"}
+                                                                    </Badge>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">

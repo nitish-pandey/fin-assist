@@ -1,3 +1,5 @@
+import type { ImageFile } from "./image-upload";
+
 export interface ProductOptions {
     name: string;
     slug: string;
@@ -15,6 +17,9 @@ export interface ProductVariant {
     sellPrice: number;
     stock: number;
     isBase?: boolean;
+    imageUrls?: string[] | null;
+    pendingImages?: ImageFile[]; // Images pending upload (File objects)
+    useProductImages?: boolean; // Whether to use the product's default images
     values: {
         [key: string]: string; // key is the option slug, value is the option value slug
     };
@@ -27,6 +32,8 @@ export interface Product {
     sellPrice: number;
     stock: number;
     categoryId: string;
+    imageUrls?: string[] | null;
+    pendingImages?: ImageFile[]; // Images pending upload (File objects)
     code: string;
     sku: string;
 

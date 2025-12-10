@@ -133,6 +133,7 @@ export interface ProductVariant {
     values: object;
     code: string;
     sku: string;
+    imageUrls?: string[] | null;
 
     createdAt: string;
     updatedAt: string;
@@ -146,6 +147,7 @@ export interface Product {
     name: string;
     categoryId: string;
     image: string | null;
+    imageUrls?: string[] | null;
     sku: string;
     description: string | null;
     organizationId: string;
