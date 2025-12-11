@@ -415,25 +415,31 @@ const SingleProductPage = () => {
                             )}
 
                             {/* Product Images */}
-                            {product.imageUrls && product.imageUrls.length > 0 && (
-                                <div className="mb-6">
-                                    <h3 className="text-sm font-medium mb-2">Product Images</h3>
-                                    <div className="flex gap-3 flex-wrap">
+                            <div className="mb-6">
+                                <h3 className="text-sm font-medium mb-2">Product Images</h3>
+                                {product.imageUrls && product.imageUrls.length > 0 ? (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                                         {product.imageUrls.map((url, index) => (
                                             <div
                                                 key={index}
-                                                className="h-24 w-24 rounded-lg border overflow-hidden bg-muted"
+                                                className="aspect-square rounded-lg border overflow-hidden bg-muted hover:shadow-md transition-shadow cursor-pointer group"
+                                                onClick={() => window.open(url, "_blank")}
                                             >
                                                 <img
                                                     src={url}
                                                     alt={`${product.name} - Image ${index + 1}`}
-                                                    className="h-full w-full object-cover"
+                                                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
                                                 />
                                             </div>
                                         ))}
                                     </div>
-                                </div>
-                            )}
+                                ) : (
+                                    <div className="aspect-square max-w-[200px] rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 flex flex-col items-center justify-center text-muted-foreground">
+                                        <Package className="h-10 w-10 mb-2 opacity-50" />
+                                        <span className="text-sm">No images</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </Card>
                     <Card>
@@ -514,7 +520,7 @@ const SingleProductPage = () => {
                                                 {/* Variant Header with Basic Info */}
                                                 <div className="bg-muted/50 px-4 py-3 border-b">
                                                     <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-3">
-                                                        <div className="flex gap-4">
+                                                        <div className="flex gap-4 items-start">
                                                             {/* Variant Images */}
                                                             {variant.imageUrls &&
                                                                 variant.imageUrls.length > 0 && (
@@ -527,7 +533,13 @@ const SingleProductPage = () => {
                                                                                         key={
                                                                                             imgIndex
                                                                                         }
-                                                                                        className="h-16 w-16 rounded-md border overflow-hidden bg-background"
+                                                                                        className="h-16 w-16 rounded-md border overflow-hidden bg-background hover:shadow-md transition-shadow cursor-pointer group"
+                                                                                        onClick={() =>
+                                                                                            window.open(
+                                                                                                url,
+                                                                                                "_blank"
+                                                                                            )
+                                                                                        }
                                                                                     >
                                                                                         <img
                                                                                             src={
@@ -539,14 +551,14 @@ const SingleProductPage = () => {
                                                                                                 imgIndex +
                                                                                                 1
                                                                                             }`}
-                                                                                            className="h-full w-full object-cover"
+                                                                                            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-200"
                                                                                         />
                                                                                     </div>
                                                                                 )
                                                                             )}
                                                                         {variant.imageUrls.length >
                                                                             3 && (
-                                                                            <div className="h-16 w-16 rounded-md border bg-muted flex items-center justify-center text-sm text-muted-foreground">
+                                                                            <div className="h-16 w-16 rounded-md border bg-muted flex items-center justify-center text-sm text-muted-foreground cursor-pointer hover:bg-muted/80">
                                                                                 +
                                                                                 {variant.imageUrls
                                                                                     .length - 3}
@@ -654,14 +666,14 @@ const SingleProductPage = () => {
 
                                                         <div className="bg-purple-50 p-3 rounded-md border border-purple-200">
                                                             <div className="font-medium text-purple-800">
-                                                                Total Orders
+                                                                Selling Price
                                                             </div>
                                                             <div className="text-lg font-bold text-purple-900">
-                                                                {variant.items?.length || 0}
+                                                                {variant.price || 0}
                                                             </div>
-                                                            <div className="text-xs text-purple-600">
+                                                            {/* <div className="text-xs text-purple-600">
                                                                 Transactions
-                                                            </div>
+                                                            </div> */}
                                                         </div>
                                                         <div className="bg-amber-50 p-3 rounded-md border border-amber-200">
                                                             <div className="font-medium text-amber-800">

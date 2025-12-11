@@ -7,6 +7,7 @@ import "./report.css";
 import { Link } from "react-router-dom";
 import { ColumnDef } from "@tanstack/react-table";
 import { Order } from "@/data/types";
+import { BS_DATES_MONTHS, convertAdToBs, convertBsToAd } from "@/utils/bs-ad-conversion";
 
 const FISCAL_YEARS = [
     {
@@ -54,11 +55,26 @@ const getPeriod = (type: string) => {
         end = new Date(now);
         end.setDate(start.getDate() + 6);
     } else if (type === "month") {
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        // start = new Date(now.getFullYear(), now.getMonth(), 1);
+        // end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const currentBSDate = convertAdToBs(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        const startDate = convertBsToAd(currentBSDate.year, currentBSDate.month, 1);
+        const endDate = convertBsToAd(
+            currentBSDate.year,
+            currentBSDate.month,
+            BS_DATES_MONTHS[currentBSDate.year as keyof typeof BS_DATES_MONTHS][
+                currentBSDate.month - 1
+            ]
+        );
+        start = new Date(startDate.year, startDate.month - 1, startDate.day);
+        end = new Date(endDate.year, endDate.month - 1, endDate.day);
     } else if (type === "year") {
-        start = new Date(now.getFullYear(), 0, 1);
-        end = new Date(now.getFullYear(), 11, 31);
+        const currentBSDate = convertAdToBs(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        const startDate = convertBsToAd(currentBSDate.year, 1, 1);
+        const endDate = convertBsToAd(currentBSDate.year, 12, 30);
+
+        start = new Date(startDate.year, startDate.month - 1, startDate.day);
+        end = new Date(endDate.year, endDate.month - 1, endDate.day);
     } else {
         start = now;
         end = now;
@@ -78,11 +94,45 @@ const formatCurrency = (amount: number) => {
 };
 
 const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-IN", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-    });
+    // Convert AD date to BS for display
+    const adDate = new Date(dateStr);
+    const bsDate = convertAdToBs(adDate.getFullYear(), adDate.getMonth() + 1, adDate.getDate());
+
+    const bsMonths = [
+        "Baisakh",
+        "Jestha",
+        "Ashadh",
+        "Shrawan",
+        "Bhadra",
+        "Ashwin",
+        "Kartik",
+        "Mangsir",
+        "Poush",
+        "Magh",
+        "Falgun",
+        "Chaitra",
+    ];
+
+    return `${bsMonths[bsDate.month - 1]} ${bsDate.day}, ${bsDate.year}`;
+};
+
+const convertBsToAdDate = (bsYear: number, bsMonth: number, bsDay: number): string => {
+    // Convert BS date to AD date string (YYYY-MM-DD)
+    const adDate = convertBsToAd(bsYear, bsMonth, bsDay);
+    return `${adDate.year}-${String(adDate.month).padStart(2, "0")}-${String(adDate.day).padStart(
+        2,
+        "0"
+    )}`;
+};
+
+const convertAdDateToBsString = (adDateStr: string): string => {
+    // Convert AD date string to BS date string for input fields
+    const adDate = new Date(adDateStr);
+    const bsDate = convertAdToBs(adDate.getFullYear(), adDate.getMonth() + 1, adDate.getDate());
+    return `${bsDate.year}-${String(bsDate.month).padStart(2, "0")}-${String(bsDate.day).padStart(
+        2,
+        "0"
+    )}`;
 };
 
 const ReportPage = () => {
@@ -91,6 +141,7 @@ const ReportPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [periodType, setPeriodType] = useState("month");
+    // Store dates in AD format internally
     const [customStart, setCustomStart] = useState(() => {
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -99,6 +150,16 @@ const ReportPage = () => {
     const [customEnd, setCustomEnd] = useState(() => {
         const today = new Date();
         return today.toISOString().slice(0, 10);
+    });
+    // BS date strings for display in input fields
+    const [bsCustomStart, setBsCustomStart] = useState(() => {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        return convertAdDateToBsString(startOfMonth.toISOString().slice(0, 10));
+    });
+    const [bsCustomEnd, setBsCustomEnd] = useState(() => {
+        const today = new Date();
+        return convertAdDateToBsString(today.toISOString().slice(0, 10));
     });
     const [selectedFiscalYear, setSelectedFiscalYear] = useState(FISCAL_YEARS[0]);
     const [activeTab, setActiveTab] = useState("summary");
@@ -111,17 +172,43 @@ const ReportPage = () => {
     }, [orgId, periodType, customStart, customEnd, selectedFiscalYear]);
 
     // Handle custom date changes and validate dates
-    const handleCustomStartChange = (date: string) => {
-        setCustomStart(date);
-        if (date && customEnd && new Date(date) > new Date(customEnd)) {
-            setCustomEnd(date);
+    const handleCustomStartChange = (bsDateStr: string) => {
+        // Parse BS date and convert to AD
+        const parts = bsDateStr.split("-");
+        if (parts.length === 3) {
+            const bsYear = parseInt(parts[0]);
+            const bsMonth = parseInt(parts[1]);
+            const bsDay = parseInt(parts[2]);
+            const adDateStr = convertBsToAdDate(bsYear, bsMonth, bsDay);
+
+            setBsCustomStart(bsDateStr);
+            setCustomStart(adDateStr);
+
+            // Validate and adjust end date if needed
+            if (adDateStr && customEnd && new Date(adDateStr) > new Date(customEnd)) {
+                setCustomEnd(adDateStr);
+                setBsCustomEnd(bsDateStr);
+            }
         }
     };
 
-    const handleCustomEndChange = (date: string) => {
-        setCustomEnd(date);
-        if (date && customStart && new Date(date) < new Date(customStart)) {
-            setCustomStart(date);
+    const handleCustomEndChange = (bsDateStr: string) => {
+        // Parse BS date and convert to AD
+        const parts = bsDateStr.split("-");
+        if (parts.length === 3) {
+            const bsYear = parseInt(parts[0]);
+            const bsMonth = parseInt(parts[1]);
+            const bsDay = parseInt(parts[2]);
+            const adDateStr = convertBsToAdDate(bsYear, bsMonth, bsDay);
+
+            setBsCustomEnd(bsDateStr);
+            setCustomEnd(adDateStr);
+
+            // Validate and adjust start date if needed
+            if (adDateStr && customStart && new Date(adDateStr) < new Date(customStart)) {
+                setCustomStart(adDateStr);
+                setBsCustomStart(bsDateStr);
+            }
         }
     };
 
@@ -493,26 +580,28 @@ const ReportPage = () => {
                                 <div className="flex gap-3 items-end">
                                     <div>
                                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                                            From
+                                            From (BS)
                                         </label>
                                         <input
                                             type="date"
-                                            value={customStart}
+                                            value={bsCustomStart}
                                             onChange={(e) =>
                                                 handleCustomStartChange(e.target.value)
                                             }
                                             className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                            placeholder="YYYY-MM-DD (BS)"
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-medium text-gray-700 mb-1">
-                                            To
+                                            To (BS)
                                         </label>
                                         <input
                                             type="date"
-                                            value={customEnd}
+                                            value={bsCustomEnd}
                                             onChange={(e) => handleCustomEndChange(e.target.value)}
                                             className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                            placeholder="YYYY-MM-DD (BS)"
                                         />
                                     </div>
                                     {customStart && customEnd && (

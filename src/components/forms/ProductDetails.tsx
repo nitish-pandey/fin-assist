@@ -152,8 +152,7 @@ export function ProductDetails({
     const handleGlobalSelect = (product: Product, variant?: ProductVariant) => {
         const myVar = variant || product.variants?.[0];
         if (!myVar) return;
-        const price =
-            type === "BUY" ? myVar.buyPrice || 0 : myVar.price || 0;
+        const price = type === "BUY" ? myVar.buyPrice || 0 : myVar.price || 0;
 
         const newProduct: SelectedProduct = {
             productId: product.id,
@@ -197,38 +196,57 @@ export function ProductDetails({
                 </div>
             )}
 
-            <CardContent className="p-6 space-y-6">
-                <div className="flex gap-4 font-medium text-sm text-muted-foreground bg-slate-50 p-3 rounded-md items-center">
-                    <div className="w-6">#</div>
-                    <div className="w-32">Product</div>
-                    <div className="min-w-28 max-w-60 w-full">Variant</div>
-                    <div className="w-24">Quantity</div>
-                    <div className="w-24">Rate (Rs)</div>
-                    <div className="w-28 text-right">Amount</div>
-                    <div className="w-40">Remarks</div>
-                    <div className="w-14" />
-                </div>
-
-                <ScrollArea className="pr-4 max-h-[50vh]">
-                    <div className="space-y-3">
-                        {addedProducts.map((item, index) => (
-                            <ProductItemRow
-                                key={index}
-                                index={index}
-                                item={item}
-                                type={type}
-                                isPublic={isPublic}
-                                products={products}
-                                product={productMap.get(item.productId)}
-                                variant={variantMap.get(item.variantId)}
-                                onUpdate={updateProductAtIndex}
-                                onRemove={handleRemoveProduct}
-                            />
-                        ))}
-                    </div>
+            <CardContent className="p-6 space-y-4">
+                <ScrollArea className="w-full max-h-[60vh]">
+                    <table className="w-full border-collapse">
+                        <thead className="sticky top-0 z-10 bg-slate-50">
+                            <tr className="border-b-2 border-slate-200">
+                                <th className="text-left py-3 px-3 text-sm font-semibold text-slate-700 w-12">
+                                    #
+                                </th>
+                                <th className="text-left py-3 px-3 text-sm font-semibold text-slate-700 min-w-[180px]">
+                                    Product
+                                </th>
+                                <th className="text-left py-3 px-3 text-sm font-semibold text-slate-700 min-w-[220px]">
+                                    Variant
+                                </th>
+                                <th className="text-center py-3 px-3 text-sm font-semibold text-slate-700 w-32">
+                                    Quantity
+                                </th>
+                                <th className="text-right py-3 px-3 text-sm font-semibold text-slate-700 w-28">
+                                    Rate (Rs)
+                                </th>
+                                <th className="text-right py-3 px-3 text-sm font-semibold text-slate-700 w-32">
+                                    Amount
+                                </th>
+                                <th className="text-left py-3 px-3 text-sm font-semibold text-slate-700 min-w-[160px]">
+                                    Remarks
+                                </th>
+                                <th className="text-center py-3 px-3 text-sm font-semibold text-slate-700 w-20">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {addedProducts.map((item, index) => (
+                                <ProductItemRow
+                                    key={index}
+                                    index={index}
+                                    item={item}
+                                    type={type}
+                                    isPublic={isPublic}
+                                    products={products}
+                                    product={productMap.get(item.productId)}
+                                    variant={variantMap.get(item.variantId)}
+                                    onUpdate={updateProductAtIndex}
+                                    onRemove={handleRemoveProduct}
+                                />
+                            ))}
+                        </tbody>
+                    </table>
                 </ScrollArea>
 
-                <div className="flex justify-between items-center pt-4 border-t">
+                <div className="flex justify-between items-center pt-4 border-t border-slate-200">
                     <div className="flex items-center gap-4">
                         <Button type="button" onClick={handleAddEmptySlot} size="sm">
                             <Plus className="h-4 w-4 mr-2" /> Add Item
@@ -284,10 +302,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
         const firstVariant = selectedProduct?.variants?.[0];
         if (!firstVariant) return;
 
-        const rate =
-            type === "BUY"
-                ? firstVariant.buyPrice
-                : firstVariant.price;
+        const rate = type === "BUY" ? firstVariant.buyPrice : firstVariant.price;
 
         onUpdate(index, { productId, variantId: firstVariant.id, rate });
     };
@@ -296,10 +311,7 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
         const selectedVariant = product?.variants?.find((v) => v.id === variantId);
         if (!selectedVariant) return;
 
-        const rate =
-            type === "BUY"
-                ? selectedVariant.buyPrice
-                : selectedVariant.price;
+        const rate = type === "BUY" ? selectedVariant.buyPrice : selectedVariant.price;
 
         onUpdate(index, { variantId, rate });
     };
@@ -322,17 +334,17 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
     };
 
     return (
-        <div className="flex gap-4 items-center bg-white p-3 rounded-lg border">
-            <div className="col-span-1 w-6 font-medium text-slate-600 text-sm">{index + 1}</div>
-            <div className="col-span-2 w-32">
+        <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+            <td className="py-3 px-3 text-sm font-medium text-slate-600">{index + 1}</td>
+            <td className="py-3 px-3">
                 <SelectPopover
                     items={products.map((p) => ({ id: p.id, label: p.name }))}
                     selectedId={item.productId}
                     onSelect={handleProductSelect}
                     placeholder="Select product"
                 />
-            </div>
-            <div className="col-span-2 max-w-60">
+            </td>
+            <td className="py-3 px-3">
                 {product ? (
                     <SelectPopover
                         items={(product.variants ?? []).map((v) => ({
@@ -356,129 +368,139 @@ const ProductItemRow: React.FC<ProductItemRowProps> = ({
                 ) : (
                     <span className="text-sm text-muted-foreground px-3">Select product first</span>
                 )}
-            </div>
-            <div className="col-span-2 w-24">
-                <div className="flex items-center gap-1">
-                    <Button
-                        size="icon"
-                        type="button"
-                        variant="outline"
-                        onClick={() => handleQuantityChange(item.quantity - 1)}
-                        disabled={!item.variantId || item.quantity <= 1}
-                        className="h-8 w-8"
-                    >
-                        <Minus className="h-3 w-3" />
-                    </Button>
-                    <Input
-                        type="number"
-                        min="1"
-                        max={type === "SELL" ? stock : undefined}
-                        value={item.quantity}
-                        onChange={(e) => onUpdate(index, { quantity: parseInt(e.target.value) })}
-                        onBlur={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
-                        className={`w-16 h-8 text-center ${
-                            hasStockError && product ? "border-red-500 bg-red-50" : ""
-                        }`}
-                        disabled={!item.variantId}
-                    />
-                    <Button
-                        size="icon"
-                        type="button"
-                        variant="outline"
-                        onClick={() => handleQuantityChange(item.quantity + 1)}
-                        disabled={!item.variantId || (type === "SELL" && item.quantity >= stock)}
-                        className="h-8 w-8"
-                    >
-                        <Plus className="h-3 w-3" />
-                    </Button>
+            </td>
+            <td className="py-3 px-3">
+                <div className="flex flex-col items-center gap-1">
+                    <div className="flex items-center gap-1">
+                        <Button
+                            size="icon"
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleQuantityChange(item.quantity - 1)}
+                            disabled={!item.variantId || item.quantity <= 1}
+                            className="h-8 w-8"
+                        >
+                            <Minus className="h-3 w-3" />
+                        </Button>
+                        <Input
+                            type="number"
+                            min="1"
+                            max={type === "SELL" ? stock : undefined}
+                            value={item.quantity}
+                            onChange={(e) =>
+                                onUpdate(index, { quantity: parseInt(e.target.value) })
+                            }
+                            onBlur={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                            className={`w-16 h-8 text-center ${
+                                hasStockError && product ? "border-red-500 bg-red-50" : ""
+                            }`}
+                            disabled={!item.variantId}
+                        />
+                        <Button
+                            size="icon"
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleQuantityChange(item.quantity + 1)}
+                            disabled={
+                                !item.variantId || (type === "SELL" && item.quantity >= stock)
+                            }
+                            className="h-8 w-8"
+                        >
+                            <Plus className="h-3 w-3" />
+                        </Button>
+                    </div>
+                    {hasStockError && product && (
+                        <div className="text-xs text-red-500 text-center whitespace-nowrap">
+                            Exceeds stock
+                        </div>
+                    )}
                 </div>
-                {hasStockError && product && (
-                    <div className="text-xs text-red-500 mt-1 text-center">Exceeds stock</div>
-                )}
-            </div>
-            <div className="col-span-2 w-24">
+            </td>
+            <td className="py-3 px-3">
                 <Input
                     type="number"
                     value={item.rate}
                     onChange={(e) => handleRateChange(parseFloat(e.target.value))}
-                    className="text-right h-9"
+                    className="text-right h-9 w-full"
                     // disabled={!item.variantId || type === "SELL"}
                 />
-            </div>
-            <div className="col-span-1 w-28 text-right font-semibold text-slate-700 whitespace-nowrap">
+            </td>
+            <td className="py-3 px-3 text-right font-semibold text-slate-700">
                 {amount.toFixed(2)}
-            </div>
-            <div className="col-span-1 w-40">
+            </td>
+            <td className="py-3 px-3">
                 <Input
                     type="text"
                     value={item.description}
                     onChange={(e) => onUpdate(index, { description: e.target.value })}
                     placeholder="Remarks"
-                    className="h-9"
+                    className="h-9 w-full"
                     disabled={!item.variantId}
                 />
-            </div>
-            <div className="col-span-1 w-14 flex justify-center items-center gap-2">
-                <Button
-                    size="icon"
-                    type="button"
-                    variant="ghost"
-                    onClick={() => onRemove(index)}
-                    className="h-8 w-8 text-slate-500 hover:text-red-500"
-                >
-                    <X className="h-4 w-4" />
-                </Button>
+            </td>
+            <td className="py-3 px-3">
+                <div className="flex justify-center items-center gap-2">
+                    <Button
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                        onClick={() => onRemove(index)}
+                        className="h-8 w-8 text-slate-500 hover:text-red-500"
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
 
-                {/* Show FIFO queue breakdown tooltip for SELL transactions */}
-                {type === "SELL" && variant?.stock_fifo_queue && item.quantity > 0 && (
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="h-4 w-4 rounded-full bg-blue-100 text-blue-600 text-xs flex items-center justify-center font-medium">
-                                    i
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-sm bg-gray-200 text-black">
-                                <div className="text-xs space-y-1">
-                                    <div className="font-medium text-slate-800 mb-2">
-                                        Price Breakdown:
+                    {/* Show FIFO queue breakdown tooltip for SELL transactions */}
+                    {type === "SELL" && variant?.stock_fifo_queue && item.quantity > 0 && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 text-xs flex items-center justify-center font-medium cursor-help">
+                                        i
                                     </div>
-                                    {(() => {
-                                        let remainingQty = item.quantity;
-                                        const breakdown: { qty: number; price: number }[] = [];
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-sm bg-gray-200 text-black">
+                                    <div className="text-xs space-y-1">
+                                        <div className="font-medium text-slate-800 mb-2">
+                                            Price Breakdown:
+                                        </div>
+                                        {(() => {
+                                            let remainingQty = item.quantity;
+                                            const breakdown: { qty: number; price: number }[] = [];
 
-                                        for (const entry of variant.stock_fifo_queue) {
-                                            if (entry.availableStock <= 0 || remainingQty <= 0)
-                                                continue;
+                                            for (const entry of variant.stock_fifo_queue) {
+                                                if (entry.availableStock <= 0 || remainingQty <= 0)
+                                                    continue;
 
-                                            const qtyToUse = Math.min(
-                                                entry.availableStock,
-                                                remainingQty
-                                            );
-                                            breakdown.push({
-                                                qty: qtyToUse,
-                                                price: entry.estimatedPrice,
-                                            });
-                                            remainingQty -= qtyToUse;
-                                        }
+                                                const qtyToUse = Math.min(
+                                                    entry.availableStock,
+                                                    remainingQty
+                                                );
+                                                breakdown.push({
+                                                    qty: qtyToUse,
+                                                    price: entry.estimatedPrice,
+                                                });
+                                                remainingQty -= qtyToUse;
+                                            }
 
-                                        return breakdown.map((item, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="flex justify-between text-slate-600"
-                                            >
-                                                <span>{item.qty} items</span>
-                                                <span>@ Rs {item.price.toFixed(2)}</span>
-                                            </div>
-                                        ));
-                                    })()}
-                                </div>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                )}
-            </div>
-        </div>
+                                            return breakdown.map((item, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="flex justify-between text-slate-600"
+                                                >
+                                                    <span>{item.qty} items</span>
+                                                    <span>@ Rs {item.price.toFixed(2)}</span>
+                                                </div>
+                                            ));
+                                        })()}
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+                </div>
+            </td>
+        </tr>
     );
 };
 
@@ -608,8 +630,7 @@ function GlobalSearchPopover({
             // If product has only one variant, show as product
             if (product.variants?.length === 1 && (productMatches || variantMatches.length > 0)) {
                 const variant = product.variants[0];
-                const price =
-                    type === "BUY" ? variant.buyPrice : variant.price;
+                const price = type === "BUY" ? variant.buyPrice : variant.price;
                 results.push({
                     type: "product",
                     product,
@@ -623,8 +644,7 @@ function GlobalSearchPopover({
             else if (product.variants && product.variants.length > 1) {
                 // Show matching variants
                 variantMatches.forEach((variant) => {
-                    const price =
-                        type === "BUY" ? variant.buyPrice : variant.price;
+                    const price = type === "BUY" ? variant.buyPrice : variant.price;
                     results.push({
                         type: "variant",
                         product,
@@ -638,10 +658,7 @@ function GlobalSearchPopover({
                 // If product name matches but no variants match, show all variants
                 if (productMatches && variantMatches.length === 0) {
                     product.variants.forEach((variant) => {
-                        const price =
-                            type === "BUY"
-                                ? variant.buyPrice
-                                : variant.price;
+                        const price = type === "BUY" ? variant.buyPrice : variant.price;
                         results.push({
                             type: "variant",
                             product,

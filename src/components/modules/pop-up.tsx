@@ -11,10 +11,7 @@ const PopUp = () => {
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (
-                popUpRef.current &&
-                !popUpRef.current.contains(e.target as Node)
-            ) {
+            if (popUpRef.current && !popUpRef.current.contains(e.target as Node)) {
                 setIsOpen(false);
             }
         };
@@ -33,6 +30,11 @@ const PopUp = () => {
     const links = [
         { path: `/org/${orgId}/orders/buy`, name: "Buy Product" },
         { path: `/org/${orgId}/orders/sell`, name: "Sell Product" },
+        // POS
+        {
+            path: `/org/${orgId}/pos`,
+            name: "Point of Sale",
+        },
     ];
 
     return (
@@ -42,11 +44,7 @@ const PopUp = () => {
                     onClick={() => setIsOpen((prev) => !prev)}
                     className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all"
                 >
-                    {isOpen ? (
-                        <ImCross className="w-6 h-6" />
-                    ) : (
-                        <FaListUl className="w-6 h-6" />
-                    )}
+                    {isOpen ? <ImCross className="w-6 h-6" /> : <FaListUl className="w-6 h-6" />}
                 </button>
 
                 {isOpen && (

@@ -299,17 +299,38 @@ export default function ProductForm() {
                     : [];
 
                 // Remove pendingImages and useProductImages from the variant payload
-                const { pendingImages, useProductImages, ...cleanVariant } = variant;
+                const { pendingImages, useProductImages, imageUrls, ...cleanVariant } = variant;
+
+                // Build variant payload matching ProductVariantInput
                 return {
-                    ...cleanVariant,
-                    imageUrls: variantImageUrls,
+                    name: cleanVariant.name,
+                    description: cleanVariant.description,
+                    sku: cleanVariant.sku,
+                    buyPrice: cleanVariant.buyPrice,
+                    sellPrice: cleanVariant.sellPrice,
+                    stock: cleanVariant.stock,
+                    values: cleanVariant.values,
+                    isBase: cleanVariant.isBase,
+                    imageUrls: variantImageUrls.length > 0 ? variantImageUrls : undefined,
                 };
             });
 
             // Remove pendingImages from the product payload
             const { pendingImages, ...cleanProduct } = product;
+
+            // Convert options array to object format
+            const optionsObject =
+                product.options?.reduce((acc, option) => {
+                    if (option.name && option.values) {
+                        acc[option.name] = option.values.map((v) => v.value);
+                    }
+                    return acc;
+                }, {} as Record<string, string[]>) || {};
+
             const productPayload = {
+                orgId,
                 ...cleanProduct,
+                options: optionsObject,
                 imageUrls: productImageUrls,
                 variants: variantsWithUrls,
             };

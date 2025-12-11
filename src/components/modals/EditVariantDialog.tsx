@@ -14,6 +14,8 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog";
+import { ImageUpload, ImageFile } from "@/pages/admin/products/image-upload";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EditVariantDialogProps {
     variant: ProductVariant | null;
@@ -43,6 +45,7 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
     onUpdate,
 }) => {
     const [isLoading, setIsLoading] = useState(false);
+    const [images, setImages] = useState<ImageFile[]>([]);
     const { toast } = useToast();
 
     const {
@@ -71,8 +74,18 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
             setValue("price", variant.price);
             setValue("code", variant.code);
             setValue("sku", variant.sku);
+
+            // Initialize images from existing URLs
+            const existingImages: ImageFile[] = (variant.imageUrls || []).map((url, index) => ({
+                id: `existing-${index}`,
+                preview: url,
+                isUploaded: true,
+                url: url,
+            }));
+            setImages(existingImages);
         } else {
             reset();
+            setImages([]);
         }
     }, [variant, setValue, reset]);
 
@@ -81,6 +94,28 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
 
         setIsLoading(true);
         try {
+            // Upload new images if any
+            const imageUrls: string[] = [];
+
+            for (const image of images) {
+                if (image.isUploaded && image.url) {
+                    // Keep existing images
+                    imageUrls.push(image.url);
+                } else if (image.file) {
+                    // Upload new images
+                    const formData = new FormData();
+                    formData.append("file", image.file);
+
+                    const uploadResponse = await api.post("/upload/public", formData, {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                        },
+                    });
+
+                    imageUrls.push(uploadResponse.data.data.url);
+                }
+            }
+
             const response = await api.put(
                 `/orgs/${orgId}/products/${productId}/variants/${variant.id}`,
                 {
@@ -91,6 +126,7 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
                     stock: parseInt(data.stock.toString()),
                     code: data.code,
                     sku: data.sku,
+                    imageUrls: imageUrls,
                 }
             );
 
@@ -121,6 +157,7 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
     const handleClose = () => {
         if (!isLoading) {
             reset();
+            setImages([]);
             onClose();
         }
     };
@@ -132,105 +169,120 @@ const EditVariantDialog: React.FC<EditVariantDialogProps> = ({
                     <DialogTitle>Edit Variant</DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                <ScrollArea className="max-h-[60vh] pr-4">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Variant Name</Label>
+                                <Input
+                                    id="name"
+                                    placeholder="Enter variant name"
+                                    {...register("name", {
+                                        required: "Variant name is required",
+                                        minLength: {
+                                            value: 2,
+                                            message: "Variant name must be at least 2 characters",
+                                        },
+                                    })}
+                                    disabled={isLoading}
+                                />
+                                {errors.name && (
+                                    <p className="text-red-500 text-sm">{errors.name.message}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="code">Code</Label>
+                                <Input
+                                    id="code"
+                                    placeholder="Enter variant code"
+                                    {...register("code", {
+                                        required: "Variant code is required",
+                                    })}
+                                    disabled={isLoading}
+                                />
+                                {errors.code && (
+                                    <p className="text-red-500 text-sm">{errors.code.message}</p>
+                                )}
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
-                            <Label htmlFor="name">Variant Name</Label>
+                            <Label htmlFor="sku">SKU</Label>
                             <Input
-                                id="name"
-                                placeholder="Enter variant name"
-                                {...register("name", {
-                                    required: "Variant name is required",
-                                    minLength: {
-                                        value: 2,
-                                        message: "Variant name must be at least 2 characters",
-                                    },
+                                id="sku"
+                                placeholder="Enter SKU"
+                                {...register("sku", {
+                                    required: "SKU is required",
                                 })}
                                 disabled={isLoading}
                             />
-                            {errors.name && (
-                                <p className="text-red-500 text-sm">{errors.name.message}</p>
+                            {errors.sku && (
+                                <p className="text-red-500 text-sm">{errors.sku.message}</p>
                             )}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="code">Code</Label>
-                            <Input
-                                id="code"
-                                placeholder="Enter variant code"
-                                {...register("code", {
-                                    required: "Variant code is required",
-                                })}
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                                id="description"
+                                placeholder="Enter variant description (optional)"
+                                rows={3}
+                                {...register("description")}
                                 disabled={isLoading}
                             />
-                            {errors.code && (
-                                <p className="text-red-500 text-sm">{errors.code.message}</p>
-                            )}
                         </div>
-                    </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="sku">SKU</Label>
-                        <Input
-                            id="sku"
-                            placeholder="Enter SKU"
-                            {...register("sku", {
-                                required: "SKU is required",
-                            })}
-                            disabled={isLoading}
-                        />
-                        {errors.sku && <p className="text-red-500 text-sm">{errors.sku.message}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="description">Description</Label>
-                        <Textarea
-                            id="description"
-                            placeholder="Enter variant description (optional)"
-                            rows={3}
-                            {...register("description")}
-                            disabled={isLoading}
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
+                        {/* Variant Images */}
                         <div className="space-y-2">
-                            <Label htmlFor="price">Sell Price</Label>
-                            <Input
-                                id="price"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="0.00"
-                                {...register("price", {
-                                    required: "Sell price is required",
-                                    min: {
-                                        value: 0,
-                                        message: "Sell price must be positive",
-                                    },
-                                })}
-                                disabled={isLoading}
+                            <ImageUpload
+                                images={images}
+                                onImagesChange={setImages}
+                                maxImages={5}
+                                label="Variant Images"
+                                description="Upload, remove, or reorder variant images"
                             />
-                            {errors.price && (
-                                <p className="text-red-500 text-sm">{errors.price.message}</p>
-                            )}
                         </div>
-                    </div>
 
-                    <DialogFooter>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleClose}
-                            disabled={isLoading}
-                        >
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading}>
-                            {isLoading ? "Updating..." : "Update Variant"}
-                        </Button>
-                    </DialogFooter>
-                </form>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="price">Sell Price</Label>
+                                <Input
+                                    id="price"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="0.00"
+                                    {...register("price", {
+                                        required: "Sell price is required",
+                                        min: {
+                                            value: 0,
+                                            message: "Sell price must be positive",
+                                        },
+                                    })}
+                                    disabled={isLoading}
+                                />
+                                {errors.price && (
+                                    <p className="text-red-500 text-sm">{errors.price.message}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleClose}
+                                disabled={isLoading}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isLoading}>
+                                {isLoading ? "Updating..." : "Update Variant"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
     );

@@ -610,10 +610,11 @@ export default function SinglePOSRegisterPage() {
                         <div className="flex gap-2 overflow-x-auto pb-1">
                             <button
                                 onClick={() => setSelectedCategory(null)}
-                                className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${!selectedCategory
+                                className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
+                                    !selectedCategory
                                         ? "bg-primary text-primary-foreground"
                                         : "bg-gray-100 hover:bg-gray-200"
-                                    }`}
+                                }`}
                             >
                                 All
                             </button>
@@ -621,10 +622,11 @@ export default function SinglePOSRegisterPage() {
                                 <button
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
-                                    className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${selectedCategory === cat
+                                    className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
+                                        selectedCategory === cat
                                             ? "bg-primary text-primary-foreground"
                                             : "bg-gray-100 hover:bg-gray-200"
-                                        }`}
+                                    }`}
                                 >
                                     {cat}
                                 </button>
@@ -646,10 +648,11 @@ export default function SinglePOSRegisterPage() {
                                                 !isOutOfStock && addToCart(product, variant)
                                             }
                                             disabled={isOutOfStock}
-                                            className={`relative bg-white rounded-lg border p-3 text-left transition-all hover:shadow-md ${isOutOfStock
+                                            className={`relative bg-white rounded-lg border p-3 text-left transition-all hover:shadow-md ${
+                                                isOutOfStock
                                                     ? "opacity-50 cursor-not-allowed"
                                                     : "hover:border-primary"
-                                                }`}
+                                            }`}
                                         >
                                             {/* Stock Badge */}
                                             <Badge
@@ -657,8 +660,8 @@ export default function SinglePOSRegisterPage() {
                                                     isOutOfStock
                                                         ? "destructive"
                                                         : stock < 10
-                                                            ? "secondary"
-                                                            : "default"
+                                                        ? "secondary"
+                                                        : "default"
                                                 }
                                                 className="absolute top-2 right-2 text-xs"
                                             >
@@ -667,9 +670,10 @@ export default function SinglePOSRegisterPage() {
 
                                             {/* Image placeholder */}
                                             <div className="aspect-square rounded-md bg-gray-100 mb-2 flex items-center justify-center overflow-hidden">
-                                                {product.image ? (
+                                                {variant.imageUrls &&
+                                                variant.imageUrls.length > 0 ? (
                                                     <img
-                                                        src={product.image}
+                                                        src={variant.imageUrls[0]}
                                                         alt={product.name}
                                                         className="w-full h-full object-cover"
                                                     />
@@ -961,21 +965,22 @@ export default function SinglePOSRegisterPage() {
                         </div>
                         {closeFormData.actualClosingBalance !== register.expectedClosingBalance && (
                             <div
-                                className={`text-sm p-2 rounded ${closeFormData.actualClosingBalance <
-                                        register.expectedClosingBalance
+                                className={`text-sm p-2 rounded ${
+                                    closeFormData.actualClosingBalance <
+                                    register.expectedClosingBalance
                                         ? "bg-red-50 text-red-600"
                                         : "bg-green-50 text-green-600"
-                                    }`}
+                                }`}
                             >
                                 Diff:{" "}
                                 {formatCurrency(
                                     Math.abs(
                                         closeFormData.actualClosingBalance -
-                                        register.expectedClosingBalance
+                                            register.expectedClosingBalance
                                     )
                                 )}
                                 {closeFormData.actualClosingBalance <
-                                    register.expectedClosingBalance
+                                register.expectedClosingBalance
                                     ? " short"
                                     : " over"}
                             </div>

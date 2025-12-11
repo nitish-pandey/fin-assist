@@ -1,4 +1,4 @@
-const BS_DATES_MONTHS = {
+export const BS_DATES_MONTHS = {
     2000: [30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31],
     2001: [31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30],
     2002: [31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30],
@@ -101,22 +101,24 @@ const BS_DATES_MONTHS = {
     2099: [31, 31, 32, 31, 31, 31, 30, 29, 29, 30, 30, 30],
 };
 
-const bdRefDate = {
+// Reference: BS 2000/01/01 = AD 1943/04/14
+const bsRefDate = {
     year: 2000,
-    month: 9,
-    day: 17,
+    month: 1,
+    day: 1,
 };
 
 const adRefDate = {
-    year: 1944,
-    month: 1,
-    day: 1,
+    year: 1943,
+    month: 4,
+    day: 14,
 };
 
 export function convertBsToAd(bsYear: number, bsMonth: number, bsDay: number) {
     let totalDays = 0;
 
-    for (let year = bdRefDate.year; year < bsYear; year++) {
+    // Calculate days from BS reference date to target date
+    for (let year = bsRefDate.year; year < bsYear; year++) {
         for (let month = 1; month <= 12; month++) {
             totalDays += BS_DATES_MONTHS[year as keyof typeof BS_DATES_MONTHS][month - 1];
         }
@@ -126,8 +128,9 @@ export function convertBsToAd(bsYear: number, bsMonth: number, bsDay: number) {
         totalDays += BS_DATES_MONTHS[bsYear as keyof typeof BS_DATES_MONTHS][month - 1];
     }
 
-    totalDays += bsDay - bdRefDate.day;
+    totalDays += bsDay - bsRefDate.day;
 
+    // Add days to AD reference date
     const adDate = new Date(adRefDate.year, adRefDate.month - 1, adRefDate.day);
     adDate.setDate(adDate.getDate() + totalDays);
 
@@ -139,31 +142,52 @@ export function convertBsToAd(bsYear: number, bsMonth: number, bsDay: number) {
 }
 
 export function convertAdToBs(adYear: number, adMonth: number, adDay: number) {
-    let totalDays = 0;
-
-    const adDate = new Date(adRefDate.year, adRefDate.month - 1, adRefDate.day);
+    const adRefDateObj = new Date(adRefDate.year, adRefDate.month - 1, adRefDate.day);
     const targetDate = new Date(adYear, adMonth - 1, adDay);
 
-    const timeDiff = targetDate.getTime() - adDate.getTime();
-    totalDays = Math.floor(timeDiff / (1000 * 3600 * 24));
+    const timeDiff = targetDate.getTime() - adRefDateObj.getTime();
+    let totalDays = Math.floor(timeDiff / (1000 * 3600 * 24));
 
-    let bsYear = bdRefDate.year;
-    let bsMonth = bdRefDate.month;
-    let bsDay = bdRefDate.day;
+    let bsYear = bsRefDate.year;
+    let bsMonth = bsRefDate.month;
+    let bsDay = bsRefDate.day;
 
-    while (totalDays > 0) {
-        const daysInMonth = BS_DATES_MONTHS[bsYear as keyof typeof BS_DATES_MONTHS][bsMonth - 1];
-        if (totalDays + bsDay > daysInMonth) {
-            totalDays -= daysInMonth - bsDay + 1;
-            bsDay = 1;
-            bsMonth++;
-            if (bsMonth > 12) {
-                bsMonth = 1;
-                bsYear++;
+    if (totalDays >= 0) {
+        // Moving forward from reference date
+        while (totalDays > 0) {
+            const daysInMonth =
+                BS_DATES_MONTHS[bsYear as keyof typeof BS_DATES_MONTHS][bsMonth - 1];
+            const daysLeftInMonth = daysInMonth - bsDay + 1;
+
+            if (totalDays >= daysLeftInMonth) {
+                totalDays -= daysLeftInMonth;
+                bsDay = 1;
+                bsMonth++;
+                if (bsMonth > 12) {
+                    bsMonth = 1;
+                    bsYear++;
+                }
+            } else {
+                bsDay += totalDays;
+                totalDays = 0;
             }
-        } else {
-            bsDay += totalDays;
-            totalDays = 0;
+        }
+    } else {
+        // Moving backward from reference date
+        totalDays = Math.abs(totalDays);
+        while (totalDays > 0) {
+            if (totalDays >= bsDay) {
+                totalDays -= bsDay;
+                bsMonth--;
+                if (bsMonth < 1) {
+                    bsMonth = 12;
+                    bsYear--;
+                }
+                bsDay = BS_DATES_MONTHS[bsYear as keyof typeof BS_DATES_MONTHS][bsMonth - 1];
+            } else {
+                bsDay -= totalDays;
+                totalDays = 0;
+            }
         }
     }
 

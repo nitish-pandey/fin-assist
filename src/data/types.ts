@@ -126,7 +126,7 @@ export interface ProductVariant {
     productId: string;
 
     buyPrice: number;
-    price: number; 
+    price: number;
     estimatedPrice: number;
     stock: number;
 
@@ -146,7 +146,6 @@ export interface Product {
     id: string;
     name: string;
     categoryId: string;
-    image: string | null;
     imageUrls?: string[] | null;
     sku: string;
     description: string | null;
