@@ -18,6 +18,9 @@ import {
 } from "lucide-react";
 import { api } from "@/utils/api";
 import { useOrg } from "@/providers/org-provider";
+import { convertAdToBs, convertBsToAd } from "@/utils/bs-ad-conversion";
+import NepaliDate from "nepali-date-converter";
+import { Link } from "react-router-dom";
 
 interface TransactionData {
     period: string;
@@ -90,6 +93,81 @@ interface ApiResponse {
 
 type PeriodType = "week" | "month" | "year" | "all";
 
+const getPeriod = (type: string) => {
+    const now = new Date();
+    let start: Date, end: Date;
+    if (type === "today") {
+        start = new Date(now);
+        end = new Date(now);
+    } else if (type === "yesterday") {
+        start = new Date(now);
+        start.setDate(now.getDate() - 1);
+        end = new Date(now);
+        end.setDate(now.getDate() - 1);
+    } else if (type === "week") {
+        const day = now.getDay();
+        start = new Date(now);
+        start.setDate(now.getDate() - day);
+        end = new Date(now);
+        end.setDate(start.getDate() + 6);
+    } else if (type === "month") {
+        const currentBSDate = convertAdToBs(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        const startDate = convertBsToAd(currentBSDate.year, currentBSDate.month, 1);
+
+        const bsMonthEnd = new NepaliDate(currentBSDate.year, currentBSDate.month - 1, 1);
+        bsMonthEnd.setMonth(currentBSDate.month);
+        bsMonthEnd.setDate(0);
+        const lastDayOfMonth = bsMonthEnd.getDate();
+
+        const endDate = convertBsToAd(currentBSDate.year, currentBSDate.month, lastDayOfMonth);
+        start = new Date(startDate.year, startDate.month - 1, startDate.day + 1);
+        end = new Date(endDate.year, endDate.month - 1, endDate.day + 1);
+    } else if (type === "year") {
+        const currentBSDate = convertAdToBs(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        const startDate = convertBsToAd(currentBSDate.year, 1, 1);
+        const endDate = convertBsToAd(currentBSDate.year, 12, 30);
+
+        start = new Date(startDate.year, startDate.month - 1, startDate.day + 1);
+        end = new Date(endDate.year, endDate.month - 1, endDate.day + 1);
+    } else if (type === "all") {
+        start = new Date(2020, 0, 1);
+        end = now;
+    } else {
+        start = now;
+        end = now;
+    }
+    return {
+        startDate: start.toISOString().slice(0, 10),
+        endDate: end.toISOString().slice(0, 10),
+    };
+};
+
+const formatDate = (dateStr: string, offsetDays: number = 0) => {
+    const adDate = new Date(dateStr);
+    const bsDate = convertAdToBs(
+        adDate.getFullYear(),
+        adDate.getMonth() + 1,
+        adDate.getDate() + offsetDays
+    );
+
+    const bsMonths = [
+        "Baisakh",
+        "Jestha",
+        "Ashadh",
+        "Shrawan",
+        "Bhadra",
+        "Ashwin",
+        "Kartik",
+        "Mangsir",
+        "Poush",
+        "Magh",
+        "Falgun",
+        "Chaitra",
+    ];
+
+    return `${bsMonths[bsDate.month - 1]} ${bsDate.day}, ${bsDate.year}`;
+};
+
 const Dashboard = () => {
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -97,27 +175,30 @@ const Dashboard = () => {
     const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>("month");
     const { orgId } = useOrg();
 
-    // API call with period parameter
+    // Store dates in AD format internally
+    const [customStart, setCustomStart] = useState(() => {
+        const period = getPeriod("month");
+        return period.startDate;
+    });
+    const [customEnd, setCustomEnd] = useState(() => {
+        const period = getPeriod("month");
+        return period.endDate;
+    });
+
+    // API call with date range parameters
     const fetchDashboardData = async (
-        period: PeriodType = selectedPeriod
+        startDate?: string,
+        endDate?: string
     ): Promise<ApiResponse> => {
         try {
-            const data = await api.get(`/orgs/${orgId}/dashboard?period=${period}`);
-            const orderSummary = await api.get(`/orgs/${orgId}/orders/summary?period=${period}`);
-
-            // Combine dashboard data with order summary
-            const combinedData = {
-                ...data.data,
-                orderSummary: orderSummary.data,
-            };
+            const params =
+                startDate && endDate ? { startDate, endDate } : getPeriod(selectedPeriod);
+            const data = await api.get(`/orgs/${orgId}/dashboard`, { params });
 
             return {
-                success: data.status === 200 && orderSummary.status === 200,
-                data: combinedData as DashboardData,
-                error:
-                    data.status !== 200 || orderSummary.status !== 200
-                        ? "Failed to fetch dashboard data"
-                        : undefined,
+                success: data.status === 200,
+                data: data.data as DashboardData,
+                error: data.status !== 200 ? "Failed to fetch dashboard data" : undefined,
             };
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
@@ -133,7 +214,11 @@ const Dashboard = () => {
         setError(null);
 
         try {
-            const response = await fetchDashboardData();
+            const period = getPeriod(selectedPeriod);
+            const startDate = period.startDate;
+            const endDate = period.endDate;
+
+            const response = await fetchDashboardData(startDate, endDate);
 
             if (response.success && response.data) {
                 setData(response.data);
@@ -150,27 +235,16 @@ const Dashboard = () => {
     // Handle period change
     const handlePeriodChange = async (period: PeriodType) => {
         setSelectedPeriod(period);
-        setLoading(true);
-        setError(null);
-
-        try {
-            const response = await fetchDashboardData(period);
-
-            if (response.success && response.data) {
-                setData(response.data);
-            } else {
-                setError(response.error || "Unknown error occurred");
-            }
-        } catch (err) {
-            setError("Network error. Please check your connection.");
-        } finally {
-            setLoading(false);
-        }
+        const dateRange = getPeriod(period);
+        setCustomStart(dateRange.startDate);
+        setCustomEnd(dateRange.endDate);
     };
 
     useEffect(() => {
-        loadData();
-    }, []);
+        if (orgId) {
+            loadData();
+        }
+    }, [orgId, selectedPeriod]);
 
     // Derived data calculations
     const getDerivedData = (dashboardData: DashboardData) => {
@@ -222,7 +296,7 @@ const Dashboard = () => {
         // Format months for display (remove year)
         const chartData = dashboardData.transactions?.map((item) => ({
             ...item,
-            month: item.period.split("-")[1], // Extract month part
+            month: item.period, // Extract month part
         }));
 
         return {
@@ -374,8 +448,24 @@ const Dashboard = () => {
                         <p className="text-gray-600 text-sm">
                             Complete business overview and analytics
                         </p>
+                        <div className="mt-2 inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 text-blue-800 text-xs font-semibold rounded-full border border-blue-200">
+                            <svg
+                                className="w-4 h-4 mr-1.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                            </svg>
+                            {formatDate(customStart)} — {formatDate(customEnd)}
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         {/* Period Selection Buttons */}
                         <button
                             onClick={loadData}
@@ -767,9 +857,15 @@ const Dashboard = () => {
                                             className="border-b border-gray-100 hover:bg-gray-50"
                                         >
                                             <td className="py-2 px-3">
-                                                <div className="font-medium text-gray-900">
+                                                {/* <div className="font-medium text-gray-900">
                                                     {order.orderNumber}
-                                                </div>
+                                                </div> */}
+                                                <Link
+                                                    to={`/org/${orgId}/orders/${order.id}`}
+                                                    className="font-medium text-blue-600 hover:underline"
+                                                >
+                                                    {order.orderNumber}
+                                                </Link>
                                             </td>
                                             <td className="py-2 px-3">
                                                 <span

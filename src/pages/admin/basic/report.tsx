@@ -7,7 +7,8 @@ import "./report.css";
 import { Link } from "react-router-dom";
 import { ColumnDef } from "@tanstack/react-table";
 import { Order } from "@/data/types";
-import { BS_DATES_MONTHS, convertAdToBs, convertBsToAd } from "@/utils/bs-ad-conversion";
+import { convertAdToBs, convertBsToAd } from "@/utils/bs-ad-conversion";
+import NepaliDate from "nepali-date-converter";
 
 const FISCAL_YEARS = [
     {
@@ -59,22 +60,23 @@ const getPeriod = (type: string) => {
         // end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         const currentBSDate = convertAdToBs(now.getFullYear(), now.getMonth() + 1, now.getDate());
         const startDate = convertBsToAd(currentBSDate.year, currentBSDate.month, 1);
-        const endDate = convertBsToAd(
-            currentBSDate.year,
-            currentBSDate.month,
-            BS_DATES_MONTHS[currentBSDate.year as keyof typeof BS_DATES_MONTHS][
-                currentBSDate.month - 1
-            ]
-        );
-        start = new Date(startDate.year, startDate.month - 1, startDate.day);
-        end = new Date(endDate.year, endDate.month - 1, endDate.day);
+
+        // Get the last day of the BS month using NepaliDate
+        const bsMonthEnd = new NepaliDate(currentBSDate.year, currentBSDate.month - 1, 1);
+        bsMonthEnd.setMonth(currentBSDate.month); // Move to next month
+        bsMonthEnd.setDate(0); // Go back one day to get last day of current month
+        const lastDayOfMonth = bsMonthEnd.getDate();
+
+        const endDate = convertBsToAd(currentBSDate.year, currentBSDate.month, lastDayOfMonth);
+        start = new Date(startDate.year, startDate.month - 1, startDate.day + 1);
+        end = new Date(endDate.year, endDate.month - 1, endDate.day + 1);
     } else if (type === "year") {
         const currentBSDate = convertAdToBs(now.getFullYear(), now.getMonth() + 1, now.getDate());
         const startDate = convertBsToAd(currentBSDate.year, 1, 1);
         const endDate = convertBsToAd(currentBSDate.year, 12, 30);
 
-        start = new Date(startDate.year, startDate.month - 1, startDate.day);
-        end = new Date(endDate.year, endDate.month - 1, endDate.day);
+        start = new Date(startDate.year, startDate.month - 1, startDate.day + 1);
+        end = new Date(endDate.year, endDate.month - 1, endDate.day + 1);
     } else {
         start = now;
         end = now;
@@ -93,10 +95,14 @@ const formatCurrency = (amount: number) => {
     }).format(amount || 0);
 };
 
-const formatDate = (dateStr: string) => {
+const formatDate = (dateStr: string, offsetDays: number = 0) => {
     // Convert AD date to BS for display
     const adDate = new Date(dateStr);
-    const bsDate = convertAdToBs(adDate.getFullYear(), adDate.getMonth() + 1, adDate.getDate());
+    const bsDate = convertAdToBs(
+        adDate.getFullYear(),
+        adDate.getMonth() + 1,
+        adDate.getDate() + offsetDays
+    );
 
     const bsMonths = [
         "Baisakh",
@@ -672,7 +678,7 @@ const ReportPage = () => {
                                     </h2>
                                     <p className="text-sm text-gray-600">
                                         {formatDate(report.reportPeriod?.startDate)} —{" "}
-                                        {formatDate(report.reportPeriod?.endDate)}
+                                        {formatDate(report.reportPeriod?.endDate, -1)}
                                     </p>
                                 </div>
                                 <div className="text-right">
